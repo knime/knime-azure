@@ -48,17 +48,12 @@
  */
 package org.knime.cloud.azure.abs.util;
 
-import org.apache.commons.lang3.StringUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.base.filehandling.remote.files.Protocol;
 import org.knime.cloud.azure.abs.filehandler.AzureBSConnection;
-import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeSettingsRO;
-import org.knime.core.node.NodeSettingsWO;
+import org.knime.cloud.core.util.ConnectionInformationCloudSettings;
 import org.knime.core.node.defaultnodesettings.SettingsModelAuthentication;
 import org.knime.core.node.defaultnodesettings.SettingsModelAuthentication.AuthenticationType;
-import org.knime.core.node.defaultnodesettings.SettingsModelInteger;
-import org.knime.core.node.defaultnodesettings.SettingsModelNumber;
 import org.knime.core.node.workflow.CredentialsProvider;
 import org.knime.core.node.workflow.ICredentials;
 
@@ -67,99 +62,23 @@ import org.knime.core.node.workflow.ICredentials;
  *
  * @author Ole Ostergaard, KNIME.com GmbH
  */
-public class SettingsAzureBSConnectionInformation {
+public class AzureConnectionInformationSettings extends ConnectionInformationCloudSettings{
 
 	public static final int DEFAULT_TIMEOUT = 30000;
-
-	private final SettingsModelAuthentication m_authModel = createAuthenticationModel();
-	private final SettingsModelInteger m_timeoutModel = createTimeoutModel();
-
-	private final String m_prefix;
 
 	/**
 	 * Constructor.
 	 */
-	public SettingsAzureBSConnectionInformation(final String prefix) {
-		m_prefix = prefix;
-	}
-
-	private SettingsModelAuthentication createAuthenticationModel() {
-		return new SettingsModelAuthentication("auth", AuthenticationType.USER_PWD, null, null, null);
-	}
-
-	private SettingsModelInteger createTimeoutModel() {
-		return new SettingsModelInteger("timeout", DEFAULT_TIMEOUT);
-	}
-
-	public void saveSettingsTo(final NodeSettingsWO settings) {
-		m_authModel.saveSettingsTo(settings);
-		m_timeoutModel.saveSettingsTo(settings);
-	}
-
-	public void loadValidatedSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
-		m_authModel.loadSettingsFrom(settings);
-		m_timeoutModel.loadSettingsFrom(settings);
-	}
-
-	public void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
-		m_authModel.validateSettings(settings);
-		m_timeoutModel.validateSettings(settings);
-	}
-
-	public SettingsModelAuthentication getAuthenticationModel() {
-		return m_authModel;
-	}
-
-	public SettingsModelNumber getTimeoutModel() {
-		return m_timeoutModel;
-	}
-
-	public String getStorageAccount() {
-		return m_authModel.getUsername();
-	}
-
-	public String getAccessKey() {
-		return m_authModel.getPassword();
-	}
-
-	public Boolean useWorkflowCredential() {
-		return m_authModel.useCredential();
-	}
-
-	public Integer getTimeout() {
-		return m_timeoutModel.getIntValue();
-	}
-	public String getWorkflowCredential() {
-		return m_authModel.getCredential();
+	public AzureConnectionInformationSettings(final String prefix) {
+		super(prefix);
 	}
 
 	/**
-	 * @param useWorkflowCredential
-	 * @param workflowCredential
-	 * @param storageAccount
-	 * @param accessKey
-	 * @param timeout
-	 * @throws InvalidSettingsException
+	 * {@inheritDoc}
 	 */
-	public static void validateValues(Boolean useWorkflowCredential, String workflowCredential, String storageAccount,
-			String accessKey, Integer timeout) throws InvalidSettingsException {
-		if (useWorkflowCredential) {
-			if (StringUtils.isBlank(workflowCredential)) {
-				throw new InvalidSettingsException("Please enter a valid workflow credential");
-			}
-		} else {
-			if (StringUtils.isBlank(storageAccount)) {
-				throw new InvalidSettingsException("Please enter a valid access key id");
-			}
-
-			if (StringUtils.isBlank(accessKey)) {
-				throw new InvalidSettingsException("Please enter a valid secret access key");
-			}
-		}
-
-		if (timeout < 0) {
-			throw new InvalidSettingsException("Timeout must be a positive number");
-		}
+	@Override
+	protected SettingsModelAuthentication createAuthenticationModel()  {
+		return new SettingsModelAuthentication("auth", AuthenticationType.USER_PWD, null, null, null);
 	}
 
 	/**
@@ -167,6 +86,7 @@ public class SettingsAzureBSConnectionInformation {
 	 * @param protocol
 	 * @return
 	 */
+	@Override
 	public ConnectionInformation createConnectionInformation(CredentialsProvider credentialsProvider,
 			Protocol protocol) {
 
@@ -176,7 +96,7 @@ public class SettingsAzureBSConnectionInformation {
 		connectionInformation.setProtocol(protocol.getName());
 		connectionInformation.setHost(AzureBSConnection.HOST);
 		connectionInformation.setPort(protocol.getPort());
-		connectionInformation.setTimeout(m_timeoutModel.getIntValue());
+		connectionInformation.setTimeout(getTimeout());
 
 		// Put storageAccount as user and accessKey as password
 		if (useWorkflowCredential()) {
@@ -185,8 +105,8 @@ public class SettingsAzureBSConnectionInformation {
 			connectionInformation.setUser(credentials.getLogin());
 			connectionInformation.setPassword(credentials.getPassword());
 		} else {
-			connectionInformation.setUser(getStorageAccount());
-			connectionInformation.setPassword(getAccessKey());
+			connectionInformation.setUser(getUserValue());
+			connectionInformation.setPassword(getPasswordValue());
 		}
 
 		return connectionInformation;

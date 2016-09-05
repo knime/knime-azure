@@ -62,8 +62,8 @@ import javax.swing.JPanel;
 import org.knime.base.filehandling.remote.connectioninformation.node.TestConnectionDialog;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
 import org.knime.cloud.azure.abs.filehandler.AzureBSRemoteFileHandler;
-import org.knime.cloud.azure.abs.util.ComponentsAzureBSConnectionInformation;
-import org.knime.cloud.azure.abs.util.SettingsAzureBSConnectionInformation;
+import org.knime.cloud.azure.abs.util.AzureConnectionInformationComponents;
+import org.knime.cloud.azure.abs.util.AzureConnectionInformationSettings;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeSettingsRO;
@@ -78,19 +78,20 @@ import org.knime.core.node.workflow.CredentialsProvider;
  */
 public class AzureBSConnectionNodeDialog extends NodeDialogPane {
 
-	private final SettingsAzureBSConnectionInformation m_settings = AzureBSConnectionNodeModel.createAzureBSSettings();
-	private final ComponentsAzureBSConnectionInformation m_components = new ComponentsAzureBSConnectionInformation(m_settings);
+	private final AzureConnectionInformationSettings m_settings = AzureBSConnectionNodeModel.createAzureBSSettings();
+	private final AzureConnectionInformationComponents m_components = new AzureConnectionInformationComponents(m_settings, AzureBSConnectionNodeModel.getNameMap());
 
 	public AzureBSConnectionNodeDialog() {
 		final JPanel panel = new JPanel(new GridBagLayout());
 		final GridBagConstraints gbc = new GridBagConstraints();
 		gbc.insets = new Insets(5,5,5,5);
-		gbc.weightx = 1;
+		gbc.fill = GridBagConstraints.BOTH;
 		gbc.weighty = 0;
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		panel.add(m_components.getDialogPanel(), gbc);
 		gbc.gridy++;
+		gbc.fill = GridBagConstraints.NONE;
 		gbc.anchor = GridBagConstraints.ABOVE_BASELINE_LEADING;
 		final JButton testConnectionButton = new JButton("Test connection");
 		testConnectionButton.addActionListener(new TestConnectionListener());
@@ -141,7 +142,7 @@ public class AzureBSConnectionNodeDialog extends NodeDialogPane {
 			}
 
 			// Get connection information to current settings
-			final SettingsAzureBSConnectionInformation model = m_components.getModel();
+			final AzureConnectionInformationSettings model = m_components.getSettings();
 			final ConnectionInformation connectionInformation = model
 					.createConnectionInformation(getCredentialsProvider(), AzureBSRemoteFileHandler.PROTOCOL);
 

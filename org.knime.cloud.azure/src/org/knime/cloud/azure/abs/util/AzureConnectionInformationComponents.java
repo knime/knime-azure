@@ -48,78 +48,32 @@
  */
 package org.knime.cloud.azure.abs.util;
 
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.util.HashMap;
 
-import javax.swing.JPanel;
-
-import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeSettingsRO;
-import org.knime.core.node.NodeSettingsWO;
-import org.knime.core.node.NotConfigurableException;
+import org.knime.cloud.core.util.ConnectionInformationCloudComponents;
 import org.knime.core.node.defaultnodesettings.DialogComponentAuthentication;
-import org.knime.core.node.defaultnodesettings.DialogComponentNumber;
 import org.knime.core.node.defaultnodesettings.SettingsModelAuthentication.AuthenticationType;
-import org.knime.core.node.port.PortObjectSpec;
-import org.knime.core.node.workflow.CredentialsProvider;
+import org.knime.core.util.Pair;
 
 /**
  *
  * @author Ole Ostergaard, KNIME.com GmbH
  */
-public class ComponentsAzureBSConnectionInformation {
-
-	protected final SettingsAzureBSConnectionInformation m_settings;
-
-	private DialogComponentAuthentication m_auth;
-	private DialogComponentNumber m_timeout;
+public class AzureConnectionInformationComponents extends ConnectionInformationCloudComponents<AzureConnectionInformationSettings> {
 
 	/**
 	 * Constructor.
 	 */
-	public ComponentsAzureBSConnectionInformation(final SettingsAzureBSConnectionInformation settings) {
-		m_settings = settings;
+	public AzureConnectionInformationComponents(final AzureConnectionInformationSettings settings, HashMap<AuthenticationType, Pair<String, String>> nameMap) {
+		super(settings, nameMap);
 	}
 
 
-	protected DialogComponentAuthentication getAuthenticationComponent() {
-		m_auth = new DialogComponentAuthentication(m_settings.getAuthenticationModel(), "Authentication", AuthenticationType.USER_PWD, AuthenticationType.CREDENTIALS);
-		m_auth.setUsernameLabel("Storage Account: ");
-		m_auth.setPasswordLabel("Access Key: ");
-		return m_auth;
-	}
-
-	protected DialogComponentNumber getTimeoutComponent() {
-		m_timeout = new DialogComponentNumber(m_settings.getTimeoutModel(), "Timeout", 100);
-		return m_timeout;
-	}
-
-
-	public JPanel getDialogPanel() {
-		final JPanel panel = new JPanel(new GridBagLayout());
-		final GridBagConstraints gbc = new GridBagConstraints();
-		gbc.anchor = GridBagConstraints.NORTHWEST;
-		gbc.weightx = 1;
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-		panel.add(getAuthenticationComponent().getComponentPanel(), gbc);
-		gbc.gridy++;
-		panel.add(getTimeoutComponent().getComponentPanel(),gbc);
-
-		return panel;
-	}
-
-	public void loadSettingsFrom(final NodeSettingsRO settings, final PortObjectSpec[] specs, final CredentialsProvider cp) throws NotConfigurableException {
-		m_auth.loadSettingsFrom(settings, specs, cp);
-		m_timeout.loadSettingsFrom(settings, specs);
-	}
-
-	public void saveSettingsTo(final NodeSettingsWO settings) throws InvalidSettingsException {
-		m_auth.saveSettingsTo(settings);
-		m_timeout.saveSettingsTo(settings);
-	}
-
-	public SettingsAzureBSConnectionInformation getModel() {
-		return m_settings;
+	@Override
+	protected DialogComponentAuthentication defineAuthenticationComponent() {
+		final DialogComponentAuthentication authComponent = new DialogComponentAuthentication(m_settings.getAuthenticationModel(), "Authentication", getNameMap(), AuthenticationType.USER_PWD,AuthenticationType.CREDENTIALS);
+		authComponent.setUsernameLabel("Storage Account: ");
+		authComponent.setPasswordLabel("Access Key: ");
+		return authComponent;
 	}
 }
