@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<knimeNode icon="./default.png" type="Source" xmlns="http://knime.org/node/v2.10" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://knime.org/node/v2.10 http://knime.org/node/v2.10.xsd">
+    <name>Azure Blob Storage Connector (Labs)</name>
+    
+    <shortDescription>
+        Connects to Azure Blob Storage in order to read/write files in downstream nodes.
+    </shortDescription>
+    
+    <fullDescription>
+        <intro>
+
+        </intro>
+    </fullDescription>
+    
+    <ports>
+        <outPort index="0" name="Azure Blob Storage File System Connection">
+            Azure Blob Storage File System Connection
+        </outPort>
+    </ports>    
+</knimeNode>
