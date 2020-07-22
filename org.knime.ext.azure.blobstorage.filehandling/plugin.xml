@@ -9,5 +9,11 @@
             id="org.knime.ext.google.filehandling.cloudstorage.node.CloudStorageConnectorNodeFactory">
       </node>
    </extension>
+   <extension
+         point="org.knime.filehandling.FSTestInitializerProvider">
+         <FSTestInitializerProvider
+               ProviderClass="org.knime.ext.azure.blobstorage.filehandling.testing.AzureBlobStorageTestInitializerProvider">
+         </FSTestInitializerProvider>
+   </extension>
 
 </plugin>

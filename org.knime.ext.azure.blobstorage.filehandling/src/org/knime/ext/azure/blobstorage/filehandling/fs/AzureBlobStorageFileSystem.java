@@ -59,6 +59,8 @@ import org.knime.filehandling.core.connections.FSCategory;
 import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.connections.base.BaseFileSystem;
 
+import com.azure.storage.blob.BlobServiceClient;
+
 /**
  * Azure Blob Storage implementation of the {@link FileSystem} interface.
  *
@@ -71,12 +73,23 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
      */
     public static final String PATH_SEPARATOR = "/";
 
+    private final BlobServiceClient m_client;
+
     /**
      * @param uri
+     *            the URI for the file system
      * @param cacheTTL
+     *            The time to live for cached elements in milliseconds.
+     * @param client
+     *            The {@link BlobServiceClient} instance.
+     * @param workingDirectory
+     *            The working directory
      */
-    public AzureBlobStorageFileSystem(final URI uri, final long cacheTTL) {
-        super(new AzureBlobStorageFileSystemProvider(), uri, cacheTTL, PATH_SEPARATOR, createFSLocationSpec());
+    public AzureBlobStorageFileSystem(final URI uri, final long cacheTTL, final BlobServiceClient client,
+            final String workingDirectory) {
+        super(new AzureBlobStorageFileSystemProvider(), uri, cacheTTL, workingDirectory, createFSLocationSpec());
+
+        m_client = client;
     }
 
     /**
@@ -86,14 +99,20 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
         return new DefaultFSLocationSpec(FSCategory.CONNECTED, AzureBlobStorageFileSystemProvider.FS_TYPE);
     }
 
+    /**
+     * @return the client
+     */
+    public BlobServiceClient getClient() {
+        return m_client;
+    }
+
 
     /**
      * {@inheritDoc}
      */
     @Override
     protected void prepareClose() throws IOException {
-        // TODO Auto-generated method stub
-
+        // nothing to close
     }
 
     /**

@@ -44,64 +44,73 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2020-07-14 (Alexander Bondaletov): created
+ *   2020-07-16 (Alexander Bondaletov): created
  */
-package org.knime.ext.azure.blobstorage.filehandling.fs;
+package org.knime.ext.azure.blobstorage.filehandling.testing;
 
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.io.IOException;
+import java.util.Map;
 
-import org.knime.core.node.util.FileSystemBrowser;
-import org.knime.filehandling.core.connections.FSConnection;
-import org.knime.filehandling.core.connections.FSFileSystem;
-import org.knime.filehandling.core.filechooser.NioFileSystemBrowser;
+import org.knime.core.node.util.CheckUtils;
+import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSConnection;
+import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFileSystem;
+import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFileSystemProvider;
+import org.knime.filehandling.core.connections.FSLocationSpec;
+import org.knime.filehandling.core.testing.DefaultFSTestInitializerProvider;
 
 import com.azure.storage.blob.BlobServiceClient;
+import com.azure.storage.blob.BlobServiceClientBuilder;
+import com.azure.storage.common.StorageSharedKeyCredential;
 
 /**
- * Azure Blob Storage implementation of the {@link FSConnection} interface.
+ * Initializer provider for ths Azure Blob Storage.
  *
  * @author Alexander Bondaletov
  */
-public class AzureBlobStorageFSConnection implements FSConnection {
-
-    private static final long m_cacheTTL = 60000;
-
-    private final AzureBlobStorageFileSystem m_filesystem;
+public class AzureBlobStorageTestInitializerProvider extends DefaultFSTestInitializerProvider {
 
     /**
-     * @param client
-     *            The {@link BlobServiceClient} instance.
-     * @param workingDirectory
-     *            The working directory.
-     *
+     * {@inheritDoc}
      */
-    public AzureBlobStorageFSConnection(final BlobServiceClient client, final String workingDirectory) {
-        URI uri = null;
-        try {
-            // TODO maybe pass account name as host
-            uri = new URI(AzureBlobStorageFileSystemProvider.FS_TYPE, "azure-blob-storage", null, null);
-        } catch (URISyntaxException ex) {
-            // never happens
-        }
+    @SuppressWarnings("resource")
+    @Override
+    public AzureBlobStorageTestInitializer setup(final Map<String, String> configuration) throws IOException {
+        validateConfiguration(configuration);
+        AzureBlobStorageFSConnection fsConnection = new AzureBlobStorageFSConnection(createClient(configuration),
+                configuration.get("workingDirPrefix"));
+        return new AzureBlobStorageTestInitializer(fsConnection);
+    }
 
-        m_filesystem = new AzureBlobStorageFileSystem(uri, m_cacheTTL, client, workingDirectory);
+    private static BlobServiceClient createClient(final Map<String, String> config) {
+        String urlFormat = "https://%s.blob.core.windows.net";
+        String account = config.get("account");
+        String key = config.get("key");
+
+        return new BlobServiceClientBuilder().endpoint(String.format(urlFormat, account))
+                .credential(new StorageSharedKeyCredential(account, key)).buildClient();
+    }
+
+    private static void validateConfiguration(final Map<String, String> configuration) {
+        CheckUtils.checkArgumentNotNull(configuration.get("account"), "account must be specified.");
+        CheckUtils.checkArgumentNotNull(configuration.get("key"), "key must be specified.");
+        CheckUtils.checkArgumentNotNull(configuration.get("workingDirPrefix"), "workingDirPrefix must be specified.");
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public FSFileSystem<?> getFileSystem() {
-        return m_filesystem;
+    public String getFSType() {
+        return AzureBlobStorageFileSystemProvider.FS_TYPE;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public FileSystemBrowser getFileSystemBrowser() {
-        return new NioFileSystemBrowser(this);
+    public FSLocationSpec createFSLocationSpec(final Map<String, String> configuration) {
+        validateConfiguration(configuration);
+        return AzureBlobStorageFileSystem.createFSLocationSpec();
     }
 
 }

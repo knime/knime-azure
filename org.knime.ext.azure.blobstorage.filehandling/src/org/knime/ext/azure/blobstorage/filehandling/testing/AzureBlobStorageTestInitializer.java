@@ -44,64 +44,79 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2020-07-14 (Alexander Bondaletov): created
+ *   2020-07-16 (Alexander Bondaletov): created
  */
-package org.knime.ext.azure.blobstorage.filehandling.fs;
+package org.knime.ext.azure.blobstorage.filehandling.testing;
 
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 
-import org.knime.core.node.util.FileSystemBrowser;
+import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFileSystem;
+import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStoragePath;
 import org.knime.filehandling.core.connections.FSConnection;
-import org.knime.filehandling.core.connections.FSFileSystem;
-import org.knime.filehandling.core.filechooser.NioFileSystemBrowser;
+import org.knime.filehandling.core.testing.DefaultFSTestInitializer;
 
+import com.azure.core.http.rest.PagedIterable;
+import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobServiceClient;
+import com.azure.storage.blob.models.BlobItem;
+import com.azure.storage.blob.models.ListBlobsOptions;
 
 /**
- * Azure Blob Storage implementation of the {@link FSConnection} interface.
+ * Azure Blob Storage test initializer
  *
  * @author Alexander Bondaletov
  */
-public class AzureBlobStorageFSConnection implements FSConnection {
+public class AzureBlobStorageTestInitializer
+        extends DefaultFSTestInitializer<AzureBlobStoragePath, AzureBlobStorageFileSystem> {
 
-    private static final long m_cacheTTL = 60000;
-
-    private final AzureBlobStorageFileSystem m_filesystem;
+    private BlobServiceClient m_client;
 
     /**
-     * @param client
-     *            The {@link BlobServiceClient} instance.
-     * @param workingDirectory
-     *            The working directory.
-     *
+     * @param fsConnection
      */
-    public AzureBlobStorageFSConnection(final BlobServiceClient client, final String workingDirectory) {
-        URI uri = null;
-        try {
-            // TODO maybe pass account name as host
-            uri = new URI(AzureBlobStorageFileSystemProvider.FS_TYPE, "azure-blob-storage", null, null);
-        } catch (URISyntaxException ex) {
-            // never happens
+    protected AzureBlobStorageTestInitializer(final FSConnection fsConnection) {
+        super(fsConnection);
+        m_client = getFileSystem().getClient();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public AzureBlobStoragePath createFileWithContent(final String content, final String... pathComponents) throws IOException {
+        AzureBlobStoragePath path = makePath(pathComponents);
+        byte[] bytes = content.getBytes();
+
+        m_client.getBlobContainerClient(path.getBucketName()).getBlobClient(path.getBlobName())
+                .upload(new ByteArrayInputStream(bytes), bytes.length);
+        return path;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void beforeTestCaseInternal() throws IOException {
+        final AzureBlobStoragePath scratchDir = getTestCaseScratchDir().toDirectoryPath();
+        m_client.getBlobContainerClient(scratchDir.getBucketName()).getBlobClient(scratchDir.getBlobName())
+                .upload(new ByteArrayInputStream(new byte[0]), 0);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void afterTestCaseInternal() throws IOException {
+        final AzureBlobStoragePath scratchDir = getTestCaseScratchDir().toDirectoryPath();
+        BlobContainerClient contClient = m_client.getBlobContainerClient(scratchDir.getBucketName());
+
+        ListBlobsOptions opts = new ListBlobsOptions().setPrefix(scratchDir.getBlobName());
+        PagedIterable<BlobItem> blobs = contClient.listBlobs(opts, null);
+
+        for (BlobItem item : blobs) {
+            contClient.getBlobClient(item.getName()).delete();
         }
-
-        m_filesystem = new AzureBlobStorageFileSystem(uri, m_cacheTTL, client, workingDirectory);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public FSFileSystem<?> getFileSystem() {
-        return m_filesystem;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public FileSystemBrowser getFileSystemBrowser() {
-        return new NioFileSystemBrowser(this);
     }
 
 }

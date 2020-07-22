@@ -48,6 +48,7 @@
  */
 package org.knime.ext.azure.blobstorage.filehandling.fs;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -58,11 +59,20 @@ import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.FileTime;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.knime.ext.azure.blobstorage.filehandling.AzureUtils;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
+
+import com.azure.storage.blob.BlobClient;
+import com.azure.storage.blob.BlobContainerClient;
+import com.azure.storage.blob.models.BlobContainerProperties;
+import com.azure.storage.blob.models.BlobProperties;
+import com.azure.storage.blob.models.BlobStorageException;
+import com.azure.storage.blob.models.ListBlobsOptions;
 
 /**
  * File system provider for the {@link AzureBlobStorageFileSystem}.
@@ -131,35 +141,97 @@ public class AzureBlobStorageFileSystemProvider
     @Override
     protected Iterator<AzureBlobStoragePath> createPathIterator(final AzureBlobStoragePath dir, final Filter<? super Path> filter)
             throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        return AzureBlobStoragePathIteratorFactory.create(dir, filter);
     }
 
     /**
      * {@inheritDoc}
      */
+    @SuppressWarnings("resource")
     @Override
     protected void createDirectoryInternal(final AzureBlobStoragePath dir, final FileAttribute<?>... attrs) throws IOException {
-        // TODO Auto-generated method stub
+        BlobContainerClient contClient = dir.getFileSystem().getClient().getBlobContainerClient(dir.getBucketName());
 
+
+        if (dir.getBlobName() != null) {
+            contClient.getBlobClient(dir.toDirectoryPath().getBlobName()).upload(new ByteArrayInputStream(new byte[0]),
+                    0);
+        } else {
+            contClient.create();
+        }
     }
 
     /**
      * {@inheritDoc}
      */
+    @SuppressWarnings("resource")
     @Override
     protected boolean exists(final AzureBlobStoragePath path) throws IOException {
-        // TODO Auto-generated method stub
-        return false;
+        if (path.getBucketName() == null) {
+            // This is the fake root
+            return true;
+        }
+
+        try {
+            BlobContainerClient contClient = path.getFileSystem().getClient()
+                    .getBlobContainerClient(path.getBucketName());
+
+            if (path.getBlobName() == null) {
+                return contClient.exists();
+            }
+
+            boolean exist = contClient.getBlobClient(path.getBlobName()).exists();
+            if (!exist) {
+                ListBlobsOptions opts = new ListBlobsOptions().setPrefix(path.toDirectoryPath().getBlobName())
+                        .setMaxResultsPerPage(1);
+                exist = contClient.listBlobsByHierarchy(path.getFileSystem().getSeparator(), opts, null).iterator()
+                        .hasNext();
+            }
+
+            return exist;
+        } catch (BlobStorageException ex) {
+            throw AzureUtils.toIOE(ex, path.toString());
+        }
     }
 
     /**
      * {@inheritDoc}
      */
+    @SuppressWarnings("resource")
     @Override
-    protected BaseFileAttributes fetchAttributesInternal(final AzureBlobStoragePath path, final Class<?> type) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+    protected BaseFileAttributes fetchAttributesInternal(final AzureBlobStoragePath path, final Class<?> type)
+            throws IOException {
+        FileTime createdAt = FileTime.fromMillis(0);
+        FileTime modifiedAt = createdAt;
+        long size = 0;
+        boolean objectExists = false;
+
+        if (path.getBucketName() != null) {
+            try {
+                BlobContainerClient contClient = path.getFileSystem().getClient()
+                        .getBlobContainerClient(path.getBucketName());
+
+                if (path.getBlobName() != null) {
+                    BlobClient blobClient = contClient.getBlobClient(path.getBlobName());
+                    objectExists = blobClient.exists();
+
+                    if (objectExists) {
+                        BlobProperties p = blobClient.getProperties();
+                        createdAt = FileTime.from(p.getCreationTime().toInstant());
+                        modifiedAt = FileTime.from(p.getLastModified().toInstant());
+                        size = p.getBlobSize();
+                    }
+                } else {
+                    BlobContainerProperties p = contClient.getProperties();
+                    modifiedAt = FileTime.from(p.getLastModified().toInstant());
+                }
+            } catch (BlobStorageException ex) {
+                throw AzureUtils.toIOE(ex, path.toString());
+            }
+        }
+
+        return new BaseFileAttributes(!path.isDirectory() && objectExists, path, modifiedAt, modifiedAt, createdAt,
+                size, false, false, null);
     }
 
     /**

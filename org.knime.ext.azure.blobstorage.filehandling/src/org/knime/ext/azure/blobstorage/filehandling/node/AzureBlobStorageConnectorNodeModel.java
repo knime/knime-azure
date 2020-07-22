@@ -61,11 +61,17 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
+import org.knime.ext.azure.blobstorage.filehandling.AzureUtils;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSConnection;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFileSystem;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
 import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
+
+import com.azure.storage.blob.BlobServiceClient;
+import com.azure.storage.blob.BlobServiceClientBuilder;
+import com.azure.storage.blob.models.BlobStorageException;
+import com.azure.storage.common.StorageSharedKeyCredential;
 
 /**
  * Azure Blob Storage Connector node.
@@ -91,9 +97,27 @@ public class AzureBlobStorageConnectorNodeModel extends NodeModel {
      */
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
-        m_fsConnection = new AzureBlobStorageFSConnection();
-        FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
-        return new PortObject[] { new FileSystemPortObject(createSpec()) };
+        try {
+            BlobServiceClient client = createServiceClient();
+            client.listBlobContainers().iterator().hasNext();
+
+            m_fsConnection = new AzureBlobStorageFSConnection(createServiceClient(),
+                    AzureBlobStorageFileSystem.PATH_SEPARATOR);
+            FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
+
+            return new PortObject[] { new FileSystemPortObject(createSpec()) };
+        } catch (BlobStorageException ex) {
+            throw AzureUtils.toIOE(ex, AzureBlobStorageFileSystem.PATH_SEPARATOR);
+        }
+    }
+
+    private static BlobServiceClient createServiceClient() {
+        String urlFormat = "https://%s.blob.core.windows.net";
+        String account = System.getProperty("azure.account");
+        String key = System.getProperty("azure.key");
+
+        return new BlobServiceClientBuilder().endpoint(String.format(urlFormat, account))
+                .credential(new StorageSharedKeyCredential(account, key)).buildClient();
     }
 
     /**
