@@ -106,7 +106,6 @@ public class AzureBlobStorageFileSystemProvider
     /**
      * {@inheritDoc}
      */
-    @SuppressWarnings("resource")
     @Override
     protected void moveInternal(final AzureBlobStoragePath source, final AzureBlobStoragePath target, final CopyOption... options)
             throws IOException {
@@ -114,51 +113,67 @@ public class AzureBlobStorageFileSystemProvider
             throw new DirectoryNotEmptyException(target.toString());
         }
 
+        if (isDirectory(source)) {
+            moveDirectoryRecursively(source, target);
+        } else {
+            moveBlob(source, target);
+        }
+    }
+
+    @SuppressWarnings("resource")
+    private void moveDirectoryRecursively(final AzureBlobStoragePath source, final AzureBlobStoragePath target)
+            throws IOException {
+        AzureBlobStoragePath sourceDir = source.toDirectoryPath();
+        AzureBlobStoragePath targetDir = target.toDirectoryPath();
+        BlobServiceClient client = sourceDir.getFileSystem().getClient();
+
+        BlobContainerClient targetContClient = client.getBlobContainerClient(targetDir.getBucketName());
+
+        try {
+            if (!targetContClient.exists()) {
+                targetContClient.create();
+            }
+
+            BlobContainerClient sourceContClient = client.getBlobContainerClient(sourceDir.getBucketName());
+
+            ListBlobsOptions opts = new ListBlobsOptions();
+            if (sourceDir.getBlobName() != null) {
+                opts = opts.setPrefix(sourceDir.getBlobName());
+            }
+            PagedIterable<BlobItem> srcBlobs = sourceContClient.listBlobs(opts, null);
+
+            for (BlobItem srcBlob : srcBlobs) {
+                String targetBlobName = srcBlob.getName();
+                if (sourceDir.getBlobName() != null) {
+                    targetBlobName = targetBlobName.replaceFirst(sourceDir.getBlobName(), targetDir.getBlobName());
+                }
+
+                BlobClient sourceBlobClient = sourceContClient.getBlobClient(srcBlob.getName());
+                SyncPoller<BlobCopyInfo, Void> poller = targetContClient.getBlobClient(targetBlobName)
+                        .beginCopy(sourceBlobClient.getBlobUrl(), null);
+                poller.waitForCompletion();
+
+                sourceBlobClient.delete();
+                getFileSystemInternal().removeFromAttributeCache(new AzureBlobStoragePath(getFileSystemInternal(),
+                        sourceDir.getBucketName(), srcBlob.getName()));
+            }
+        } catch (BlobStorageException ex) {
+            throw AzureUtils.toIOE(ex, source.toString(), target.toString());
+        }
+    }
+
+    @SuppressWarnings("resource")
+    private void moveBlob(final AzureBlobStoragePath source, final AzureBlobStoragePath target) throws IOException {
         BlobServiceClient client = source.getFileSystem().getClient();
         try {
-            if (isDirectory(source)) {
-                AzureBlobStoragePath sourceDir = source.toDirectoryPath();
-                AzureBlobStoragePath targetDir = target.toDirectoryPath();
+            BlobClient sourceBlobClient = client.getBlobContainerClient(source.getBucketName())
+                    .getBlobClient(source.getBlobName());
+            BlobClient targetBlobClient = client.getBlobContainerClient(target.getBucketName())
+                    .getBlobClient(target.getBlobName());
 
-                BlobContainerClient targetContClient = client.getBlobContainerClient(target.getBucketName());
-
-                if (!targetContClient.exists()) {
-                    targetContClient.create();
-                }
-
-                BlobContainerClient sourceContClient = client.getBlobContainerClient(source.getBucketName());
-
-                ListBlobsOptions opts = new ListBlobsOptions();
-                if (sourceDir.getBlobName() != null) {
-                    opts = opts.setPrefix(sourceDir.getBlobName());
-                }
-                PagedIterable<BlobItem> srcBlobs = sourceContClient.listBlobs(opts, null);
-
-                for (BlobItem srcBlob : srcBlobs) {
-                    String targetBlobName = srcBlob.getName();
-                    if (sourceDir.getBlobName() != null) {
-                        targetBlobName = targetBlobName.replaceFirst(sourceDir.getBlobName(), targetDir.getBlobName());
-                    }
-
-                    BlobClient sourceBlobClient = sourceContClient.getBlobClient(srcBlob.getName());
-                    SyncPoller<BlobCopyInfo, Void> poller = targetContClient.getBlobClient(targetBlobName)
-                            .beginCopy(sourceBlobClient.getBlobUrl(), null);
-                    poller.waitForCompletion();
-
-                    sourceBlobClient.delete();
-                    getFileSystemInternal().removeFromAttributeCache(new AzureBlobStoragePath(getFileSystemInternal(),
-                            sourceDir.getBucketName(), srcBlob.getName()));
-                }
-            } else {
-                BlobClient sourceBlobClient = client.getBlobContainerClient(source.getBucketName())
-                        .getBlobClient(source.getBlobName());
-                BlobClient targetBlobClient = client.getBlobContainerClient(target.getBucketName())
-                        .getBlobClient(target.getBlobName());
-
-                SyncPoller<BlobCopyInfo, Void> poller = targetBlobClient.beginCopy(sourceBlobClient.getBlobUrl(), null);
-                poller.waitForCompletion();
-                delete(source);
-            }
+            SyncPoller<BlobCopyInfo, Void> poller = targetBlobClient.beginCopy(sourceBlobClient.getBlobUrl(), null);
+            poller.waitForCompletion();
+            delete(source);
         } catch (BlobStorageException ex) {
             throw AzureUtils.toIOE(ex, source.toString(), target.toString());
         }
