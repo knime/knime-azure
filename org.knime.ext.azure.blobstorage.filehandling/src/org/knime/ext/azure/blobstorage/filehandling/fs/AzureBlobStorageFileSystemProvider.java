@@ -52,6 +52,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.channels.Channels;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
@@ -62,6 +63,8 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileTime;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -99,8 +102,7 @@ public class AzureBlobStorageFileSystemProvider
     @Override
     protected SeekableByteChannel newByteChannelInternal(final AzureBlobStoragePath path, final Set<? extends OpenOption> options,
             final FileAttribute<?>... attrs) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        return new AzureBlobStorageSeekableByteChannel(path, options);
     }
 
     /**
@@ -251,20 +253,26 @@ public class AzureBlobStorageFileSystemProvider
     /**
      * {@inheritDoc}
      */
+    @SuppressWarnings("resource")
     @Override
     protected InputStream newInputStreamInternal(final AzureBlobStoragePath path, final OpenOption... options) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        try {
+            return path.getFileSystem().getClient().getBlobContainerClient(path.getBucketName())
+                    .getBlobClient(path.getBlobName()).openInputStream();
+        } catch (BlobStorageException ex) {
+            throw AzureUtils.toIOE(ex, path.toString());
+        }
     }
 
     /**
      * {@inheritDoc}
      */
+    @SuppressWarnings("resource")
     @Override
     protected OutputStream newOutputStreamInternal(final AzureBlobStoragePath path, final OpenOption... options)
             throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        final Set<OpenOption> opts = new HashSet<>(Arrays.asList(options));
+        return Channels.newOutputStream(newByteChannel(path, opts));
     }
 
     /**
