@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <feature id="org.knime.features.ext.azure.blobstorage.filehandling" version="0.0.0">
+       <category name="knime-azure" />
+   </feature>
+   
+   <feature id="org.knime.features.ext.azure.blobstorage.filehandling.source" version="0.0.0">
+       <category name="knime-azure" />
+   </feature>
+
+   <category-def name="knime-azure" label="Build artifacts from knime-azure">
+       <description>Build artifacts from knime-azure</description>
+   </category-def>
+</site>

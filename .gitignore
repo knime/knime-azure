@@ -1,0 +1,5 @@
+*/bin/
+target/
+*/.polyglot.build.properties
+.flattened-pom.xml
+*/**.flattened-pom.xml
