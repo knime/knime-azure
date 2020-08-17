@@ -66,7 +66,7 @@ import com.azure.storage.blob.BlobServiceClient;
  */
 public class AzureBlobStorageFSConnection implements FSConnection {
 
-    private static final long m_cacheTTL = 60000;
+    private static final long m_cacheTTL = 6000;
 
     private final AzureBlobStorageFileSystem m_filesystem;
 
