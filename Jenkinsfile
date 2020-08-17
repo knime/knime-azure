@@ -17,11 +17,11 @@ properties([
 try {
     knimetools.defaultTychoBuild('org.knime.update.azure')
 
-//    workflowTests.runTests(
-//        dependencies: [
-//            repositories:  ['knime-azure', 'knime-excel', 'knime-js-base']
-//        ]
-//    )
+    workflowTests.runTests(
+        dependencies: [
+            repositories:  ['knime-azure']
+        ]
+    )
 
     stage('Sonarqube analysis') {
         env.lastStage = env.STAGE_NAME
