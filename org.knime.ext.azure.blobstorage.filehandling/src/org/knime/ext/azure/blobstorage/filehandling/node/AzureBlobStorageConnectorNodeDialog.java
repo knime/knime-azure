@@ -48,13 +48,160 @@
  */
 package org.knime.ext.azure.blobstorage.filehandling.node;
 
-import org.knime.core.node.defaultnodesettings.DefaultNodeSettingsPane;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.io.IOException;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.event.ChangeListener;
+
+import org.knime.core.data.DataTableSpec;
+import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeDialogPane;
+import org.knime.core.node.NodeSettingsRO;
+import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.NotConfigurableException;
+import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
+import org.knime.core.node.defaultnodesettings.DialogComponentNumber;
+import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSConnection;
+import org.knime.filehandling.core.connections.FSConnection;
+import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryChooser;
 
 /**
  * Azure Blob Storage Connector node dialog.
  *
  * @author Alexander Bondaletov
  */
-public class AzureBlobStorageConnectorNodeDialog extends DefaultNodeSettingsPane {
+public class AzureBlobStorageConnectorNodeDialog extends NodeDialogPane {
 
+
+    private final ChangeListener m_workdirListener;
+    private final AzureBlobStorageConnectorSettings m_settings = new AzureBlobStorageConnectorSettings();
+    private final WorkingDirectoryChooser m_workingDirChooser = new WorkingDirectoryChooser(
+            "azure-blob-storage.workingDir", this::createFSConnection);
+
+    /**
+     * Creates new instance
+     */
+    public AzureBlobStorageConnectorNodeDialog() {
+        m_workdirListener = e -> m_settings.getWorkingDirectoryModel()
+                .setStringValue(m_workingDirChooser.getSelectedWorkingDirectory());
+
+        addTab("Settings", createFilesystemSettingsPanel());
+        addTab("Advanced", createTimeoutsPanel());
+    }
+
+    private JComponent createFilesystemSettingsPanel() {
+        DialogComponentBoolean normalizePath = new DialogComponentBoolean(m_settings.getNormalizePathsModel(),
+                "Normalize paths");
+        normalizePath.getComponentPanel().setLayout(new FlowLayout(FlowLayout.LEFT));
+
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 1;
+        c.weighty = 0;
+        c.gridx = 0;
+        c.gridy = 0;
+        c.insets = new Insets(0, 10, 0, 0);
+        panel.add(m_workingDirChooser, c);
+
+        c.gridy += 1;
+        c.insets = new Insets(0, 0, 0, 0);
+        panel.add(normalizePath.getComponentPanel(), c);
+
+        c.fill = GridBagConstraints.BOTH;
+        c.weighty = 1;
+        c.gridy += 1;
+        panel.add(Box.createVerticalGlue(), c);
+
+        panel.setBorder(BorderFactory.createTitledBorder("File system settings"));
+        return panel;
+    }
+
+    private JComponent createTimeoutsPanel() {
+        DialogComponentNumber timeout = new DialogComponentNumber(m_settings.getTimeoutModel(), "", 1);
+        timeout.getComponentPanel().setLayout(new FlowLayout(FlowLayout.LEFT));
+        DialogComponentNumber longTimeout = new DialogComponentNumber(m_settings.getLongTimeoutModel(), "", 1);
+        longTimeout.getComponentPanel().setLayout(new FlowLayout(FlowLayout.LEFT));
+
+        final JPanel panel = new JPanel(new GridBagLayout());
+        final GridBagConstraints c = new GridBagConstraints();
+        c.anchor = GridBagConstraints.WEST;
+        c.fill = GridBagConstraints.NONE;
+        c.weightx = 0;
+        c.weighty = 0;
+        c.gridx = 0;
+        c.gridy = 0;
+        panel.add(new JLabel("Service calls timeout (seconds): "), c);
+
+        c.gridy = 1;
+        panel.add(new JLabel("Long operations timeout (seconds): "), c);
+
+        c.weightx = 1;
+        c.gridx = 1;
+        c.gridy = 0;
+        panel.add(timeout.getComponentPanel(), c);
+
+        c.gridy = 1;
+        panel.add(longTimeout.getComponentPanel(), c);
+
+        c.fill = GridBagConstraints.BOTH;
+        c.gridx = 0;
+        c.gridy++;
+        c.gridwidth = 2;
+        c.weightx = 1;
+        c.weighty = 1;
+        panel.add(Box.createVerticalGlue(), c);
+
+        panel.setBorder(BorderFactory.createTitledBorder("Connection settings"));
+        return panel;
+    }
+
+    private FSConnection createFSConnection() throws IOException {
+        return new AzureBlobStorageFSConnection(AzureBlobStorageConnectorNodeModel.createServiceClient(), m_settings);
+    }
+
+    @Override
+    protected void saveSettingsTo(final NodeSettingsWO settings) throws InvalidSettingsException {
+        validateBeforeSaving();
+        m_settings.saveSettingsTo(settings);
+    }
+
+    private void validateBeforeSaving() throws InvalidSettingsException {
+        m_settings.validate();
+        m_workingDirChooser.addCurrentSelectionToHistory();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void loadSettingsFrom(final NodeSettingsRO settings, final DataTableSpec[] specs)
+            throws NotConfigurableException {
+        try {
+            m_settings.loadSettingsFrom(settings);
+        } catch (InvalidSettingsException ex) {
+            // ignore
+        }
+
+        settingsLoaded();
+    }
+
+    private void settingsLoaded() {
+        m_workingDirChooser.setSelectedWorkingDirectory(m_settings.getWorkingDirectoryModel().getStringValue());
+        m_workingDirChooser.addListener(m_workdirListener);
+    }
+
+    @Override
+    public void onClose() {
+        m_workingDirChooser.removeListener(m_workdirListener);
+        m_workingDirChooser.onClose();
+    }
 }

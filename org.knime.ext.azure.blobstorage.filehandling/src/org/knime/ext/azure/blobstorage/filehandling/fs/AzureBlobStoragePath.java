@@ -103,4 +103,32 @@ public class AzureBlobStoragePath extends BlobStorePath {
     public AzureBlobStoragePath toDirectoryPath() {
         return (AzureBlobStoragePath) super.toDirectoryPath();
     }
+
+    @SuppressWarnings("resource")
+    @Override
+    protected boolean lastComponentUsesRelativeNotation() {
+        if (getFileSystem().normalizePaths()) {
+            return super.lastComponentUsesRelativeNotation();
+        }
+        return false;
+    }
+
+    @Override
+    public Path normalize() {
+        if (getFileSystem().normalizePaths()) {
+            return super.normalize();
+        } else {
+            return this;
+        }
+    }
+
+    @SuppressWarnings("resource")
+    @Override
+    public Path relativize(final Path other) {
+        if (!getFileSystem().normalizePaths()) {
+            throw new IllegalArgumentException("Cannot relativize paths if normalization is disabled.");
+        }
+
+        return super.relativize(other);
+    }
 }

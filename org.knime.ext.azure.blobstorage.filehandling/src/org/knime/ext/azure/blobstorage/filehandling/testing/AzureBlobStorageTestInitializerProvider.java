@@ -55,6 +55,7 @@ import org.knime.core.node.util.CheckUtils;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSConnection;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFileSystem;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFileSystemProvider;
+import org.knime.ext.azure.blobstorage.filehandling.node.AzureBlobStorageConnectorSettings;
 import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializerProvider;
 
@@ -76,8 +77,10 @@ public class AzureBlobStorageTestInitializerProvider extends DefaultFSTestInitia
     @Override
     public AzureBlobStorageTestInitializer setup(final Map<String, String> configuration) throws IOException {
         validateConfiguration(configuration);
+        AzureBlobStorageConnectorSettings settings = new AzureBlobStorageConnectorSettings();
+        settings.getWorkingDirectoryModel().setStringValue(configuration.get("workingDirPrefix"));
         AzureBlobStorageFSConnection fsConnection = new AzureBlobStorageFSConnection(createClient(configuration),
-                configuration.get("workingDirPrefix"));
+                settings);
         return new AzureBlobStorageTestInitializer(fsConnection);
     }
 

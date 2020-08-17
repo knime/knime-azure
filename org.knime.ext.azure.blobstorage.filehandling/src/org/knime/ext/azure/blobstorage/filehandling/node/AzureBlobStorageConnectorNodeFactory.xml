@@ -8,8 +8,39 @@
     
     <fullDescription>
         <intro>
-
+            <p>This node connects to Azure Blob Storage. The resulting output port allows downstream nodes to access
+            the Azure Blob Storage data as a file system, e.g. to read or write files and folders,
+            or to perform other file system operations (browse/list files, copy, move, ...).
+            </p>
+            
+            <p><b>Path syntax:</b> Paths for Azure Blob Storage are specified with a UNIX-like syntax, /mycontainer/myfolder/myfile. An absolute
+            for Azure Blob Storage consists of:
+                <ol>
+                    <li>A leading slash ("/").</li>
+                    <li>Followed by the name of a container ("mycontainer" in the above example), followed by a slash.</li>
+                    <li>Followed by the name of an object within the container ("myfolder/myfile" in the above example).</li>
+                </ol>
+            </p>
         </intro>
+        <tab name="Settings">
+	        <option name="Working directory">
+	            Specifies the <i>working directory</i> using the path syntax explained above. The working directory must be specified as an absolute path. A working directory allows downstream
+	            nodes to access files/folders using <i>relative</i> paths, i.e. paths that do not have a leading slash. If not specified, the default working directory
+	            is "/".
+	        </option>
+	        <option name="Normalize paths">
+	            Determines if the path normalization should be applied. Path normalization eliminates redundant components of a path like, e.g. /a/../b/./c" can be normalized to "/b/c".
+	            When these redundant components like "../" or "." are part of an existing object, then normalization must be deactivated in order to access them properly.
+	        </option>
+        </tab>
+        <tab name="Advanced">
+        	<option name="Service calls timeout">
+        		The timeout for the Blob service calls in seconds.
+        	</option>
+        	<option name="Long operations timeout">
+        		Separate timeout value applied for a longer operations: upload, download, move and copy.
+        	</option>
+        </tab>
     </fullDescription>
     
     <ports>

@@ -85,6 +85,8 @@ public class AzureBlobStorageConnectorNodeModel extends NodeModel {
     private String m_fsId;
     private AzureBlobStorageFSConnection m_fsConnection;
 
+    private final AzureBlobStorageConnectorSettings m_settings = new AzureBlobStorageConnectorSettings();
+
     /**
      * Creates new instance.
      */
@@ -102,7 +104,7 @@ public class AzureBlobStorageConnectorNodeModel extends NodeModel {
             client.listBlobContainers().iterator().hasNext();
 
             m_fsConnection = new AzureBlobStorageFSConnection(createServiceClient(),
-                    AzureBlobStorageFileSystem.PATH_SEPARATOR);
+                    m_settings);
             FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
 
             return new PortObject[] { new FileSystemPortObject(createSpec()) };
@@ -111,7 +113,7 @@ public class AzureBlobStorageConnectorNodeModel extends NodeModel {
         }
     }
 
-    private static BlobServiceClient createServiceClient() {
+    static BlobServiceClient createServiceClient() {
         String urlFormat = "https://%s.blob.core.windows.net";
         String account = System.getProperty("azure.account");
         String key = System.getProperty("azure.key");
@@ -158,8 +160,7 @@ public class AzureBlobStorageConnectorNodeModel extends NodeModel {
      */
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
-        // TODO Auto-generated method stub
-
+        m_settings.saveSettingsTo(settings);
     }
 
     /**
@@ -167,8 +168,7 @@ public class AzureBlobStorageConnectorNodeModel extends NodeModel {
      */
     @Override
     protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
-        // TODO Auto-generated method stub
-
+        m_settings.validateSettings(settings);
     }
 
     /**
@@ -176,8 +176,7 @@ public class AzureBlobStorageConnectorNodeModel extends NodeModel {
      */
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
-        // TODO Auto-generated method stub
-
+        m_settings.loadSettingsFrom(settings);
     }
 
     /**

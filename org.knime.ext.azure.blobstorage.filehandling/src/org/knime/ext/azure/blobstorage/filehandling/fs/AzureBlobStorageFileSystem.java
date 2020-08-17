@@ -52,8 +52,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Collections;
 
+import org.knime.ext.azure.blobstorage.filehandling.node.AzureBlobStorageConnectorSettings;
 import org.knime.filehandling.core.connections.DefaultFSLocationSpec;
 import org.knime.filehandling.core.connections.FSCategory;
 import org.knime.filehandling.core.connections.FSLocationSpec;
@@ -74,6 +76,9 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
     public static final String PATH_SEPARATOR = "/";
 
     private final BlobServiceClient m_client;
+    private final boolean m_normalizePaths;
+    private final Duration m_timeout;
+    private final Duration m_longTimeout;
 
     /**
      * @param uri
@@ -82,14 +87,18 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
      *            The time to live for cached elements in milliseconds.
      * @param client
      *            The {@link BlobServiceClient} instance.
-     * @param workingDirectory
-     *            The working directory
+     * @param settings
+     *            The settings.
      */
     public AzureBlobStorageFileSystem(final URI uri, final long cacheTTL, final BlobServiceClient client,
-            final String workingDirectory) {
-        super(new AzureBlobStorageFileSystemProvider(), uri, cacheTTL, workingDirectory, createFSLocationSpec());
+            final AzureBlobStorageConnectorSettings settings) {
+        super(new AzureBlobStorageFileSystemProvider(), uri, cacheTTL, settings.getWorkingDirectory(),
+                createFSLocationSpec());
 
         m_client = client;
+        m_normalizePaths = settings.getNormalizePaths();
+        m_timeout = Duration.ofSeconds(settings.getTimeout());
+        m_longTimeout = Duration.ofSeconds(settings.getLongTimeout());
     }
 
     /**
@@ -155,4 +164,28 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
         return Collections.singletonList(getPath(PATH_SEPARATOR));
     }
 
+    /**
+     * @return whether to normalize paths
+     */
+    public boolean normalizePaths() {
+        return m_normalizePaths;
+    }
+
+    /**
+     * Returns the timeout for azure service calls
+     *
+     * @return the timeout
+     */
+    public Duration getTimeout() {
+        return m_timeout;
+    }
+
+    /**
+     * Returns the timeout for the longer service operations (upload/download/copy)
+     *
+     * @return the longTimeout
+     */
+    public Duration getLongTimeout() {
+        return m_longTimeout;
+    }
 }
