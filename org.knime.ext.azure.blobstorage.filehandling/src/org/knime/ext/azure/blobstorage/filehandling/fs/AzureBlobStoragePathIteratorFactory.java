@@ -56,6 +56,7 @@ import java.nio.file.attribute.FileTime;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import org.knime.filehandling.core.connections.base.CloseablePathIterator;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 
 import com.azure.storage.blob.models.BlobContainerItem;
@@ -80,7 +81,8 @@ public class AzureBlobStoragePathIteratorFactory {
      *            {@link Filter} instance.
      * @return The iterator.
      */
-    public static Iterator<AzureBlobStoragePath> create(final AzureBlobStoragePath path,
+    public static CloseablePathIterator<AzureBlobStoragePath> create(
+            final AzureBlobStoragePath path,
             final Filter<? super Path> filter) {
         if (path.getNameCount() == 0) {
             return new ContainerIterator(path, filter);
@@ -89,7 +91,7 @@ public class AzureBlobStoragePathIteratorFactory {
         }
     }
 
-    private abstract static class AzureIterator<T> implements Iterator<AzureBlobStoragePath> {
+    private abstract static class AzureIterator<T> implements CloseablePathIterator<AzureBlobStoragePath> {
         protected final AzureBlobStoragePath m_path;
         private final Filter<? super Path> m_filter;
 
@@ -142,6 +144,12 @@ public class AzureBlobStoragePathIteratorFactory {
         protected abstract Iterator<T> createIterator(AzureBlobStoragePath path);
 
         protected abstract AzureBlobStoragePath toPath(T item);
+
+        @Override
+        public void close() throws IOException {
+            // do nothing
+        }
+
     }
 
     private static class ContainerIterator extends AzureIterator<BlobContainerItem> {

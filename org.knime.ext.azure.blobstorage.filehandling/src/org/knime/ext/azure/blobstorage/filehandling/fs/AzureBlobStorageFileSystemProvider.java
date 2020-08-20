@@ -70,6 +70,7 @@ import java.util.Set;
 
 import org.knime.ext.azure.blobstorage.filehandling.AzureUtils;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
+import org.knime.filehandling.core.connections.base.CloseablePathIterator;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 
 import com.azure.core.http.rest.PagedIterable;
@@ -280,7 +281,8 @@ public class AzureBlobStorageFileSystemProvider
      * {@inheritDoc}
      */
     @Override
-    protected Iterator<AzureBlobStoragePath> createPathIterator(final AzureBlobStoragePath dir, final Filter<? super Path> filter)
+    protected CloseablePathIterator<AzureBlobStoragePath> createPathIterator(final AzureBlobStoragePath dir,
+            final Filter<? super Path> filter)
             throws IOException {
         return AzureBlobStoragePathIteratorFactory.create(dir, filter);
     }
