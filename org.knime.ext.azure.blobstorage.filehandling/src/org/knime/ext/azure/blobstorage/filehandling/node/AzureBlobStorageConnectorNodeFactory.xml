@@ -44,6 +44,9 @@
     </fullDescription>
     
     <ports>
+        <inPort index="0" name="Microsoft Connection">
+    		Microsoft Connection that provides user authentication.
+    	</inPort>
         <outPort index="0" name="Azure Blob Storage File System Connection">
             Azure Blob Storage File System Connection
         </outPort>

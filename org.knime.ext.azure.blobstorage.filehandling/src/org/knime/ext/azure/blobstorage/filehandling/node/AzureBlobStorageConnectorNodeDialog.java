@@ -61,7 +61,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.event.ChangeListener;
 
-import org.knime.core.data.DataTableSpec;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeSettingsRO;
@@ -69,7 +68,10 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentNumber;
+import org.knime.core.node.port.PortObjectSpec;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSConnection;
+import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
+import org.knime.ext.microsoft.authentication.port.MicrosoftCredentialPortObjectSpec;
 import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryChooser;
 
@@ -85,6 +87,8 @@ public class AzureBlobStorageConnectorNodeDialog extends NodeDialogPane {
     private final AzureBlobStorageConnectorSettings m_settings = new AzureBlobStorageConnectorSettings();
     private final WorkingDirectoryChooser m_workingDirChooser = new WorkingDirectoryChooser(
             "azure-blob-storage.workingDir", this::createFSConnection);
+
+    private MicrosoftCredential m_credentials;
 
     /**
      * Creates new instance
@@ -165,7 +169,8 @@ public class AzureBlobStorageConnectorNodeDialog extends NodeDialogPane {
     }
 
     private FSConnection createFSConnection() throws IOException {
-        return new AzureBlobStorageFSConnection(AzureBlobStorageConnectorNodeModel.createServiceClient(), m_settings);
+        return new AzureBlobStorageFSConnection(AzureBlobStorageConnectorNodeModel.createServiceClient(m_credentials),
+                m_settings);
     }
 
     @Override
@@ -183,13 +188,15 @@ public class AzureBlobStorageConnectorNodeDialog extends NodeDialogPane {
      * {@inheritDoc}
      */
     @Override
-    protected void loadSettingsFrom(final NodeSettingsRO settings, final DataTableSpec[] specs)
+    protected void loadSettingsFrom(final NodeSettingsRO settings, final PortObjectSpec[] specs)
             throws NotConfigurableException {
         try {
             m_settings.loadSettingsFrom(settings);
         } catch (InvalidSettingsException ex) {
             // ignore
         }
+
+        m_credentials = ((MicrosoftCredentialPortObjectSpec) specs[0]).getMicrosoftCredential();
 
         settingsLoaded();
     }

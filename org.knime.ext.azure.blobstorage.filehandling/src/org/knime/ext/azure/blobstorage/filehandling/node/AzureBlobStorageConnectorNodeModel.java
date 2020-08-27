@@ -64,6 +64,11 @@ import org.knime.core.node.port.PortType;
 import org.knime.ext.azure.blobstorage.filehandling.AzureUtils;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSConnection;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFileSystem;
+import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
+import org.knime.ext.microsoft.authentication.port.MicrosoftCredential.Type;
+import org.knime.ext.microsoft.authentication.port.MicrosoftCredentialPortObject;
+import org.knime.ext.microsoft.authentication.port.MicrosoftCredentialPortObjectSpec;
+import org.knime.ext.microsoft.authentication.port.azure.AzureSharedKeyCredential;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
 import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
@@ -91,7 +96,7 @@ public class AzureBlobStorageConnectorNodeModel extends NodeModel {
      * Creates new instance.
      */
     protected AzureBlobStorageConnectorNodeModel() {
-        super(new PortType[] {}, new PortType[] { FileSystemPortObject.TYPE });
+        super(new PortType[] { MicrosoftCredentialPortObject.TYPE }, new PortType[] { FileSystemPortObject.TYPE });
     }
 
     /**
@@ -99,12 +104,14 @@ public class AzureBlobStorageConnectorNodeModel extends NodeModel {
      */
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
-        try {
-            BlobServiceClient client = createServiceClient();
-            client.listBlobContainers().iterator().hasNext();
+        MicrosoftCredential credential = ((MicrosoftCredentialPortObject) inObjects[0]).getMicrosoftCredentials();
+        BlobServiceClient client = createServiceClient(credential);
 
-            m_fsConnection = new AzureBlobStorageFSConnection(createServiceClient(),
-                    m_settings);
+        try {
+            // initialize lazy iterator by calling haxNext to make list containers request
+            client.listBlobContainers().iterator().hasNext();// NOSONAR
+
+            m_fsConnection = new AzureBlobStorageFSConnection(client, m_settings);
             FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
 
             return new PortObject[] { new FileSystemPortObject(createSpec()) };
@@ -113,13 +120,21 @@ public class AzureBlobStorageConnectorNodeModel extends NodeModel {
         }
     }
 
-    static BlobServiceClient createServiceClient() {
-        String urlFormat = "https://%s.blob.core.windows.net";
-        String account = System.getProperty("azure.account");
-        String key = System.getProperty("azure.key");
+    static BlobServiceClient createServiceClient(final MicrosoftCredential credential) throws IOException {
+        BlobServiceClientBuilder builder = new BlobServiceClientBuilder();
+        Type type = credential.getType();
 
-        return new BlobServiceClientBuilder().endpoint(String.format(urlFormat, account))
-                .credential(new StorageSharedKeyCredential(account, key)).buildClient();
+        switch (type) {
+        case AZURE_SHARED_KEY:
+            AzureSharedKeyCredential c = (AzureSharedKeyCredential) credential;
+            builder.endpoint(c.getEndpoint());
+            builder.credential(new StorageSharedKeyCredential(c.getAccount(), c.getSecretKey()));
+            break;
+        default:
+            throw new UnsupportedOperationException("Unsupported credential type " + type);
+        }
+
+        return builder.buildClient();
     }
 
     /**
@@ -127,6 +142,11 @@ public class AzureBlobStorageConnectorNodeModel extends NodeModel {
      */
     @Override
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
+        MicrosoftCredential connection = ((MicrosoftCredentialPortObjectSpec) inSpecs[0]).getMicrosoftCredential();
+        if (connection == null) {
+            throw new InvalidSettingsException("Not authenticated");
+        }
+
         m_fsId = FSConnectionRegistry.getInstance().getKey();
         return new PortObjectSpec[] { createSpec() };
     }
