@@ -35,10 +35,7 @@
         </tab>
         <tab name="Advanced">
         	<option name="Service calls timeout">
-        		The timeout for the Blob service calls in seconds.
-        	</option>
-        	<option name="Long operations timeout">
-        		Separate timeout value applied for a longer operations: upload, download, move and copy.
+        		The time allowed between sending a request and receiving the response
         	</option>
         </tab>
     </fullDescription>

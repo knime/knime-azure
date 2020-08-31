@@ -66,15 +66,12 @@ public class AzureBlobStorageConnectorSettings {
     private static final String KEY_WORKING_DIRECTORY = "workingDirectory";
     private static final String KEY_NORMALIZE_PATHS = "normalizePaths";
     private static final String KEY_TIMEOUT = "timeout";
-    private static final String KEY_LONG_TIMEOUT = "longTimeout";
 
     private static final int DEFAULT_TIMEOUT = 30;
-    private static final int DEFAULT_LONG_TIMEOUT = 120;
 
     private final SettingsModelString m_workingDirectory;
     private final SettingsModelBoolean m_normalizePaths;
     private final SettingsModelIntegerBounded m_timeout;
-    private final SettingsModelIntegerBounded m_longTimeout;
 
     /**
      * Creates new instance.
@@ -83,7 +80,6 @@ public class AzureBlobStorageConnectorSettings {
         m_workingDirectory = new SettingsModelString(KEY_WORKING_DIRECTORY, AzureBlobStorageFileSystem.PATH_SEPARATOR);
         m_normalizePaths = new SettingsModelBoolean(KEY_NORMALIZE_PATHS, true);
         m_timeout = new SettingsModelIntegerBounded(KEY_TIMEOUT, DEFAULT_TIMEOUT, 0, Integer.MAX_VALUE);
-        m_longTimeout = new SettingsModelIntegerBounded(KEY_LONG_TIMEOUT, DEFAULT_LONG_TIMEOUT, 0, Integer.MAX_VALUE);
     }
 
     /**
@@ -96,7 +92,6 @@ public class AzureBlobStorageConnectorSettings {
         m_workingDirectory.saveSettingsTo(settings);
         m_normalizePaths.saveSettingsTo(settings);
         m_timeout.saveSettingsTo(settings);
-        m_longTimeout.saveSettingsTo(settings);
     }
 
     /**
@@ -110,7 +105,6 @@ public class AzureBlobStorageConnectorSettings {
         m_workingDirectory.validateSettings(settings);
         m_normalizePaths.validateSettings(settings);
         m_timeout.validateSettings(settings);
-        m_longTimeout.validateSettings(settings);
 
         AzureBlobStorageConnectorSettings temp = new AzureBlobStorageConnectorSettings();
         temp.loadSettingsFrom(settings);
@@ -140,7 +134,6 @@ public class AzureBlobStorageConnectorSettings {
         m_workingDirectory.loadSettingsFrom(settings);
         m_normalizePaths.loadSettingsFrom(settings);
         m_timeout.loadSettingsFrom(settings);
-        m_longTimeout.loadSettingsFrom(settings);
     }
 
     /**
@@ -185,17 +178,4 @@ public class AzureBlobStorageConnectorSettings {
         return m_timeout.getIntValue();
     }
 
-    /**
-     * @return the longTimeout model
-     */
-    public SettingsModelIntegerBounded getLongTimeoutModel() {
-        return m_longTimeout;
-    }
-
-    /**
-     * @return the longTimeout
-     */
-    public int getLongTimeout() {
-        return m_longTimeout.getIntValue();
-    }
 }

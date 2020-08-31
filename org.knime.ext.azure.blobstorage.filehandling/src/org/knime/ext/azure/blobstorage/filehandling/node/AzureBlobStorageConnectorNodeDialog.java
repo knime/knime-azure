@@ -132,8 +132,6 @@ public class AzureBlobStorageConnectorNodeDialog extends NodeDialogPane {
     private JComponent createTimeoutsPanel() {
         DialogComponentNumber timeout = new DialogComponentNumber(m_settings.getTimeoutModel(), "", 1);
         timeout.getComponentPanel().setLayout(new FlowLayout(FlowLayout.LEFT));
-        DialogComponentNumber longTimeout = new DialogComponentNumber(m_settings.getLongTimeoutModel(), "", 1);
-        longTimeout.getComponentPanel().setLayout(new FlowLayout(FlowLayout.LEFT));
 
         final JPanel panel = new JPanel(new GridBagLayout());
         final GridBagConstraints c = new GridBagConstraints();
@@ -145,16 +143,10 @@ public class AzureBlobStorageConnectorNodeDialog extends NodeDialogPane {
         c.gridy = 0;
         panel.add(new JLabel("Service calls timeout (seconds): "), c);
 
-        c.gridy = 1;
-        panel.add(new JLabel("Long operations timeout (seconds): "), c);
-
         c.weightx = 1;
         c.gridx = 1;
         c.gridy = 0;
         panel.add(timeout.getComponentPanel(), c);
-
-        c.gridy = 1;
-        panel.add(longTimeout.getComponentPanel(), c);
 
         c.fill = GridBagConstraints.BOTH;
         c.gridx = 0;
@@ -169,8 +161,8 @@ public class AzureBlobStorageConnectorNodeDialog extends NodeDialogPane {
     }
 
     private FSConnection createFSConnection() throws IOException {
-        return new AzureBlobStorageFSConnection(AzureBlobStorageConnectorNodeModel.createServiceClient(m_credentials),
-                m_settings);
+        return new AzureBlobStorageFSConnection(
+                AzureBlobStorageConnectorNodeModel.createServiceClient(m_credentials, m_settings), m_settings);
     }
 
     @Override

@@ -49,17 +49,14 @@
 package org.knime.ext.azure.blobstorage.filehandling.fs;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.knime.ext.azure.blobstorage.filehandling.AzureUtils;
 import org.knime.filehandling.core.connections.base.TempFileSeekableByteChannel;
 
-import com.azure.core.util.Context;
 import com.azure.storage.blob.models.BlobStorageException;
 
 /**
@@ -86,20 +83,9 @@ public class AzureBlobStorageSeekableByteChannel extends TempFileSeekableByteCha
     /**
      * {@inheritDoc}
      */
-    @SuppressWarnings("resource")
     @Override
     public void copyFromRemote(final AzureBlobStoragePath remoteFile, final Path tempFile) throws IOException {
-        Set<OpenOption> openOptions = new HashSet<>(Arrays.asList(StandardOpenOption.CREATE,
-                StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.READ, StandardOpenOption.WRITE));
-        AzureBlobStorageFileSystem fs = remoteFile.getFileSystem();
-
-        try {
-            fs.getClient().getBlobContainerClient(remoteFile.getBucketName()).getBlobClient(remoteFile.getBlobName())
-                    .downloadToFileWithResponse(tempFile.toString(), null, null, null, null, false, openOptions,
-                            fs.getLongTimeout(), Context.NONE);
-        } catch (BlobStorageException ex) {
-            throw AzureUtils.toIOE(ex, remoteFile.toString());
-        }
+        Files.copy(remoteFile, tempFile);
     }
 
     /**
@@ -111,7 +97,7 @@ public class AzureBlobStorageSeekableByteChannel extends TempFileSeekableByteCha
         try {
             AzureBlobStorageFileSystem fs = remoteFile.getFileSystem();
             fs.getClient().getBlobContainerClient(remoteFile.getBucketName()).getBlobClient(remoteFile.getBlobName())
-                    .uploadFromFile(tempFile.toString(), null, null, null, null, null, fs.getLongTimeout());
+                    .uploadFromFile(tempFile.toString(), true);
         } catch (BlobStorageException ex) {
             throw AzureUtils.toIOE(ex, remoteFile.toString());
         }

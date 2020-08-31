@@ -153,7 +153,7 @@ public class AzureBlobStoragePathIteratorFactory {
         @Override
         protected Iterator<BlobContainerItem> createIterator(final AzureBlobStoragePath path) {
             AzureBlobStorageFileSystem fs = path.getFileSystem();
-            return fs.getClient().listBlobContainers(new ListBlobContainersOptions(), fs.getTimeout()).iterator();
+            return fs.getClient().listBlobContainers(new ListBlobContainersOptions(), null).iterator();
         }
 
         @SuppressWarnings("resource")
@@ -185,7 +185,7 @@ public class AzureBlobStoragePathIteratorFactory {
             ListBlobsOptions opts = new ListBlobsOptions().setPrefix(path.getBlobName());
 
             return fs.getClient().getBlobContainerClient(path.getBucketName())
-                    .listBlobsByHierarchy(fs.getSeparator(), opts, fs.getTimeout()).iterator();
+                    .listBlobsByHierarchy(fs.getSeparator(), opts, null).iterator();
         }
 
         @SuppressWarnings("resource")

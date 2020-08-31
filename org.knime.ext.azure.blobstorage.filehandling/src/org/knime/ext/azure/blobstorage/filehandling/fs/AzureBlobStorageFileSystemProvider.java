@@ -73,7 +73,6 @@ import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 
 import com.azure.core.http.rest.PagedIterable;
-import com.azure.core.util.Context;
 import com.azure.core.util.polling.SyncPoller;
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
@@ -134,8 +133,8 @@ public class AzureBlobStorageFileSystemProvider
         BlobContainerClient targetContClient = client.getBlobContainerClient(targetDir.getBucketName());
 
         try {
-            if (!Boolean.TRUE.equals(targetContClient.existsWithResponse(fs.getTimeout(), Context.NONE).getValue())) {
-                targetContClient.createWithResponse(null, null, fs.getTimeout(), Context.NONE);
+            if (!targetContClient.exists()) {
+                targetContClient.create();
             }
 
             BlobContainerClient sourceContClient = client.getBlobContainerClient(sourceDir.getBucketName());
@@ -144,7 +143,7 @@ public class AzureBlobStorageFileSystemProvider
             if (sourceDir.getBlobName() != null) {
                 opts = opts.setPrefix(sourceDir.getBlobName());
             }
-            PagedIterable<BlobItem> srcBlobs = sourceContClient.listBlobs(opts, fs.getTimeout());
+            PagedIterable<BlobItem> srcBlobs = sourceContClient.listBlobs(opts, null);
 
             for (BlobItem srcBlob : srcBlobs) {
                 String targetBlobName = srcBlob.getName();
@@ -155,9 +154,9 @@ public class AzureBlobStorageFileSystemProvider
                 BlobClient sourceBlobClient = sourceContClient.getBlobClient(srcBlob.getName());
                 SyncPoller<BlobCopyInfo, Void> poller = targetContClient.getBlobClient(targetBlobName)
                         .beginCopy(sourceBlobClient.getBlobUrl(), null);
-                poller.waitForCompletion(fs.getLongTimeout());
+                poller.waitForCompletion();
 
-                sourceBlobClient.deleteWithResponse(null, null, fs.getTimeout(), Context.NONE);
+                sourceBlobClient.delete();
                 getFileSystemInternal().removeFromAttributeCache(new AzureBlobStoragePath(getFileSystemInternal(),
                         sourceDir.getBucketName(), srcBlob.getName()));
             }
@@ -177,7 +176,7 @@ public class AzureBlobStorageFileSystemProvider
                     .getBlobClient(target.getBlobName());
 
             SyncPoller<BlobCopyInfo, Void> poller = targetBlobClient.beginCopy(sourceBlobClient.getBlobUrl(), null);
-            poller.waitForCompletion(fs.getLongTimeout());
+            poller.waitForCompletion();
             delete(source);
         } catch (BlobStorageException ex) {
             throw AzureUtils.toIOE(ex, source.toString(), target.toString());
@@ -191,7 +190,7 @@ public class AzureBlobStorageFileSystemProvider
         BlobContainerClient contClient = fs.getClient().getBlobContainerClient(dir.getBucketName());
 
         try {
-            if (!Boolean.TRUE.equals(contClient.existsWithResponse(fs.getTimeout(), Context.NONE).getValue())) {
+            if (!contClient.exists()) {
                 return false;
             }
 
@@ -201,7 +200,7 @@ public class AzureBlobStorageFileSystemProvider
                 opts = opts.setPrefix(prefix);
             }
 
-            Iterator<BlobItem> blobItems = contClient.listBlobs(opts, fs.getTimeout()).iterator();
+            Iterator<BlobItem> blobItems = contClient.listBlobs(opts, null).iterator();
 
             while (blobItems.hasNext()) {
                 BlobItem next = blobItems.next();
@@ -246,9 +245,8 @@ public class AzureBlobStorageFileSystemProvider
                 BlobClient targetBlobClient = client.getBlobContainerClient(target.getBucketName())
                         .getBlobClient(target.getBlobName());
 
-                SyncPoller<BlobCopyInfo, Void> poller = targetBlobClient.beginCopy(sourceBlobClient.getBlobUrl(),
-                        null);
-                poller.waitForCompletion(fs.getLongTimeout());
+                SyncPoller<BlobCopyInfo, Void> poller = targetBlobClient.beginCopy(sourceBlobClient.getBlobUrl(), null);
+                poller.waitForCompletion();
             } catch (BlobStorageException ex) {
                 throw AzureUtils.toIOE(ex, source.toString(), target.toString());
             }
@@ -261,8 +259,12 @@ public class AzureBlobStorageFileSystemProvider
     @SuppressWarnings("resource")
     @Override
     protected InputStream newInputStreamInternal(final AzureBlobStoragePath path, final OpenOption... options) throws IOException {
-        final Set<OpenOption> opts = new HashSet<>(Arrays.asList(options));
-        return Channels.newInputStream(newByteChannel(path, opts));
+        try {
+            return path.getFileSystem().getClient().getBlobContainerClient(path.getBucketName())
+                    .getBlobClient(path.getBlobName()).openInputStream();
+        } catch (BlobStorageException ex) {
+            throw AzureUtils.toIOE(ex, path.toString());
+        }
     }
 
     /**
@@ -296,11 +298,10 @@ public class AzureBlobStorageFileSystemProvider
 
         try {
             if (dir.getBlobName() != null) {
-                contClient.getBlobClient(dir.toDirectoryPath().getBlobName()).uploadWithResponse(
-                        new ByteArrayInputStream(new byte[0]), 0, null, null, null, null, null, fs.getTimeout(),
-                        Context.NONE);
+                contClient.getBlobClient(dir.toDirectoryPath().getBlobName())
+                        .upload(new ByteArrayInputStream(new byte[0]), 0, true);
             } else {
-                contClient.createWithResponse(null, null, fs.getTimeout(), Context.NONE);
+                contClient.create();
             }
         } catch (BlobStorageException ex) {
             throw AzureUtils.toIOE(ex, dir.toString());
@@ -323,15 +324,14 @@ public class AzureBlobStorageFileSystemProvider
             BlobContainerClient contClient = fs.getClient().getBlobContainerClient(path.getBucketName());
 
             if (path.getBlobName() == null) {
-                return contClient.existsWithResponse(fs.getTimeout(), Context.NONE).getValue();
+                return contClient.exists();
             }
 
-            boolean exist = contClient.getBlobClient(path.getBlobName())
-                    .existsWithResponse(fs.getTimeout(), Context.NONE).getValue();
+            boolean exist = contClient.getBlobClient(path.getBlobName()).exists();
             if (!exist) {
                 ListBlobsOptions opts = new ListBlobsOptions().setPrefix(path.toDirectoryPath().getBlobName())
                         .setMaxResultsPerPage(1);
-                exist = contClient.listBlobsByHierarchy(fs.getSeparator(), opts, fs.getTimeout()).iterator().hasNext();
+                exist = contClient.listBlobsByHierarchy(fs.getSeparator(), opts, null).iterator().hasNext();
             }
 
             return exist;
@@ -359,18 +359,16 @@ public class AzureBlobStorageFileSystemProvider
 
                 if (path.getBlobName() != null) {
                     BlobClient blobClient = contClient.getBlobClient(path.getBlobName());
-                    objectExists = blobClient.existsWithResponse(fs.getTimeout(), Context.NONE).getValue();
+                    objectExists = blobClient.exists();
 
                     if (objectExists) {
-                        BlobProperties p = blobClient.getPropertiesWithResponse(null, fs.getTimeout(), Context.NONE)
-                                .getValue();
+                        BlobProperties p = blobClient.getProperties();
                         createdAt = FileTime.from(p.getCreationTime().toInstant());
                         modifiedAt = FileTime.from(p.getLastModified().toInstant());
                         size = p.getBlobSize();
                     }
                 } else {
-                    BlobContainerProperties p = contClient
-                            .getPropertiesWithResponse(null, fs.getTimeout(), Context.NONE).getValue();
+                    BlobContainerProperties p = contClient.getProperties();
                     modifiedAt = FileTime.from(p.getLastModified().toInstant());
                 }
             } catch (BlobStorageException ex) {
@@ -410,9 +408,9 @@ public class AzureBlobStorageFileSystemProvider
 
         try {
             if (path.getBlobName() != null) {
-                contClient.getBlobClient(blobName).deleteWithResponse(null, null, fs.getTimeout(), Context.NONE);
+                contClient.getBlobClient(blobName).delete();
             } else {
-                contClient.deleteWithResponse(null, fs.getTimeout(), Context.NONE);
+                contClient.delete();
             }
         } catch (BlobStorageException ex) {
             throw AzureUtils.toIOE(ex, path.toString());

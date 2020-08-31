@@ -52,7 +52,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.Collections;
 
 import org.knime.ext.azure.blobstorage.filehandling.node.AzureBlobStorageConnectorSettings;
@@ -77,8 +76,6 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
 
     private final BlobServiceClient m_client;
     private final boolean m_normalizePaths;
-    private final Duration m_timeout;
-    private final Duration m_longTimeout;
 
     /**
      * @param uri
@@ -97,8 +94,6 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
 
         m_client = client;
         m_normalizePaths = settings.getNormalizePaths();
-        m_timeout = Duration.ofSeconds(settings.getTimeout());
-        m_longTimeout = Duration.ofSeconds(settings.getLongTimeout());
     }
 
     /**
@@ -171,21 +166,4 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
         return m_normalizePaths;
     }
 
-    /**
-     * Returns the timeout for azure service calls
-     *
-     * @return the timeout
-     */
-    public Duration getTimeout() {
-        return m_timeout;
-    }
-
-    /**
-     * Returns the timeout for the longer service operations (upload/download/copy)
-     *
-     * @return the longTimeout
-     */
-    public Duration getLongTimeout() {
-        return m_longTimeout;
-    }
 }

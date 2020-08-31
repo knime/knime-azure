@@ -50,6 +50,7 @@ package org.knime.ext.azure.blobstorage.filehandling.node;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -73,6 +74,7 @@ import org.knime.filehandling.core.connections.FSConnectionRegistry;
 import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
 
+import com.azure.core.http.policy.TimeoutPolicy;
 import com.azure.storage.blob.BlobServiceClient;
 import com.azure.storage.blob.BlobServiceClientBuilder;
 import com.azure.storage.blob.models.BlobStorageException;
@@ -105,7 +107,7 @@ public class AzureBlobStorageConnectorNodeModel extends NodeModel {
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
         MicrosoftCredential credential = ((MicrosoftCredentialPortObject) inObjects[0]).getMicrosoftCredentials();
-        BlobServiceClient client = createServiceClient(credential);
+        BlobServiceClient client = createServiceClient(credential, m_settings);
 
         try {
             // initialize lazy iterator by calling haxNext to make list containers request
@@ -120,8 +122,10 @@ public class AzureBlobStorageConnectorNodeModel extends NodeModel {
         }
     }
 
-    static BlobServiceClient createServiceClient(final MicrosoftCredential credential) throws IOException {
-        BlobServiceClientBuilder builder = new BlobServiceClientBuilder();
+    static BlobServiceClient createServiceClient(final MicrosoftCredential credential,
+            final AzureBlobStorageConnectorSettings settings) throws IOException {
+        BlobServiceClientBuilder builder = new BlobServiceClientBuilder()
+                .addPolicy(new TimeoutPolicy(Duration.ofSeconds(settings.getTimeout())));
         Type type = credential.getType();
 
         switch (type) {
