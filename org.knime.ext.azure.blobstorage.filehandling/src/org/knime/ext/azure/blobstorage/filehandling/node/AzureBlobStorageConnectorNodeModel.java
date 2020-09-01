@@ -69,7 +69,8 @@ import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
 import org.knime.ext.microsoft.authentication.port.MicrosoftCredential.Type;
 import org.knime.ext.microsoft.authentication.port.MicrosoftCredentialPortObject;
 import org.knime.ext.microsoft.authentication.port.MicrosoftCredentialPortObjectSpec;
-import org.knime.ext.microsoft.authentication.port.azure.AzureSharedKeyCredential;
+import org.knime.ext.microsoft.authentication.port.azure.storage.AzureSasTokenCredential;
+import org.knime.ext.microsoft.authentication.port.azure.storage.AzureSharedKeyCredential;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
 import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
@@ -133,6 +134,9 @@ public class AzureBlobStorageConnectorNodeModel extends NodeModel {
             AzureSharedKeyCredential c = (AzureSharedKeyCredential) credential;
             builder.endpoint(c.getEndpoint());
             builder.credential(new StorageSharedKeyCredential(c.getAccount(), c.getSecretKey()));
+            break;
+        case AZURE_SAS_TOKEN:
+            builder.endpoint(((AzureSasTokenCredential) credential).getSasUrl());
             break;
         default:
             throw new UnsupportedOperationException("Unsupported credential type " + type);
