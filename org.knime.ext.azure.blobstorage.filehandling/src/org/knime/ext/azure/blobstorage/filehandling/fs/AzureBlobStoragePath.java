@@ -50,7 +50,6 @@ package org.knime.ext.azure.blobstorage.filehandling.fs;
 
 import java.nio.file.Path;
 
-import org.knime.filehandling.core.connections.base.BaseFileSystem;
 import org.knime.filehandling.core.connections.base.BlobStorePath;
 
 /**
@@ -58,7 +57,7 @@ import org.knime.filehandling.core.connections.base.BlobStorePath;
  *
  * @author Alexander Bondaletov
  */
-public class AzureBlobStoragePath extends BlobStorePath {
+public class AzureBlobStoragePath extends BlobStorePath<AzureBlobStoragePath, AzureBlobStorageFileSystem> {
 
     /**
      * Creates path from the given path string.
@@ -70,7 +69,7 @@ public class AzureBlobStoragePath extends BlobStorePath {
      * @param more
      *            More name components. the string representation of the path.
      */
-    public AzureBlobStoragePath(final BaseFileSystem<?> fileSystem, final String first, final String[] more) {
+    public AzureBlobStoragePath(final AzureBlobStorageFileSystem fileSystem, final String first, final String[] more) {
         super(fileSystem, first, more);
     }
 
@@ -84,21 +83,11 @@ public class AzureBlobStoragePath extends BlobStorePath {
      * @param blobName
      *            the object key.
      */
-    public AzureBlobStoragePath(final BaseFileSystem<?> fileSystem, final String bucketName, final String blobName) {
+    public AzureBlobStoragePath(final AzureBlobStorageFileSystem fileSystem, final String bucketName,
+            final String blobName) {
         super(fileSystem, bucketName, blobName);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public AzureBlobStorageFileSystem getFileSystem() {
-        return (AzureBlobStorageFileSystem) super.getFileSystem();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public AzureBlobStoragePath toDirectoryPath() {
         return (AzureBlobStoragePath) super.toDirectoryPath();
@@ -114,7 +103,7 @@ public class AzureBlobStoragePath extends BlobStorePath {
     }
 
     @Override
-    public Path normalize() {
+    public AzureBlobStoragePath normalize() {
         if (getFileSystem().normalizePaths()) {
             return super.normalize();
         } else {
@@ -124,7 +113,7 @@ public class AzureBlobStoragePath extends BlobStorePath {
 
     @SuppressWarnings("resource")
     @Override
-    public Path relativize(final Path other) {
+    public AzureBlobStoragePath relativize(final Path other) {
         if (!getFileSystem().normalizePaths()) {
             throw new IllegalArgumentException("Cannot relativize paths if normalization is disabled.");
         }
