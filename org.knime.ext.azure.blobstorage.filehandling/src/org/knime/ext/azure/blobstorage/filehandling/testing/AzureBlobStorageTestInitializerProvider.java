@@ -77,8 +77,12 @@ public class AzureBlobStorageTestInitializerProvider extends DefaultFSTestInitia
     @Override
     public AzureBlobStorageTestInitializer setup(final Map<String, String> configuration) throws IOException {
         validateConfiguration(configuration);
+
+        final String workingDir = generateRandomizedWorkingDir(configuration.get("workingDirPrefix"),
+                AzureBlobStorageFileSystem.PATH_SEPARATOR);
+
         AzureBlobStorageConnectorSettings settings = new AzureBlobStorageConnectorSettings();
-        settings.getWorkingDirectoryModel().setStringValue(configuration.get("workingDirPrefix"));
+        settings.getWorkingDirectoryModel().setStringValue(workingDir);
         AzureBlobStorageFSConnection fsConnection = new AzureBlobStorageFSConnection(createClient(configuration),
                 settings);
         return new AzureBlobStorageTestInitializer(fsConnection);
