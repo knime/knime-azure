@@ -81,6 +81,8 @@ import com.azure.storage.blob.BlobServiceClientBuilder;
 import com.azure.storage.blob.models.BlobStorageException;
 import com.azure.storage.common.StorageSharedKeyCredential;
 
+import io.netty.handler.codec.http.HttpResponseStatus;
+
 /**
  * Azure Blob Storage Connector node.
  *
@@ -113,14 +115,18 @@ public class AzureBlobStorageConnectorNodeModel extends NodeModel {
         try {
             // initialize lazy iterator by calling haxNext to make list containers request
             client.listBlobContainers().iterator().hasNext();// NOSONAR
-
-            m_fsConnection = new AzureBlobStorageFSConnection(client, m_settings);
-            FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
-
-            return new PortObject[] { new FileSystemPortObject(createSpec()) };
         } catch (BlobStorageException ex) {
-            throw AzureUtils.toIOE(ex, AzureBlobStorageFileSystem.PATH_SEPARATOR);
+            if (ex.getStatusCode() == HttpResponseStatus.FORBIDDEN.code()) {
+                setWarningMessage("The account doesn't have enough permissions to list containers");
+            } else {
+                throw AzureUtils.toIOE(ex, AzureBlobStorageFileSystem.PATH_SEPARATOR);
+            }
         }
+
+        m_fsConnection = new AzureBlobStorageFSConnection(client, m_settings);
+        FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
+
+        return new PortObject[] { new FileSystemPortObject(createSpec()) };
     }
 
     static BlobServiceClient createServiceClient(final MicrosoftCredential credential,

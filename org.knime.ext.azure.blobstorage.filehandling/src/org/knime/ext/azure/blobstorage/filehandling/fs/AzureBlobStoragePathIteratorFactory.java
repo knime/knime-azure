@@ -56,10 +56,12 @@ import java.nio.file.attribute.FileTime;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import org.knime.ext.azure.blobstorage.filehandling.AzureUtils;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 
 import com.azure.storage.blob.models.BlobContainerItem;
 import com.azure.storage.blob.models.BlobItem;
+import com.azure.storage.blob.models.BlobStorageException;
 import com.azure.storage.blob.models.ListBlobContainersOptions;
 import com.azure.storage.blob.models.ListBlobsOptions;
 
@@ -132,6 +134,8 @@ public class AzureBlobStoragePathIteratorFactory {
                     if (m_filter.accept(next) && !m_path.equals(next)) {
                         return next;
                     }
+                } catch (BlobStorageException ex) {
+                    throw new DirectoryIteratorException(AzureUtils.toIOE(ex, m_path.toString()));
                 } catch (IOException ex) {
                     throw new DirectoryIteratorException(ex);
                 }

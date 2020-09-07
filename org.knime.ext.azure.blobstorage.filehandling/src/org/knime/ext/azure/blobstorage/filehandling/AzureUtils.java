@@ -107,7 +107,7 @@ public class AzureUtils {
             return nsfe;
         }
         if (ex.getStatusCode() == HttpResponseStatus.FORBIDDEN.code()) {
-            AccessDeniedException ade = new AccessDeniedException(file, other, message);
+            AccessDeniedException ade = new AccessDeniedException(file, other, "Access denied");
             ade.initCause(ex);
             return ade;
         }
