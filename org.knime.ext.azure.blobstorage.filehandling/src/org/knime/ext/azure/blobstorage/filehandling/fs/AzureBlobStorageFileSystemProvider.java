@@ -58,6 +58,7 @@ import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.DirectoryStream.Filter;
+import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -260,8 +261,9 @@ public class AzureBlobStorageFileSystemProvider
     @Override
     protected InputStream newInputStreamInternal(final AzureBlobStoragePath path, final OpenOption... options) throws IOException {
         try {
-            return path.getFileSystem().getClient().getBlobContainerClient(path.getBucketName())
-                    .getBlobClient(path.getBlobName()).openInputStream();
+            return path.getFileSystem()
+                    .getBlobClientwithIncreasedTimeout(path.getBucketName(), path.getBlobName(), Files.size(path))
+                    .openInputStream();
         } catch (BlobStorageException ex) {
             throw AzureUtils.toIOE(ex, path.toString());
         }

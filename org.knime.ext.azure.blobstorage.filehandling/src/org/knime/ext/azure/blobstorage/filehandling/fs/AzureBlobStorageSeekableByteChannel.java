@@ -96,8 +96,8 @@ public class AzureBlobStorageSeekableByteChannel extends TempFileSeekableByteCha
     public void copyToRemote(final AzureBlobStoragePath remoteFile, final Path tempFile) throws IOException {
         try {
             AzureBlobStorageFileSystem fs = remoteFile.getFileSystem();
-            fs.getClient().getBlobContainerClient(remoteFile.getBucketName()).getBlobClient(remoteFile.getBlobName())
-                    .uploadFromFile(tempFile.toString(), true);
+            fs.getBlobClientwithIncreasedTimeout(remoteFile.getBucketName(), remoteFile.getBlobName(),
+                    Files.size(tempFile)).uploadFromFile(tempFile.toString(), true);
         } catch (BlobStorageException ex) {
             throw AzureUtils.toIOE(ex, remoteFile.toString());
         }

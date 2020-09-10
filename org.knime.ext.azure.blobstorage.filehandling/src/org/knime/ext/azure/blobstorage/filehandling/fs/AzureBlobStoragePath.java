@@ -49,6 +49,7 @@
 package org.knime.ext.azure.blobstorage.filehandling.fs;
 
 import java.nio.file.Path;
+import java.util.regex.Pattern;
 
 import org.knime.filehandling.core.connections.base.BaseFileSystem;
 import org.knime.filehandling.core.connections.base.BlobStorePath;
@@ -59,6 +60,8 @@ import org.knime.filehandling.core.connections.base.BlobStorePath;
  * @author Alexander Bondaletov
  */
 public class AzureBlobStoragePath extends BlobStorePath {
+
+    private static final Pattern VALID_CONTAINER_NAME = Pattern.compile("^(\\w|\\w-\\w)*$");
 
     /**
      * Creates path from the given path string.
@@ -72,6 +75,7 @@ public class AzureBlobStoragePath extends BlobStorePath {
      */
     public AzureBlobStoragePath(final BaseFileSystem<?> fileSystem, final String first, final String[] more) {
         super(fileSystem, first, more);
+        validateContainerName();
     }
 
     /**
@@ -86,6 +90,24 @@ public class AzureBlobStoragePath extends BlobStorePath {
      */
     public AzureBlobStoragePath(final BaseFileSystem<?> fileSystem, final String bucketName, final String blobName) {
         super(fileSystem, bucketName, blobName);
+        validateContainerName();
+    }
+
+    private void validateContainerName() {
+        if (isAbsolute()) {
+            String container = getBucketName();
+            if (container != null) {
+                if (!VALID_CONTAINER_NAME.matcher(container).matches()) {
+                    throw new IllegalArgumentException("Illegal container name: " + container);
+                }
+                if (container.length() < 3) {
+                    throw new IllegalArgumentException("Container name is too short");
+                }
+                if (container.length() > 63) {
+                    throw new IllegalArgumentException("Container name is too long");
+                }
+            }
+        }
     }
 
     /**

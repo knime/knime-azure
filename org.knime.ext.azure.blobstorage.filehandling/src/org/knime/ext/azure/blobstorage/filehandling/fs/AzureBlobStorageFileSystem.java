@@ -52,6 +52,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Collections;
 
 import org.knime.ext.azure.blobstorage.filehandling.node.AzureBlobStorageConnectorSettings;
@@ -60,6 +61,12 @@ import org.knime.filehandling.core.connections.FSCategory;
 import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.connections.base.BaseFileSystem;
 
+import com.azure.core.http.HttpPipeline;
+import com.azure.core.http.HttpPipelineBuilder;
+import com.azure.core.http.policy.HttpPipelinePolicy;
+import com.azure.core.http.policy.TimeoutPolicy;
+import com.azure.storage.blob.BlobClient;
+import com.azure.storage.blob.BlobClientBuilder;
 import com.azure.storage.blob.BlobServiceClient;
 
 /**
@@ -73,9 +80,11 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
      * Character to use as path separator
      */
     public static final String PATH_SEPARATOR = "/";
+    private static final long FILE_SIZE_TIMEOUT_FACTOR = 10 * 1024 * 1024L;// 10Mb
 
     private final BlobServiceClient m_client;
     private final boolean m_normalizePaths;
+    private final int m_standardTimeout;
 
     /**
      * @param uri
@@ -94,6 +103,7 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
 
         m_client = client;
         m_normalizePaths = settings.getNormalizePaths();
+        m_standardTimeout = settings.getTimeout();
     }
 
     /**
@@ -166,4 +176,45 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
         return m_normalizePaths;
     }
 
+    /**
+     * Returns {@link BlobClient} instance where {@link TimeoutPolicy} is replaced
+     * with a new one with a larger timeout value. New timeout value is calculated
+     * as standard timeout (from the node settings) multiplied by the value derived
+     * from the file size.
+     *
+     * @param container
+     *            The container name.
+     * @param blob
+     *            The blob name.
+     * @param fileSize
+     *            The file size in bytes.
+     * @return The {@link BlobClient} instance.
+     */
+    public BlobClient getBlobClientwithIncreasedTimeout(final String container, final String blob,
+            final long fileSize) {
+        long newTimeout = Math.max(m_standardTimeout, m_standardTimeout * fileSize / FILE_SIZE_TIMEOUT_FACTOR);
+
+        HttpPipeline pipeline = m_client.getHttpPipeline();
+        HttpPipelinePolicy[] policies = new HttpPipelinePolicy[pipeline.getPolicyCount()];
+
+        for (int i = 0; i < pipeline.getPolicyCount(); i++) {
+            HttpPipelinePolicy policy = pipeline.getPolicy(i);
+
+            if (policy instanceof TimeoutPolicy) {
+                policy = new TimeoutPolicy(Duration.ofSeconds(newTimeout));
+            }
+
+            policies[i] = policy;
+        }
+
+        HttpPipeline newPipeline = new HttpPipelineBuilder().policies(policies).httpClient(pipeline.getHttpClient())
+                .build();
+
+        return new BlobClientBuilder() //
+                .endpoint(m_client.getAccountUrl()) //
+                .containerName(container) //
+                .blobName(blob) //
+                .pipeline(newPipeline) //
+                .buildClient();
+    }
 }
