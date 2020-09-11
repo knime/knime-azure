@@ -48,6 +48,7 @@
  */
 package org.knime.ext.azure.blobstorage.filehandling.fs;
 
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
 
@@ -98,13 +99,13 @@ public class AzureBlobStoragePath extends BlobStorePath {
             String container = getBucketName();
             if (container != null) {
                 if (!VALID_CONTAINER_NAME.matcher(container).matches()) {
-                    throw new IllegalArgumentException("Illegal container name: " + container);
+                    throw new InvalidPathException(toString(), "Invalid container name");
                 }
                 if (container.length() < 3) {
-                    throw new IllegalArgumentException("Container name is too short");
+                    throw new InvalidPathException(toString(), "Container name is too short");
                 }
                 if (container.length() > 63) {
-                    throw new IllegalArgumentException("Container name is too long");
+                    throw new InvalidPathException(toString(), "Container name is too long");
                 }
             }
         }
