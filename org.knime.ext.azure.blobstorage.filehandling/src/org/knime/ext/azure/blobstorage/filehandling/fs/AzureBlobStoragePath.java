@@ -96,7 +96,7 @@ public class AzureBlobStoragePath extends BlobStorePath {
 
     private void validateContainerName() {
         if (isAbsolute()) {
-            String container = getBucketName();
+            String container = ((BlobStorePath) normalize()).getBucketName();
             if (container != null) {
                 if (!VALID_CONTAINER_NAME.matcher(container).matches()) {
                     throw new InvalidPathException(toString(), "Invalid container name");
