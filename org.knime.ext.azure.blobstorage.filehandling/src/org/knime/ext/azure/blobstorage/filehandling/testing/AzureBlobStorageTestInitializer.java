@@ -57,6 +57,7 @@ import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializer;
 
 import com.azure.core.http.rest.PagedIterable;
+import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobServiceClient;
 import com.azure.storage.blob.models.BlobItem;
@@ -86,10 +87,18 @@ public class AzureBlobStorageTestInitializer
     @Override
     public AzureBlobStoragePath createFileWithContent(final String content, final String... pathComponents) throws IOException {
         AzureBlobStoragePath path = makePath(pathComponents);
-        byte[] bytes = content.getBytes();
+        BlobContainerClient contClient = m_client.getBlobContainerClient(path.getBucketName());
 
-        m_client.getBlobContainerClient(path.getBucketName()).getBlobClient(path.getBlobName())
-                .upload(new ByteArrayInputStream(bytes), bytes.length);
+        for (int i = 1; i < path.getNameCount() - 1; i++) {
+            final String dirKey = path.subpath(1, i + 1).toString();
+            BlobClient blobClient = contClient.getBlobClient(dirKey);
+            if (!Boolean.TRUE.equals(blobClient.exists())) {
+                blobClient.upload(new ByteArrayInputStream(new byte[0]), 0);
+            }
+        }
+
+        byte[] bytes = content.getBytes();
+        contClient.getBlobClient(path.getBlobName()).upload(new ByteArrayInputStream(bytes), bytes.length);
         return path;
     }
 
