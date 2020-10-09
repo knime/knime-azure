@@ -68,6 +68,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.knime.ext.azure.blobstorage.filehandling.AzureUtils;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
@@ -96,6 +97,8 @@ public class AzureBlobStorageFileSystemProvider
      * Azure Blob Storage URI scheme.
      */
     public static final String FS_TYPE = "microsoft-blobstorage";
+
+    private static final Pattern VALID_CONTAINER_NAME_PATTERN = Pattern.compile("^(\\w|\\w-\\w)*$");
 
     /**
      * {@inheritDoc}
@@ -289,14 +292,39 @@ public class AzureBlobStorageFileSystemProvider
         return AzureBlobStoragePathIteratorFactory.create(dir, filter);
     }
 
+
+
+    private static void validateContainerName(final String container) throws IOException {
+        if (!VALID_CONTAINER_NAME_PATTERN.matcher(container).matches()) {
+            throw new IOException(String.format(
+                    "Invalid Azure Blob Storage container name: %s (only allowed characters are letters, numbers, and '-')",
+                    container));
+        }
+        if (container.length() < 3) {
+            throw new IOException(String.format(
+                    "Invalid Azure Blob Storage container name: %s (must have at least three characters)", container));
+        }
+        if (container.length() > 63) {
+            throw new IOException(String.format(
+                    "Invalid Azure Blob Storage container name: %s (must only have up to 63 characters)", container));
+        }
+    }
+
     /**
      * {@inheritDoc}
      */
     @SuppressWarnings("resource")
     @Override
     protected void createDirectoryInternal(final AzureBlobStoragePath dir, final FileAttribute<?>... attrs) throws IOException {
-        AzureBlobStorageFileSystem fs = dir.getFileSystem();
-        BlobContainerClient contClient = fs.getClient().getBlobContainerClient(dir.getBucketName());
+
+        if (dir.getBucketName() != null && dir.getBlobName() == null) {
+            // before creating a BS container we should validate the name (to prevent funny
+            // exceptions in the BlobContainerClient)
+            validateContainerName(dir.getBucketName());
+        }
+
+        final AzureBlobStorageFileSystem fs = dir.getFileSystem();
+        final BlobContainerClient contClient = fs.getClient().getBlobContainerClient(dir.getBucketName());
 
         try {
             if (dir.getBlobName() != null) {
