@@ -50,7 +50,10 @@ package org.knime.ext.azure.blobstorage.filehandling.node;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.Duration;
+import java.util.regex.Pattern;
 
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -63,6 +66,7 @@ import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
 import org.knime.ext.azure.blobstorage.filehandling.AzureUtils;
+import org.knime.ext.azure.blobstorage.filehandling.OAuthTokenCredential;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSConnection;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFileSystem;
 import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
@@ -71,6 +75,7 @@ import org.knime.ext.microsoft.authentication.port.MicrosoftCredentialPortObject
 import org.knime.ext.microsoft.authentication.port.MicrosoftCredentialPortObjectSpec;
 import org.knime.ext.microsoft.authentication.port.azure.storage.AzureSasTokenCredential;
 import org.knime.ext.microsoft.authentication.port.azure.storage.AzureSharedKeyCredential;
+import org.knime.ext.microsoft.authentication.port.oauth2.OAuth2Credential;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
 import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
@@ -89,6 +94,8 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  * @author Alexander Bondaletov
  */
 public class AzureBlobStorageConnectorNodeModel extends NodeModel {
+
+    private static final Pattern BLOB_STORAGE_SCOPE_PATTERN = Pattern.compile("https://[^.]+.blob.core.windows.net/.+");
 
     private static final String FILE_SYSTEM_NAME = "Azure Blob Storage";
 
@@ -131,6 +138,7 @@ public class AzureBlobStorageConnectorNodeModel extends NodeModel {
 
     static BlobServiceClient createServiceClient(final MicrosoftCredential credential,
             final AzureBlobStorageConnectorSettings settings) throws IOException {
+
         BlobServiceClientBuilder builder = new BlobServiceClientBuilder()
                 .addPolicy(new TimeoutPolicy(Duration.ofSeconds(settings.getTimeout())));
         Type type = credential.getType();
@@ -144,11 +152,30 @@ public class AzureBlobStorageConnectorNodeModel extends NodeModel {
         case AZURE_SAS_TOKEN:
             builder.endpoint(((AzureSasTokenCredential) credential).getSasUrl());
             break;
+        case OAUTH2_ACCESS_TOKEN:
+            final OAuth2Credential oauth2Credential = (OAuth2Credential) credential;
+            builder.endpoint(extractEndpoint(oauth2Credential));
+            builder.credential(new OAuthTokenCredential(oauth2Credential.getAccessToken()));
+            break;
         default:
             throw new UnsupportedOperationException("Unsupported credential type " + type);
         }
 
         return builder.buildClient();
+    }
+
+    private static String extractEndpoint(final OAuth2Credential credential) {
+        final String scope = credential.getScopes().stream() //
+                .filter(BLOB_STORAGE_SCOPE_PATTERN.asPredicate()) //
+                .findFirst() //
+                .orElseThrow(() -> new IllegalStateException(
+                        "Credentials do not provide access to Azure Blob Storage. Please request the appropriate access in the Microsoft Authentication node."));
+
+        try {
+            return "https://" + new URL(scope).getHost();
+        } catch (MalformedURLException ex) {
+            throw new UnsupportedOperationException("Malformed scope: " + scope, ex);
+        }
     }
 
     /**
