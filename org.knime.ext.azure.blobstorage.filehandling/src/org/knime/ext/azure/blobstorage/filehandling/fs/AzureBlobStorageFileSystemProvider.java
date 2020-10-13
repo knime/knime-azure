@@ -59,6 +59,7 @@ import java.nio.file.CopyOption;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -71,17 +72,16 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.knime.ext.azure.blobstorage.filehandling.AzureUtils;
+import org.knime.filehandling.core.connections.FSFiles;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 
-import com.azure.core.http.rest.PagedIterable;
 import com.azure.core.util.polling.SyncPoller;
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobServiceClient;
 import com.azure.storage.blob.models.BlobContainerProperties;
 import com.azure.storage.blob.models.BlobCopyInfo;
-import com.azure.storage.blob.models.BlobItem;
 import com.azure.storage.blob.models.BlobProperties;
 import com.azure.storage.blob.models.BlobStorageException;
 import com.azure.storage.blob.models.ListBlobsOptions;
@@ -106,118 +106,13 @@ public class AzureBlobStorageFileSystemProvider
     @Override
     protected SeekableByteChannel newByteChannelInternal(final AzureBlobStoragePath path, final Set<? extends OpenOption> options,
             final FileAttribute<?>... attrs) throws IOException {
+
+        // we cannot read/write a file below the root (only containers can be there)
+        if (path.getParent() != null && ((AzureBlobStoragePath) path.getParent()).isRoot()) {
+            throw new IOException("Cannot read/write files below the root. Only folders can be there.");
+        }
+
         return new AzureBlobStorageSeekableByteChannel(path, options);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void moveInternal(final AzureBlobStoragePath source, final AzureBlobStoragePath target, final CopyOption... options)
-            throws IOException {
-        if (isNotEmptyDirectory(target)) {
-            throw new DirectoryNotEmptyException(target.toString());
-        }
-
-        if (isDirectory(source)) {
-            moveDirectoryRecursively(source, target);
-        } else {
-            moveBlob(source, target);
-        }
-    }
-
-    @SuppressWarnings("resource")
-    private void moveDirectoryRecursively(final AzureBlobStoragePath source, final AzureBlobStoragePath target)
-            throws IOException {
-        AzureBlobStoragePath sourceDir = source.toDirectoryPath();
-        AzureBlobStoragePath targetDir = target.toDirectoryPath();
-        AzureBlobStorageFileSystem fs = sourceDir.getFileSystem();
-        BlobServiceClient client = fs.getClient();
-
-        BlobContainerClient targetContClient = client.getBlobContainerClient(targetDir.getBucketName());
-
-        try {
-            if (!targetContClient.exists()) {
-                targetContClient.create();
-            }
-
-            BlobContainerClient sourceContClient = client.getBlobContainerClient(sourceDir.getBucketName());
-
-            ListBlobsOptions opts = new ListBlobsOptions();
-            if (sourceDir.getBlobName() != null) {
-                opts = opts.setPrefix(sourceDir.getBlobName());
-            }
-            PagedIterable<BlobItem> srcBlobs = sourceContClient.listBlobs(opts, null);
-
-            for (BlobItem srcBlob : srcBlobs) {
-                String targetBlobName = srcBlob.getName();
-                if (sourceDir.getBlobName() != null) {
-                    targetBlobName = targetBlobName.replaceFirst(sourceDir.getBlobName(), targetDir.getBlobName());
-                }
-
-                BlobClient sourceBlobClient = sourceContClient.getBlobClient(srcBlob.getName());
-                SyncPoller<BlobCopyInfo, Void> poller = targetContClient.getBlobClient(targetBlobName)
-                        .beginCopy(sourceBlobClient.getBlobUrl(), null);
-                poller.waitForCompletion();
-
-                sourceBlobClient.delete();
-                getFileSystemInternal().removeFromAttributeCache(new AzureBlobStoragePath(getFileSystemInternal(),
-                        sourceDir.getBucketName(), srcBlob.getName()));
-            }
-        } catch (BlobStorageException ex) {
-            throw AzureUtils.toIOE(ex, source.toString(), target.toString());
-        }
-    }
-
-    @SuppressWarnings("resource")
-    private void moveBlob(final AzureBlobStoragePath source, final AzureBlobStoragePath target) throws IOException {
-        AzureBlobStorageFileSystem fs = source.getFileSystem();
-        BlobServiceClient client = fs.getClient();
-        try {
-            BlobClient sourceBlobClient = client.getBlobContainerClient(source.getBucketName())
-                    .getBlobClient(source.getBlobName());
-            BlobClient targetBlobClient = client.getBlobContainerClient(target.getBucketName())
-                    .getBlobClient(target.getBlobName());
-
-            SyncPoller<BlobCopyInfo, Void> poller = targetBlobClient.beginCopy(sourceBlobClient.getBlobUrl(), null);
-            poller.waitForCompletion();
-            delete(source);
-        } catch (BlobStorageException ex) {
-            throw AzureUtils.toIOE(ex, source.toString(), target.toString());
-        }
-    }
-
-    @SuppressWarnings("resource")
-    private static boolean isNotEmptyDirectory(final AzureBlobStoragePath path) throws IOException {
-        AzureBlobStorageFileSystem fs = path.getFileSystem();
-        AzureBlobStoragePath dir = path.toDirectoryPath();
-        BlobContainerClient contClient = fs.getClient().getBlobContainerClient(dir.getBucketName());
-
-        try {
-            if (!contClient.exists()) {
-                return false;
-            }
-
-            ListBlobsOptions opts = new ListBlobsOptions().setMaxResultsPerPage(2);
-            String prefix = dir.getBlobName();
-            if (prefix != null) {
-                opts = opts.setPrefix(prefix);
-            }
-
-            Iterator<BlobItem> blobItems = contClient.listBlobs(opts, null).iterator();
-
-            while (blobItems.hasNext()) {
-                BlobItem next = blobItems.next();
-
-                if (prefix == null || !next.getName().equals(prefix)) {
-                    return true;
-                }
-            }
-
-            return false;
-        } catch (BlobStorageException ex) {
-            throw AzureUtils.toIOE(ex, path.toString());
-        }
     }
 
     private boolean isDirectory(final AzureBlobStoragePath path) throws IOException {
@@ -232,7 +127,7 @@ public class AzureBlobStorageFileSystemProvider
     protected void copyInternal(final AzureBlobStoragePath source, final AzureBlobStoragePath target, final CopyOption... options)
             throws IOException {
         if (isDirectory(source)) {
-            if (isNotEmptyDirectory(target)) {
+            if (FSFiles.isNonEmptyDirectory(target)) {
                 throw new DirectoryNotEmptyException(
                         String.format("Target directory %s exists and is not empty", target.toString()));
             }
@@ -279,6 +174,7 @@ public class AzureBlobStorageFileSystemProvider
     @Override
     protected OutputStream newOutputStreamInternal(final AzureBlobStoragePath path, final OpenOption... options)
             throws IOException {
+
         final Set<OpenOption> opts = new HashSet<>(Arrays.asList(options));
         return Channels.newOutputStream(newByteChannel(path, opts));
     }
@@ -308,6 +204,12 @@ public class AzureBlobStorageFileSystemProvider
             throw new IOException(String.format(
                     "Invalid Azure Blob Storage container name: %s (must only have up to 63 characters)", container));
         }
+    }
+
+    private static boolean isContainerNameValid(final String container) {
+        return VALID_CONTAINER_NAME_PATTERN.matcher(container).matches() //
+                && container.length() >= 3 //
+                && container.length() <= 63;
     }
 
     /**
@@ -349,6 +251,10 @@ public class AzureBlobStorageFileSystemProvider
             return true;
         }
 
+        if (!isContainerNameValid(path.getBucketName())) {
+            return false;
+        }
+
         try {
             AzureBlobStorageFileSystem fs = path.getFileSystem();
             BlobContainerClient contClient = fs.getClient().getBlobContainerClient(path.getBucketName());
@@ -384,6 +290,10 @@ public class AzureBlobStorageFileSystemProvider
 
         if (path.getBucketName() != null) {
             try {
+                if (!isContainerNameValid(path.getBucketName())) {
+                    throw new NoSuchFileException(path.toString());
+                }
+
                 AzureBlobStorageFileSystem fs = path.getFileSystem();
                 BlobContainerClient contClient = fs.getClient().getBlobContainerClient(path.getBucketName());
 
@@ -428,7 +338,7 @@ public class AzureBlobStorageFileSystemProvider
         String blobName = path.getBlobName();
         if (isDirectory(path)) {
             blobName = path.toDirectoryPath().getBlobName();
-            if (isNotEmptyDirectory(path)) {
+            if (FSFiles.isNonEmptyDirectory(path)) {
                 throw new DirectoryNotEmptyException(path.toString());
             }
         }
