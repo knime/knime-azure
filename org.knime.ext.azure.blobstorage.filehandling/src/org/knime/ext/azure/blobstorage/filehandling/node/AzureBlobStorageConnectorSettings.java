@@ -160,7 +160,7 @@ public class AzureBlobStorageConnectorSettings {
     /**
      * @return the normalizePaths
      */
-    public boolean getNormalizePaths() {
+    public boolean shouldNormalizePaths() {
         return m_normalizePaths.getBooleanValue();
     }
 

@@ -49,14 +49,14 @@
 package org.knime.ext.azure.blobstorage.filehandling.fs;
 
 import java.io.IOException;
-import java.nio.file.DirectoryIteratorException;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 import org.knime.ext.azure.blobstorage.filehandling.AzureUtils;
+import org.knime.filehandling.core.connections.base.PagedPathIterator;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 
 import com.azure.storage.blob.models.BlobContainerItem;
@@ -71,7 +71,10 @@ import com.azure.storage.blob.models.ListBlobsOptions;
  *
  * @author Alexander Bondaletov
  */
-public class AzureBlobStoragePathIteratorFactory {
+public final class AzureBlobStoragePathIteratorFactory {
+
+    private AzureBlobStoragePathIteratorFactory() {
+    }
 
     /**
      * Creates iterator instance.
@@ -81,121 +84,97 @@ public class AzureBlobStoragePathIteratorFactory {
      * @param filter
      *            {@link Filter} instance.
      * @return The iterator.
+     * @throws IOException
      */
     public static Iterator<AzureBlobStoragePath> create(final AzureBlobStoragePath path,
-            final Filter<? super Path> filter) {
-        if (path.getNameCount() == 0) {
+            final Filter<? super Path> filter) throws IOException {
+        if (path.isRoot()) {
             return new ContainerIterator(path, filter);
         } else {
             return new BlobIterator(path.toDirectoryPath(), filter);
         }
     }
 
-    private abstract static class AzureIterator<T> implements Iterator<AzureBlobStoragePath> {
-        protected final AzureBlobStoragePath m_path;
-        private final Filter<? super Path> m_filter;
+    private static final class ContainerIterator extends PagedPathIterator<AzureBlobStoragePath> {
 
-        private final Iterator<T> m_iterator;
-        private AzureBlobStoragePath m_next;
-
-        protected AzureIterator(final AzureBlobStoragePath path, final Filter<? super Path> filter) {
-            m_path = path;
-            m_filter = filter;
-            m_iterator = createIterator(path);
-            m_next = findNext();
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public boolean hasNext() {
-            return m_next != null;
-        }
-
-        /**
-         * {@inheritDoc}
-         */
-        @Override
-        public AzureBlobStoragePath next() {
-            if (!hasNext()) {
-                throw new NoSuchElementException();
-            }
-
-            AzureBlobStoragePath toReturn = m_next;
-            m_next = findNext();
-            return toReturn;
-        }
-
-        private AzureBlobStoragePath findNext() {
-            while(m_iterator.hasNext()) {
-                AzureBlobStoragePath next = toPath(m_iterator.next());
-                try {
-                    if (m_filter.accept(next) && !m_path.equals(next)) {
-                        return next;
-                    }
-                } catch (BlobStorageException ex) {
-                    throw new DirectoryIteratorException(AzureUtils.toIOE(ex, m_path.toString()));
-                } catch (IOException ex) {
-                    throw new DirectoryIteratorException(ex);
-                }
-            }
-            return null;
-        }
-
-        protected abstract Iterator<T> createIterator(AzureBlobStoragePath path);
-
-        protected abstract AzureBlobStoragePath toPath(T item);
-    }
-
-    private static class ContainerIterator extends AzureIterator<BlobContainerItem> {
-        private ContainerIterator(final AzureBlobStoragePath path, final Filter<? super Path> filter) {
+        private ContainerIterator(final AzureBlobStoragePath path, final Filter<? super Path> filter)
+                throws IOException {
             super(path, filter);
+            setFirstPage(loadNextPage());
+        }
+
+        @Override
+        protected boolean hasNextPage() {
+            return false;
         }
 
         @SuppressWarnings("resource")
         @Override
-        protected Iterator<BlobContainerItem> createIterator(final AzureBlobStoragePath path) {
-            AzureBlobStorageFileSystem fs = path.getFileSystem();
-            return fs.getClient().listBlobContainers(new ListBlobContainersOptions(), null).iterator();
+        protected Iterator<AzureBlobStoragePath> loadNextPage() throws IOException {
+            final AzureBlobStorageFileSystem fs = m_path.getFileSystem();
+            try {
+                return fs.getClient() //
+                        .listBlobContainers(new ListBlobContainersOptions(), null) //
+                        .stream() //
+                        .map(this::toPath) //
+                        .collect(Collectors.toList()) //
+                        .iterator();
+            } catch (BlobStorageException ex) {
+                throw AzureUtils.toIOE(ex, m_path.toString());
+            }
         }
 
         @SuppressWarnings("resource")
-        @Override
-        protected AzureBlobStoragePath toPath(final BlobContainerItem item) {
-            AzureBlobStorageFileSystem fs = m_path.getFileSystem();
-            AzureBlobStoragePath path = fs.getPath(fs.getSeparator() + item.getName(), fs.getSeparator());
+        private AzureBlobStoragePath toPath(final BlobContainerItem item) {
+            final AzureBlobStorageFileSystem fs = m_path.getFileSystem();
+            final AzureBlobStoragePath path = fs.getPath(fs.getSeparator() + item.getName(), fs.getSeparator());
 
-            FileTime createdAt = FileTime.fromMillis(0);
-            FileTime modifiedAt = FileTime.from(item.getProperties().getLastModified().toInstant());
-            BaseFileAttributes attrs = new BaseFileAttributes(false, path, modifiedAt, modifiedAt, createdAt, 0, false,
-                    false, null);
+            final FileTime createdAt = FileTime.fromMillis(0);
+            final FileTime modifiedAt = FileTime.from(item.getProperties().getLastModified().toInstant());
+            final BaseFileAttributes attrs = new BaseFileAttributes(false, path, modifiedAt, modifiedAt, createdAt, 0,
+                    false, false, null);
             fs.addToAttributeCache(path, attrs);
 
             return path;
         }
     }
 
-    private static class BlobIterator extends AzureIterator<BlobItem>{
-        private BlobIterator(final AzureBlobStoragePath path, final Filter<? super Path> filter) {
+    private static final class BlobIterator extends PagedPathIterator<AzureBlobStoragePath> {
+
+        private BlobIterator(final AzureBlobStoragePath path, final Filter<? super Path> filter) throws IOException {
             super(path, filter);
+            setFirstPage(loadNextPage());
+        }
+
+        @Override
+        protected boolean hasNextPage() {
+            return false;
         }
 
         @SuppressWarnings("resource")
         @Override
-        protected Iterator<BlobItem> createIterator(final AzureBlobStoragePath path) {
-            AzureBlobStorageFileSystem fs = path.getFileSystem();
+        protected Iterator<AzureBlobStoragePath> loadNextPage() throws IOException {
 
-            ListBlobsOptions opts = new ListBlobsOptions().setPrefix(path.getBlobName());
+            final AzureBlobStorageFileSystem fs = m_path.getFileSystem();
+            final ListBlobsOptions opts = new ListBlobsOptions().setPrefix(m_path.getBlobName());
 
-            return fs.getClient().getBlobContainerClient(path.getBucketName())
-                    .listBlobsByHierarchy(fs.getSeparator(), opts, null).iterator();
+            try {
+                return fs.getClient() //
+                        .getBlobContainerClient(m_path.getBucketName()) //
+                        .listBlobsByHierarchy(fs.getSeparator(), opts, null) //
+                        .stream() //
+                        .filter(blob -> !blob.getName().equals(m_path.getBlobName()))
+                        .map(this::toPath) //
+                        .collect(Collectors.toList()) //
+                        .iterator();
+            } catch (BlobStorageException ex) {
+                throw AzureUtils.toIOE(ex, m_path.toString());
+            }
         }
 
         @SuppressWarnings("resource")
-        @Override
-        protected AzureBlobStoragePath toPath(final BlobItem item) {
-            AzureBlobStorageFileSystem fs = m_path.getFileSystem();
+        private AzureBlobStoragePath toPath(final BlobItem item) {
+            final AzureBlobStorageFileSystem fs = m_path.getFileSystem();
             // Blob item doesn't have all the necessary info to construct BaseFileAttributes
             // so we don't do any attributes caching here
             return new AzureBlobStoragePath(fs, m_path.getBucketName(), item.getName());

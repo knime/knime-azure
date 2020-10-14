@@ -48,7 +48,6 @@
  */
 package org.knime.ext.azure.blobstorage.filehandling;
 
-import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 
@@ -74,10 +73,8 @@ public class OAuthTokenCredential implements TokenCredential {
     /**
      * @param credential
      *            The credential.
-     * @throws IOException
-     *
      */
-    public OAuthTokenCredential(final OAuth2AccessToken credential) throws IOException {
+    public OAuthTokenCredential(final OAuth2AccessToken credential) {
         m_token = new AccessToken(credential.getToken(),
                 OffsetDateTime.ofInstant(credential.getAccessTokenExpiresAt(), ZoneId.systemDefault()));
     }

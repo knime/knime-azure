@@ -88,8 +88,8 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
     private final int m_standardTimeout;
 
     /**
-     * @param uri
-     *            the URI for the file system
+     * Creates a new instance.
+     *
      * @param cacheTTL
      *            The time to live for cached elements in milliseconds.
      * @param client
@@ -105,7 +105,7 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
                 createFSLocationSpec(client.getAccountName()));
 
         m_client = client;
-        m_normalizePaths = settings.getNormalizePaths();
+        m_normalizePaths = settings.shouldNormalizePaths();
         m_standardTimeout = settings.getTimeout();
     }
 

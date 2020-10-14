@@ -184,8 +184,7 @@ public class AzureBlobStorageConnectorNodeDialog extends NodeDialogPane {
             throws NotConfigurableException {
         try {
             m_settings.loadSettingsFrom(settings);
-        } catch (InvalidSettingsException ex) {
-            // ignore
+        } catch (InvalidSettingsException ex) { // NOSONAR can be ignored
         }
 
         m_credentials = ((MicrosoftCredentialPortObjectSpec) specs[0]).getMicrosoftCredential();

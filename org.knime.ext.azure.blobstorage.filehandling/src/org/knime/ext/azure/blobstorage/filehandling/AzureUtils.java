@@ -63,7 +63,10 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  *
  * @author Alexander Bondaletov
  */
-public class AzureUtils {
+public final class AzureUtils {
+
+    private AzureUtils() {
+    }
 
     private static final Pattern ERROR_PATTERN = Pattern.compile(".*<Message>([^\n]*)\n.*", Pattern.DOTALL);
 
@@ -138,7 +141,7 @@ public class AzureUtils {
      * Wrapper for the {@link BlobStorageException} with the human readable error
      * message extracted.
      */
-    public static class WrappedBlobStorageException extends IOException {
+    public static final class WrappedBlobStorageException extends IOException {
         private static final long serialVersionUID = 1L;
 
         private WrappedBlobStorageException(final String message, final BlobStorageException cause) {

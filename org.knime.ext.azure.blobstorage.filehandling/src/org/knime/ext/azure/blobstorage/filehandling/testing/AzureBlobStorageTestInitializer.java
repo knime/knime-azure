@@ -50,6 +50,7 @@ package org.knime.ext.azure.blobstorage.filehandling.testing;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFileSystem;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStoragePath;
@@ -68,7 +69,7 @@ import com.azure.storage.blob.models.ListBlobsOptions;
  *
  * @author Alexander Bondaletov
  */
-public class AzureBlobStorageTestInitializer
+public final class AzureBlobStorageTestInitializer
         extends DefaultFSTestInitializer<AzureBlobStoragePath, AzureBlobStorageFileSystem> {
 
     private BlobServiceClient m_client;
@@ -97,7 +98,7 @@ public class AzureBlobStorageTestInitializer
             }
         }
 
-        byte[] bytes = content.getBytes();
+        byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
         contClient.getBlobClient(path.getBlobName()).upload(new ByteArrayInputStream(bytes), bytes.length);
         return path;
     }

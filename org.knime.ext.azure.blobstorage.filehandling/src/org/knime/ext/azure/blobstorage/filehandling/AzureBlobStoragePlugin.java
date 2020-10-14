@@ -70,7 +70,7 @@ public class AzureBlobStoragePlugin extends AbstractUIPlugin {
      * The constructor.
      */
     public AzureBlobStoragePlugin() {
-        plugin = this;
+        plugin = this; // NOSONAR standard KNIME pattern
     }
 
     /**
@@ -95,7 +95,8 @@ public class AzureBlobStoragePlugin extends AbstractUIPlugin {
             // accordingly here, otherwise the no implementation class can be found.
             Thread.currentThread().setContextClassLoader(HttpClientProvider.class.getClassLoader());
             HttpClientProviders.createInstance();
-        } catch (Exception e) {
+        } catch (Exception e) { // NOSONAR we must catch all exceptions here as we don't know what might be
+                                // thrown
             LOG.error("Failed to load Azure BlobStorage client", e);
         } finally {
             Thread.currentThread().setContextClassLoader(cl);
@@ -112,7 +113,7 @@ public class AzureBlobStoragePlugin extends AbstractUIPlugin {
      */
     @Override
     public void stop(final BundleContext context) throws Exception {
-        plugin = null;
+        plugin = null; // NOSONAR standard KNIME pattern
         super.stop(context);
     }
 
