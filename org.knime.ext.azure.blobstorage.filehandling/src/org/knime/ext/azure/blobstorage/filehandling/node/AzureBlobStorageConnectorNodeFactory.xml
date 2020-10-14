@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<knimeNode icon="./azurebsconnection16x16.png" type="Source" xmlns="http://knime.org/node/v2.10" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://knime.org/node/v2.10 http://knime.org/node/v2.10.xsd">
+<knimeNode icon="./azurebsconnection16x16.png"
+	type="Source"
+	xmlns="http://knime.org/node/v4.1"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://knime.org/node/v4.1 http://knime.org/node/v4.1.xsd">
+
     <name>Azure Blob Storage Connector (Labs)</name>
     
     <shortDescription>
@@ -13,12 +18,21 @@
             or to perform other file system operations (browse/list files, copy, move, ...).
             </p>
             
-            <p><b>Path syntax:</b> Paths for Azure Blob Storage are specified with a UNIX-like syntax, /mycontainer/myfolder/myfile. An absolute
+            <p>This node requires the <i>Microsoft Authentication</i> to perform authentication. The following authentication modes are supported:
+            <ul>
+            <li>Interactive Authentication</li>
+            <li>Username/password Authentication</li>
+            <li>Shared key authentication (Azure Storage only)</li>
+            <li>Shared access signature (SAS) authentication (Azure Storage only)</li>
+            </ul>
+            </p>
+            
+            <p><b>Path syntax:</b> Paths for Azure Blob Storage are specified with a UNIX-like syntax, <tt>/mycontainer/myfolder/myfile</tt>. An absolute
             for Azure Blob Storage consists of:
                 <ol>
-                    <li>A leading slash ("/").</li>
-                    <li>Followed by the name of a container ("mycontainer" in the above example), followed by a slash.</li>
-                    <li>Followed by the name of an object within the container ("myfolder/myfile" in the above example).</li>
+                    <li>A leading slash (<tt>/</tt>).</li>
+                    <li>Followed by the name of a container (<tt>mycontainer</tt> in the above example), followed by a slash.</li>
+                    <li>Followed by the name of an object within the container (<tt>myfolder/myfile</tt> in the above example).</li>
                 </ol>
             </p>
         </intro>
@@ -26,11 +40,11 @@
 	        <option name="Working directory">
 	            Specifies the <i>working directory</i> using the path syntax explained above. The working directory must be specified as an absolute path. A working directory allows downstream
 	            nodes to access files/folders using <i>relative</i> paths, i.e. paths that do not have a leading slash. If not specified, the default working directory
-	            is "/".
+	            is <tt>/</tt>.
 	        </option>
 	        <option name="Normalize paths">
-	            Determines if the path normalization should be applied. Path normalization eliminates redundant components of a path like, e.g. /a/../b/./c" can be normalized to "/b/c".
-	            When these redundant components like "../" or "." are part of an existing object, then normalization must be deactivated in order to access them properly.
+	            Determines if the path normalization should be applied. Path normalization eliminates redundant components of a path like, e.g. <tt>/a/../b/./c</tt> can be normalized to <tt>/b/c</tt>.
+	            When these redundant components like <tt>../</tt> or <tt>.</tt> are part of an existing object, then normalization must be deactivated in order to access them properly.
 	        </option>
         </tab>
         <tab name="Advanced">
