@@ -50,6 +50,7 @@ package org.knime.ext.azure.blobstorage.filehandling.fs;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -96,21 +97,35 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
      * @param settings
      *            The settings.
      */
-    public AzureBlobStorageFileSystem(final URI uri, final long cacheTTL, final BlobServiceClient client,
-            final AzureBlobStorageConnectorSettings settings) {
-        super(new AzureBlobStorageFileSystemProvider(), uri, cacheTTL, settings.getWorkingDirectory(),
-                createFSLocationSpec());
+    public AzureBlobStorageFileSystem(final BlobServiceClient client, final AzureBlobStorageConnectorSettings settings,
+            final long cacheTTL) {
+        super(new AzureBlobStorageFileSystemProvider(), //
+                createURL(client.getAccountName()), //
+                cacheTTL, settings.getWorkingDirectory(), //
+                createFSLocationSpec(client.getAccountName()));
 
         m_client = client;
         m_normalizePaths = settings.getNormalizePaths();
         m_standardTimeout = settings.getTimeout();
     }
 
+    private static URI createURL(final String accountName) {
+        try {
+            return new URI(AzureBlobStorageFileSystemProvider.FS_TYPE, accountName, null, null);
+        } catch (URISyntaxException ex) {
+            // never happens
+            throw new IllegalArgumentException(accountName, ex);
+        }
+    }
+
     /**
+     * @param accountName
+     *            The storage account name.
      * @return the {@link FSLocationSpec} for a Azure Blob Storage file system.
      */
-    public static DefaultFSLocationSpec createFSLocationSpec() {
-        return new DefaultFSLocationSpec(FSCategory.CONNECTED, AzureBlobStorageFileSystemProvider.FS_TYPE);
+    public static DefaultFSLocationSpec createFSLocationSpec(final String accountName) {
+        return new DefaultFSLocationSpec(FSCategory.CONNECTED, //
+                String.format("%s:%s", AzureBlobStorageFileSystemProvider.FS_TYPE, accountName));
     }
 
     /**

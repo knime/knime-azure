@@ -117,7 +117,7 @@ public class AzureBlobStorageTestInitializerProvider extends DefaultFSTestInitia
     @Override
     public FSLocationSpec createFSLocationSpec(final Map<String, String> configuration) {
         validateConfiguration(configuration);
-        return AzureBlobStorageFileSystem.createFSLocationSpec();
+        return AzureBlobStorageFileSystem.createFSLocationSpec(configuration.get("account"));
     }
 
 }

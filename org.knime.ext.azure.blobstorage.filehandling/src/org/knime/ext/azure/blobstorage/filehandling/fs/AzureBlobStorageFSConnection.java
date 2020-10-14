@@ -48,9 +48,6 @@
  */
 package org.knime.ext.azure.blobstorage.filehandling.fs;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-
 import org.knime.core.node.util.FileSystemBrowser;
 import org.knime.ext.azure.blobstorage.filehandling.node.AzureBlobStorageConnectorSettings;
 import org.knime.filehandling.core.connections.FSConnection;
@@ -66,7 +63,7 @@ import com.azure.storage.blob.BlobServiceClient;
  */
 public class AzureBlobStorageFSConnection implements FSConnection {
 
-    private static final long m_cacheTTL = 6000;
+    private static final long CACHE_TTL = 6000;
 
     private final AzureBlobStorageFileSystem m_filesystem;
 
@@ -79,15 +76,7 @@ public class AzureBlobStorageFSConnection implements FSConnection {
      */
     public AzureBlobStorageFSConnection(final BlobServiceClient client,
             final AzureBlobStorageConnectorSettings settings) {
-        URI uri = null;
-        try {
-            // TODO maybe pass account name as host
-            uri = new URI(AzureBlobStorageFileSystemProvider.FS_TYPE, "azure-blob-storage", null, null);
-        } catch (URISyntaxException ex) {
-            // never happens
-        }
-
-        m_filesystem = new AzureBlobStorageFileSystem(uri, m_cacheTTL, client, settings);
+        m_filesystem = new AzureBlobStorageFileSystem(client, settings, CACHE_TTL);
     }
 
     /**
