@@ -84,6 +84,7 @@ import com.azure.storage.blob.models.BlobContainerProperties;
 import com.azure.storage.blob.models.BlobCopyInfo;
 import com.azure.storage.blob.models.BlobProperties;
 import com.azure.storage.blob.models.BlobStorageException;
+import com.azure.storage.blob.models.BlobType;
 import com.azure.storage.blob.models.ListBlobsOptions;
 
 /**
@@ -137,14 +138,26 @@ public class AzureBlobStorageFileSystemProvider
             }
         } else {
             try {
-                AzureBlobStorageFileSystem fs = getFileSystemInternal();
-                BlobServiceClient client = fs.getClient();
-                BlobClient sourceBlobClient = client.getBlobContainerClient(source.getBucketName())
+                final AzureBlobStorageFileSystem fs = getFileSystemInternal();
+                final BlobServiceClient client = fs.getClient();
+
+                final BlobClient sourceBlobClient = client.getBlobContainerClient(source.getBucketName())
                         .getBlobClient(source.getBlobName());
-                BlobClient targetBlobClient = client.getBlobContainerClient(target.getBucketName())
+
+                final BlobClient targetBlobClient = client.getBlobContainerClient(target.getBucketName())
                         .getBlobClient(target.getBlobName());
 
-                SyncPoller<BlobCopyInfo, Void> poller = targetBlobClient.beginCopy(sourceBlobClient.getBlobUrl(), null);
+                final SyncPoller<BlobCopyInfo, Void> poller;
+
+                final BlobType sourceBlobType = sourceBlobClient.getProperties().getBlobType();
+                if (sourceBlobType == BlobType.BLOCK_BLOB) {
+                    poller = targetBlobClient.beginCopy(sourceBlobClient.getBlobUrl(), null);
+                } else if (sourceBlobType == BlobType.APPEND_BLOB) {
+                    poller = targetBlobClient.getAppendBlobClient().beginCopy(sourceBlobClient.getBlobUrl(), null);
+                } else {
+                    throw new IOException("Unsupported blob type for copying: " + sourceBlobType.toString());
+                }
+
                 poller.waitForCompletion();
             } catch (BlobStorageException ex) {
                 throw AzureUtils.toIOE(ex, source.toString(), target.toString());
