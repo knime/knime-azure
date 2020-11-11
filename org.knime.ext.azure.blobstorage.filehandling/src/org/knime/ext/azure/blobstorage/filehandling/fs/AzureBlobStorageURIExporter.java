@@ -42,72 +42,67 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ---------------------------------------------------------------------
- *
- * History
- *   2020-07-14 (Alexander Bondaletov): created
  */
 package org.knime.ext.azure.blobstorage.filehandling.fs;
 
-import java.util.Collections;
-import java.util.Map;
+import java.net.URI;
+import java.net.URISyntaxException;
 
-import org.knime.core.node.util.FileSystemBrowser;
-import org.knime.ext.azure.blobstorage.filehandling.node.AzureBlobStorageConnectorSettings;
-import org.knime.filehandling.core.connections.FSConnection;
-import org.knime.filehandling.core.connections.FSFileSystem;
+import org.knime.filehandling.core.connections.FSPath;
 import org.knime.filehandling.core.connections.uriexport.URIExporter;
 import org.knime.filehandling.core.connections.uriexport.URIExporterID;
-import org.knime.filehandling.core.filechooser.NioFileSystemBrowser;
-
-import com.azure.storage.blob.BlobServiceClient;
 
 /**
- * Azure Blob Storage implementation of the {@link FSConnection} interface.
+ * {@link URIExporter} implementation using "wasbs" as scheme.
  *
- * @author Alexander Bondaletov
+ * @author Sascha Wolke, KNIME GmbH
  */
-public class AzureBlobStorageFSConnection implements FSConnection {
+public final class AzureBlobStorageURIExporter implements URIExporter {
 
-    private static final long CACHE_TTL = 6000;
-
-    private final AzureBlobStorageFileSystem m_filesystem;
+    private static final String SCHEME = "wasbs";
 
     /**
-     * @param client
-     *            The {@link BlobServiceClient} instance.
-     * @param settings
-     *            The settings.
-     *
+     * Unique identifier of this exporter.
      */
-    public AzureBlobStorageFSConnection(final BlobServiceClient client,
-            final AzureBlobStorageConnectorSettings settings) {
-        m_filesystem = new AzureBlobStorageFileSystem(client, settings, CACHE_TTL);
+    public static final URIExporterID ID = new URIExporterID(SCHEME);
+
+    private static final AzureBlobStorageURIExporter INSTANCE = new AzureBlobStorageURIExporter();
+
+    private AzureBlobStorageURIExporter() {
     }
 
     /**
-     * {@inheritDoc}
+     * @return singleton instance of this exporter
      */
+    public static AzureBlobStorageURIExporter getInstance() {
+        return INSTANCE;
+    }
+
     @Override
-    public FSFileSystem<?> getFileSystem() {
-        return m_filesystem;
+    public URIExporterID getID() {
+        return ID;
+    }
+
+    @Override
+    public String getLabel() {
+        return SCHEME + " URIs";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Exports URIs with scheme '" + SCHEME + "'.";
     }
 
     /**
-     * {@inheritDoc}
+     * Exports the given path as
+     * {@code wasbs://<bucket>@<account>.blob.core.windows.net</path>}.
      */
     @Override
-    public FileSystemBrowser getFileSystemBrowser() {
-        return new NioFileSystemBrowser(this);
+    @SuppressWarnings("resource")
+    public URI toUri(final FSPath path) throws URISyntaxException {
+        final AzureBlobStoragePath absPath = (AzureBlobStoragePath) path.toAbsolutePath();
+        final String account = absPath.getFileSystem().getAccountName();
+        final String host = account + ".blob.core.windows.net";
+        return new URI(SCHEME, absPath.getBucketName(), host, -1, '/' + absPath.getBlobName(), null, null);
     }
-
-    @Override
-    public URIExporter getDefaultURIExporter() {
-        return AzureBlobStorageURIExporter.getInstance();
-    }
-
-    @Override
-    public Map<URIExporterID, URIExporter> getURIExporters() {
-        return Collections.singletonMap(AzureBlobStorageURIExporter.ID, AzureBlobStorageURIExporter.getInstance());
-    }
-
 }

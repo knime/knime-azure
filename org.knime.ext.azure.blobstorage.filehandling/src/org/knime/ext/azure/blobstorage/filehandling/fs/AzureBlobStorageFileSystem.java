@@ -135,6 +135,12 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
         return m_client;
     }
 
+    /**
+     * @return account name used by client
+     */
+    String getAccountName() {
+        return m_client.getAccountName();
+    }
 
     /**
      * {@inheritDoc}
