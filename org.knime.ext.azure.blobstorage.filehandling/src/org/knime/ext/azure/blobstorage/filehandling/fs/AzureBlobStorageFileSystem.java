@@ -154,22 +154,6 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
      * {@inheritDoc}
      */
     @Override
-    public String getSchemeString() {
-        return provider().getScheme();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String getHostString() {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public AzureBlobStoragePath getPath(final String first, final String... more) {
         return new AzureBlobStoragePath(this, first, more);
     }

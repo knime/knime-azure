@@ -419,13 +419,4 @@ public class AzureBlobStorageFileSystemProvider
             throw AzureUtils.toIOE(ex, path.toString());
         }
     }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String getScheme() {
-        return FS_TYPE;
-    }
-
 }
