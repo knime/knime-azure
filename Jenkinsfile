@@ -19,7 +19,7 @@ try {
 
     workflowTests.runTests(
         dependencies: [
-            repositories:  ['knime-azure', 'knime-office365', 'knime-streaming']
+            repositories:  ['knime-azure', 'knime-filehandling', 'knime-office365', 'knime-streaming']
         ]
     )
 

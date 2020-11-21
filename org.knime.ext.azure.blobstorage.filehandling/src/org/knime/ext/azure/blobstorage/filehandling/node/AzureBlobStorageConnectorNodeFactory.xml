@@ -5,7 +5,7 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://knime.org/node/v4.1 http://knime.org/node/v4.1.xsd">
 
-    <name>Azure Blob Storage Connector (Labs)</name>
+    <name>Azure Blob Storage Connector</name>
     
     <shortDescription>
         Connects to Azure Blob Storage in order to read/write files in downstream nodes.
