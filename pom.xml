@@ -27,14 +27,19 @@
                 <!-- this needs to go first because it ensures that jar files required by blobstorage.filehandling are present -->
                 <module>org.knime.ext.azure.blobstorage.filehandling/libs/fetch_jars</module>
 
-                <module>org.knime.cloud.azure</module>
+                <module>org.knime.ext.azure.blobstorage.deprecated</module>
                 <module>org.knime.ext.azure.blobstorage.filehandling</module>
-                <module>org.knime.features.cloud.azure</module> 
+                <module>org.knime.features.ext.azure</module> 
                 <module>org.knime.update.azure</module>
 	</modules>
 
 	<!-- List all repositories required for compilation here. The variables are defined in knime-maven-parent/pom.xml. -->
 	<repositories>
+		<repository>
+			<id>p2-knime-filehandling</id>
+			<layout>p2</layout>
+			<url>${knime.filehandling.p2}</url>
+		</repository>
 		<repository>
 			<id>p2-knime-cloud</id>
 			<layout>p2</layout>
@@ -44,6 +49,11 @@
 			<id>p2-knime-workbench</id>
 			<layout>p2</layout>
 			<url>${knime.workbench.p2}</url>
+		</repository>
+		<repository>
+			<id>p2-knime-expressions</id>
+			<layout>p2</layout>
+			<url>${knime.expressions.p2}</url>
 		</repository>
 		<repository>
 			<id>p2-knime-base</id>

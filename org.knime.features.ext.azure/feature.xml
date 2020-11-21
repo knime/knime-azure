@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-      id="org.knime.features.cloud.azure"
+      id="org.knime.features.ext.azure"
       label="KNIME Azure Cloud Connectors"
       version="4.3.0.qualifier"
       provider-name="KNIME AG, Zurich, Switzerland">
@@ -728,7 +728,7 @@ propagated with or for interoperation with KNIME.
    </license>
 
    <plugin
-         id="org.knime.cloud.azure"
+         id="org.knime.ext.azure.blobstorage.deprecated"
          download-size="0"
          install-size="0"
          version="0.0.0"/>

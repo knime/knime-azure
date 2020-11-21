@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature id="org.knime.features.cloud.azure" version="0.0.0">
+   <feature id="org.knime.features.ext.azure" version="0.0.0">
        <category name="knime-azure" />
    </feature>
    
-   <feature id="org.knime.features.cloud.azure.source" version="0.0.0">
+   <feature id="org.knime.features.ext.azure.source" version="0.0.0">
        <category name="knime-azure" />
    </feature>
 
