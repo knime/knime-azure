@@ -2,7 +2,7 @@
 
 This repository contains:
 
-* [KNIME Azure Blob Storage Connector](https://hub.knime.com/knime/extensions/org.knime.features.ext.azure.blobstorage.filehandling/latest)  
+* [KNIME Azure Cloud Connectors](https://hub.knime.com/knime/extensions/org.knime.features.ext.azure/latest)  
 This extension allows to access data stored in Azure Blob Storage
 
 
