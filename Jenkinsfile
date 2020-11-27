@@ -19,7 +19,8 @@ try {
 
     workflowTests.runTests(
         dependencies: [
-            repositories:  ['knime-azure', 'knime-filehandling', 'knime-office365', 'knime-streaming', 'knime-cloud', 'knime-database', 'knime-kerberos', 'knime-textprocessing'],
+                // yes, we really need all this stuff. knime-cloud pulls in most of it...
+		repositories:  ['knime-azure', 'knime-filehandling', 'knime-office365', 'knime-streaming', 'knime-cloud', 'knime-database', 'knime-kerberos', 'knime-textprocessing', 'knime-dl4j'],
         ]
     )
 
