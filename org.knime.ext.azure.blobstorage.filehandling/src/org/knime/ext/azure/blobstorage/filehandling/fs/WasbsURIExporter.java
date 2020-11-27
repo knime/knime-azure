@@ -57,40 +57,35 @@ import org.knime.filehandling.core.connections.uriexport.URIExporterID;
  *
  * @author Sascha Wolke, KNIME GmbH
  */
-public final class AzureBlobStorageURIExporter implements URIExporter {
+final class WasbsURIExporter implements URIExporter {
 
     private static final String SCHEME = "wasbs";
 
     /**
      * Unique identifier of this exporter.
      */
-    public static final URIExporterID ID = new URIExporterID(SCHEME);
+    public static final URIExporterID ID = new URIExporterID("microsoft-blobstorage-wasbs");
 
-    private static final AzureBlobStorageURIExporter INSTANCE = new AzureBlobStorageURIExporter();
+    private static final WasbsURIExporter INSTANCE = new WasbsURIExporter();
 
-    private AzureBlobStorageURIExporter() {
+    private WasbsURIExporter() {
     }
 
     /**
      * @return singleton instance of this exporter
      */
-    public static AzureBlobStorageURIExporter getInstance() {
+    public static WasbsURIExporter getInstance() {
         return INSTANCE;
     }
 
     @Override
-    public URIExporterID getID() {
-        return ID;
-    }
-
-    @Override
     public String getLabel() {
-        return SCHEME + " URIs";
+        return "wasbs:// URLs";
     }
 
     @Override
     public String getDescription() {
-        return "Exports URIs with scheme '" + SCHEME + "'.";
+        return "Exports wasbs:// URLs";
     }
 
     /**

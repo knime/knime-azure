@@ -48,7 +48,6 @@
  */
 package org.knime.ext.azure.blobstorage.filehandling.fs;
 
-import java.util.Collections;
 import java.util.Map;
 
 import org.knime.core.node.util.FileSystemBrowser;
@@ -57,6 +56,8 @@ import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.FSFileSystem;
 import org.knime.filehandling.core.connections.uriexport.URIExporter;
 import org.knime.filehandling.core.connections.uriexport.URIExporterID;
+import org.knime.filehandling.core.connections.uriexport.URIExporterIDs;
+import org.knime.filehandling.core.connections.uriexport.URIExporterMapBuilder;
 import org.knime.filehandling.core.filechooser.NioFileSystemBrowser;
 
 import com.azure.storage.blob.BlobServiceClient;
@@ -67,6 +68,11 @@ import com.azure.storage.blob.BlobServiceClient;
  * @author Alexander Bondaletov
  */
 public class AzureBlobStorageFSConnection implements FSConnection {
+
+    private static final Map<URIExporterID, URIExporter> URI_EXPORTERS = new URIExporterMapBuilder() //
+            .add(URIExporterIDs.DEFAULT, WasbsURIExporter.getInstance()) //
+            .add(URIExporterIDs.DEFAULT_HADOOP, WasbsURIExporter.getInstance()) //
+            .build();
 
     private static final long CACHE_TTL = 6000;
 
@@ -84,30 +90,18 @@ public class AzureBlobStorageFSConnection implements FSConnection {
         m_filesystem = new AzureBlobStorageFileSystem(client, settings, CACHE_TTL);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public FSFileSystem<?> getFileSystem() {
         return m_filesystem;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public FileSystemBrowser getFileSystemBrowser() {
         return new NioFileSystemBrowser(this);
     }
 
     @Override
-    public URIExporter getDefaultURIExporter() {
-        return AzureBlobStorageURIExporter.getInstance();
-    }
-
-    @Override
     public Map<URIExporterID, URIExporter> getURIExporters() {
-        return Collections.singletonMap(AzureBlobStorageURIExporter.ID, AzureBlobStorageURIExporter.getInstance());
+        return URI_EXPORTERS;
     }
-
 }
