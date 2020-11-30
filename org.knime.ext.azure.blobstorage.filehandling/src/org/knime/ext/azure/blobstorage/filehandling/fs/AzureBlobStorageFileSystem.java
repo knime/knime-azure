@@ -55,6 +55,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.Locale;
 
 import org.knime.ext.azure.blobstorage.filehandling.node.AzureBlobStorageConnectorSettings;
 import org.knime.filehandling.core.connections.DefaultFSLocationSpec;
@@ -125,7 +126,8 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
      */
     public static DefaultFSLocationSpec createFSLocationSpec(final String accountName) {
         return new DefaultFSLocationSpec(FSCategory.CONNECTED, //
-                String.format("%s:%s", AzureBlobStorageFileSystemProvider.FS_TYPE, accountName));
+                String.format("%s:%s", AzureBlobStorageFileSystemProvider.FS_TYPE,
+                        accountName.toLowerCase(Locale.ENGLISH)));
     }
 
     /**
