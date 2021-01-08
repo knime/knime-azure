@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.0"?>
+<plugin>
+   <extension
+         point="org.knime.workbench.repository.nodes">
+      <node
+            category-path="/io/connectors"
+            factory-class="org.knime.ext.azure.adls.gen2.filehandling.node.AdlsConnectorNodeFactory"
+            id="org.knime.ext.azure.adls.gen2.filehandling.node.AdlsConnectorNodeFactory">
+      </node>
+   </extension>
+</plugin>
