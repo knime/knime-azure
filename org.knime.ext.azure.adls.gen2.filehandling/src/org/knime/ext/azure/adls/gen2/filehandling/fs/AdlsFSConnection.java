@@ -68,10 +68,12 @@ public class AdlsFSConnection implements FSConnection {
     /**
      * @param client
      *            The {@link DataLakeServiceClient} instance.
+     * @param workingDir
+     *            The working directory.
      *
      */
-    public AdlsFSConnection(final DataLakeServiceClient client) {
-        m_filesystem = new AdlsFileSystem(client, CACHE_TTL, AdlsFileSystem.PATH_SEPARATOR);
+    public AdlsFSConnection(final DataLakeServiceClient client, final String workingDir) {
+        m_filesystem = new AdlsFileSystem(client, CACHE_TTL, workingDir);
     }
 
     @Override

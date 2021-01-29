@@ -44,85 +44,62 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2020-12-17 (Alexander Bondaletov): created
+ *   2021-01-09 (Alexander Bondaletov): created
  */
-package org.knime.ext.azure.adls.gen2.filehandling.fs;
+package org.knime.ext.azure.adls.gen2.filehandling.testing;
 
-import java.nio.file.Path;
+import java.io.IOException;
+import java.util.Map;
 
-import org.knime.filehandling.core.connections.FSFileSystem;
-import org.knime.filehandling.core.connections.base.UnixStylePath;
+import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFSConnection;
+import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFileSystem;
+import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFileSystemProvider;
+import org.knime.filehandling.core.connections.FSLocationSpec;
+import org.knime.filehandling.core.testing.DefaultFSTestInitializerProvider;
 
-import com.azure.storage.file.datalake.DataLakeFileSystemClient;
+import com.azure.storage.common.StorageSharedKeyCredential;
+import com.azure.storage.file.datalake.DataLakeServiceClient;
+import com.azure.storage.file.datalake.DataLakeServiceClientBuilder;
 
 /**
- * {@link Path} implementation for the {@link AdlsFileSystem}.
+ * Test initializer provider for the ADLS
  *
  * @author Alexander Bondaletov
  */
-public class AdlsPath extends UnixStylePath {
+public class AdlsTestInitializerProvider extends DefaultFSTestInitializerProvider {
 
-    /**
-     * Creates path from the given path string.
-     *
-     * @param fileSystem
-     *            the file system.
-     * @param first
-     *            The first name component.
-     * @param more
-     *            More name components. the string representation of the path.
-     */
-    protected AdlsPath(final FSFileSystem<?> fileSystem, final String first, final String[] more) {
-        super(fileSystem, first, more);
+    private static final String ACCOUNT = "account";
+    private static final String KEY = "key";
+    private static final String WORKDIR_PREFIX = "workingDirPrefix";
+
+    @SuppressWarnings("resource")
+    @Override
+    public AdlsTestInitializer setup(final Map<String, String> configuration) throws IOException {
+        DataLakeServiceClient client = createClient(configuration);
+        String workDir = generateRandomizedWorkingDir(getParameter(configuration, WORKDIR_PREFIX),
+                AdlsFileSystem.PATH_SEPARATOR);
+
+        AdlsFSConnection connection = new AdlsFSConnection(client, workDir);
+        return new AdlsTestInitializer(connection);
     }
 
+    private DataLakeServiceClient createClient(final Map<String, String> config) {
+        String urlFormat = "https://%s.blob.core.windows.net";
+        String account = getParameter(config, ACCOUNT);
+        String key = getParameter(config, KEY);
+
+        return new DataLakeServiceClientBuilder().endpoint(String.format(urlFormat, account))
+                .credential(new StorageSharedKeyCredential(account, key)).buildClient();
+    }
 
     @Override
-    public AdlsFileSystem getFileSystem() {
-        return (AdlsFileSystem) super.getFileSystem();
+    public String getFSType() {
+        return AdlsFileSystemProvider.FS_TYPE;
     }
 
-    /**
-     * @return the file system name part of the path
-     */
-    public String getFileSystemName() {
-        if (!isAbsolute()) {
-            throw new IllegalStateException("File system name cannot be determined for relative paths.");
-        }
-        if (m_pathParts.isEmpty()) {
-            return null;
-        }
-        return m_pathParts.get(0);
+    @Override
+    public FSLocationSpec createFSLocationSpec(final Map<String, String> configuration) {
+        return AdlsFileSystem.createFSLocationSpec(getParameter(configuration, ACCOUNT));
     }
 
-    /**
-     * @return the path of the file i.e. the path without the file system name.
-     */
-    public String getFilePath() {
-        if (!isAbsolute()) {
-            throw new IllegalStateException("File path cannot be determined for relative paths.");
-        }
-        if (m_pathParts.size() <= 1) {
-            return null;
-        } else {
-            return subpath(1, getNameCount()).toString();
-        }
-    }
-
-    /**
-     * Returns the {@link DataLakeFileSystemClient} instance corresponding to the
-     * path or <code>null</code> if the path doesn't contain file system name (i.e.
-     * path is a virtual root).
-     *
-     * @return The file system client instance.
-     */
-    @SuppressWarnings("resource")
-    public DataLakeFileSystemClient getFileSystemClient() {
-        String filesystem = getFileSystemName();
-        if (filesystem != null) {
-            return getFileSystem().getClient().getFileSystemClient(filesystem);
-        } else {
-            return null;
-        }
-    }
 }
