@@ -110,7 +110,7 @@ public class AdlsConnectorNodeModel extends NodeModel {
             throw new IOException(ex.getMessage(), ex);
         }
 
-        m_fsConnection = new AdlsFSConnection(client);
+        m_fsConnection = new AdlsFSConnection(client, AdlsFileSystem.PATH_SEPARATOR);
         FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
 
         return new PortObject[] { new FileSystemPortObject(createSpec()) };

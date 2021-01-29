@@ -44,85 +44,70 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2020-12-17 (Alexander Bondaletov): created
+ *   2021-01-08 (Alexander Bondaletov): created
  */
-package org.knime.ext.azure.adls.gen2.filehandling.fs;
+package org.knime.ext.azure.adls.gen2.filehandling.testing;
 
-import java.nio.file.Path;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
-import org.knime.filehandling.core.connections.FSFileSystem;
-import org.knime.filehandling.core.connections.base.UnixStylePath;
+import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFileSystem;
+import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsPath;
+import org.knime.filehandling.core.connections.FSConnection;
+import org.knime.filehandling.core.testing.DefaultFSTestInitializer;
 
-import com.azure.storage.file.datalake.DataLakeFileSystemClient;
+import com.azure.core.util.Context;
+import com.azure.storage.file.datalake.DataLakeFileClient;
+import com.azure.storage.file.datalake.DataLakeServiceClient;
 
 /**
- * {@link Path} implementation for the {@link AdlsFileSystem}.
+ * ADLS test initializer
  *
  * @author Alexander Bondaletov
  */
-public class AdlsPath extends UnixStylePath {
+public class AdlsTestInitializer extends DefaultFSTestInitializer<AdlsPath, AdlsFileSystem> {
+
+    private DataLakeServiceClient m_client;
 
     /**
-     * Creates path from the given path string.
-     *
-     * @param fileSystem
-     *            the file system.
-     * @param first
-     *            The first name component.
-     * @param more
-     *            More name components. the string representation of the path.
+     * @param fsConnection
+     *            FS Connection.
      */
-    protected AdlsPath(final FSFileSystem<?> fileSystem, final String first, final String[] more) {
-        super(fileSystem, first, more);
+    protected AdlsTestInitializer(final FSConnection fsConnection) {
+        super(fsConnection);
+        m_client = getFileSystem().getClient();
     }
 
 
     @Override
-    public AdlsFileSystem getFileSystem() {
-        return (AdlsFileSystem) super.getFileSystem();
-    }
+    public AdlsPath createFileWithContent(final String content, final String... pathComponents) throws IOException {
+        AdlsPath path = makePath(pathComponents);
 
-    /**
-     * @return the file system name part of the path
-     */
-    public String getFileSystemName() {
-        if (!isAbsolute()) {
-            throw new IllegalStateException("File system name cannot be determined for relative paths.");
-        }
-        if (m_pathParts.isEmpty()) {
-            return null;
-        }
-        return m_pathParts.get(0);
-    }
+        byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
+        DataLakeFileClient fileClient = m_client.getFileSystemClient(path.getFileSystemName())
+                .getFileClient(path.getFilePath());
 
-    /**
-     * @return the path of the file i.e. the path without the file system name.
-     */
-    public String getFilePath() {
-        if (!isAbsolute()) {
-            throw new IllegalStateException("File path cannot be determined for relative paths.");
-        }
-        if (m_pathParts.size() <= 1) {
-            return null;
+        if (bytes.length > 0) {
+            fileClient.upload(new ByteArrayInputStream(bytes), bytes.length, true);
         } else {
-            return subpath(1, getNameCount()).toString();
+            fileClient.create();
         }
+        return path;
     }
 
-    /**
-     * Returns the {@link DataLakeFileSystemClient} instance corresponding to the
-     * path or <code>null</code> if the path doesn't contain file system name (i.e.
-     * path is a virtual root).
-     *
-     * @return The file system client instance.
-     */
-    @SuppressWarnings("resource")
-    public DataLakeFileSystemClient getFileSystemClient() {
-        String filesystem = getFileSystemName();
-        if (filesystem != null) {
-            return getFileSystem().getClient().getFileSystemClient(filesystem);
-        } else {
-            return null;
-        }
+    @Override
+    protected void beforeTestCaseInternal() throws IOException {
+        AdlsPath scratchDir = getTestCaseScratchDir();
+
+        m_client.getFileSystemClient(scratchDir.getFileSystemName()).createDirectory(scratchDir.getFilePath(), true);
     }
+
+    @Override
+    protected void afterTestCaseInternal() throws IOException {
+        AdlsPath scratchDir = getTestCaseScratchDir();
+        m_client.getFileSystemClient(scratchDir.getFileSystemName())
+                .deleteDirectoryWithResponse(scratchDir.getFilePath(), true, null, null, Context.NONE);
+    }
+
 }

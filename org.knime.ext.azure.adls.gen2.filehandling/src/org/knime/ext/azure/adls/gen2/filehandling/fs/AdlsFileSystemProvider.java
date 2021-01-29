@@ -58,11 +58,17 @@ import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.FileTime;
 import java.util.Iterator;
 import java.util.Set;
 
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
+
+import com.azure.storage.file.datalake.DataLakeFileClient;
+import com.azure.storage.file.datalake.DataLakeFileSystemClient;
+import com.azure.storage.file.datalake.models.FileSystemProperties;
+import com.azure.storage.file.datalake.models.PathProperties;
 
 /**
  * File system provider for the {@link AdlsFileSystem}.
@@ -102,20 +108,63 @@ public class AdlsFileSystemProvider extends BaseFileSystemProvider<AdlsPath, Adl
 
     @Override
     protected Iterator<AdlsPath> createPathIterator(final AdlsPath dir, final Filter<? super Path> filter) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        return AdlsPathIteratorFactory.create(dir, filter);
     }
 
     @Override
     protected void createDirectoryInternal(final AdlsPath dir, final FileAttribute<?>... attrs) throws IOException {
-        // TODO Auto-generated method stub
+        DataLakeFileSystemClient fsClient = dir.getFileSystemClient();
+        String filePath = dir.getFilePath();
 
+        if (filePath != null) {
+            fsClient.createDirectory(filePath);
+        } else {
+            fsClient.create();
+        }
     }
 
     @Override
     protected BaseFileAttributes fetchAttributesInternal(final AdlsPath path, final Class<?> type) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        if (path.isRoot()) {
+            return createFakeRootAttributes(path);
+        } else if (path.getFilePath() != null) {
+            return fetchAttributesForFile(path);
+        } else {
+            return fetchAttributesForFileSystem(path);
+        }
+    }
+
+    private static BaseFileAttributes createFakeRootAttributes(final AdlsPath path) {
+        FileTime time = FileTime.fromMillis(0);
+        return new BaseFileAttributes(false, path, time, time, time, 0, false, false, null);
+    }
+
+    private static BaseFileAttributes fetchAttributesForFile(final AdlsPath path) {
+        DataLakeFileClient fileClient = path.getFileSystemClient().getFileClient(path.getFilePath());
+        PathProperties properties = fileClient.getProperties();
+
+        FileTime createdAt = FileTime.from(properties.getCreationTime().toInstant());
+        FileTime modifiedAt = FileTime.from(properties.getLastModified().toInstant());
+
+        return new BaseFileAttributes(!properties.isDirectory(), path, modifiedAt, modifiedAt, createdAt,
+                properties.getFileSize(), false, false, null);
+    }
+
+    private static BaseFileAttributes fetchAttributesForFileSystem(final AdlsPath path) {
+        FileSystemProperties properties = path.getFileSystemClient().getProperties();
+
+        FileTime modifiedAt = FileTime.from(properties.getLastModified().toInstant());
+
+        return new BaseFileAttributes(false, path, modifiedAt, modifiedAt, modifiedAt, 0, false, false, null);
+    }
+
+    @Override
+    protected boolean exists(final AdlsPath path) throws IOException {
+        if (path.getFilePath() != null) {
+            return path.getFileSystemClient().getFileClient(path.getFilePath()).exists();
+        } else {
+            return super.exists(path);
+        }
     }
 
     @Override
