@@ -51,6 +51,7 @@ package org.knime.ext.azure.adls.gen2.filehandling.fs;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.channels.Channels;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
@@ -59,6 +60,8 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileTime;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -84,8 +87,13 @@ public class AdlsFileSystemProvider extends BaseFileSystemProvider<AdlsPath, Adl
     @Override
     protected SeekableByteChannel newByteChannelInternal(final AdlsPath path, final Set<? extends OpenOption> options,
             final FileAttribute<?>... attrs) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+
+        // we cannot read/write a file below the root (only containers can be there)
+        if (path.getParent() != null && ((AdlsPath) path.getParent()).isRoot()) {
+            throw new IOException("Cannot read/write files below the root. Only folders can be there.");
+        }
+
+        return new AdlsSeekableByteChannel(path, options);
     }
 
     @Override
@@ -96,14 +104,14 @@ public class AdlsFileSystemProvider extends BaseFileSystemProvider<AdlsPath, Adl
 
     @Override
     protected InputStream newInputStreamInternal(final AdlsPath path, final OpenOption... options) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        return new AdlsInputStream(path);
     }
 
+    @SuppressWarnings("resource")
     @Override
     protected OutputStream newOutputStreamInternal(final AdlsPath path, final OpenOption... options) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        final Set<OpenOption> opts = new HashSet<>(Arrays.asList(options));
+        return Channels.newOutputStream(newByteChannel(path, opts));
     }
 
     @Override
@@ -140,7 +148,7 @@ public class AdlsFileSystemProvider extends BaseFileSystemProvider<AdlsPath, Adl
     }
 
     private static BaseFileAttributes fetchAttributesForFile(final AdlsPath path) {
-        DataLakeFileClient fileClient = path.getFileSystemClient().getFileClient(path.getFilePath());
+        DataLakeFileClient fileClient = path.getFileClient();
         PathProperties properties = fileClient.getProperties();
 
         FileTime createdAt = FileTime.from(properties.getCreationTime().toInstant());
@@ -161,7 +169,7 @@ public class AdlsFileSystemProvider extends BaseFileSystemProvider<AdlsPath, Adl
     @Override
     protected boolean exists(final AdlsPath path) throws IOException {
         if (path.getFilePath() != null) {
-            return path.getFileSystemClient().getFileClient(path.getFilePath()).exists();
+            return path.getFileClient().exists();
         } else {
             return super.exists(path);
         }
