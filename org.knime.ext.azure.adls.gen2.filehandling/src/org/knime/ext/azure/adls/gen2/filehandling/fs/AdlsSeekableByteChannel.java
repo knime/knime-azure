@@ -44,102 +44,56 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2020-12-17 (Alexander Bondaletov): created
+ *   2021-01-09 (Alexander Bondaletov): created
  */
 package org.knime.ext.azure.adls.gen2.filehandling.fs;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.util.Set;
 
-import org.knime.filehandling.core.connections.FSFileSystem;
-import org.knime.filehandling.core.connections.base.UnixStylePath;
+import org.knime.filehandling.core.connections.base.TempFileSeekableByteChannel;
 
 import com.azure.storage.file.datalake.DataLakeFileClient;
-import com.azure.storage.file.datalake.DataLakeFileSystemClient;
 
 /**
- * {@link Path} implementation for the {@link AdlsFileSystem}.
+ * Azure Data Lake Storage implementation of the
+ * {@link TempFileSeekableByteChannel}.
  *
  * @author Alexander Bondaletov
  */
-public class AdlsPath extends UnixStylePath {
+public class AdlsSeekableByteChannel extends TempFileSeekableByteChannel<AdlsPath> {
 
     /**
-     * Creates path from the given path string.
+     * Creates new instance.
      *
-     * @param fileSystem
-     *            the file system.
-     * @param first
-     *            The first name component.
-     * @param more
-     *            More name components. the string representation of the path.
+     * @param file
+     *            The file for the channel.
+     * @param options
+     *            Open options.
+     * @throws IOException
      */
-    protected AdlsPath(final FSFileSystem<?> fileSystem, final String first, final String[] more) {
-        super(fileSystem, first, more);
+    protected AdlsSeekableByteChannel(final AdlsPath file, final Set<? extends OpenOption> options) throws IOException {
+        super(file, options);
     }
 
 
     @Override
-    public AdlsFileSystem getFileSystem() {
-        return (AdlsFileSystem) super.getFileSystem();
+    public void copyFromRemote(final AdlsPath remoteFile, final Path tempFile) throws IOException {
+        Files.copy(remoteFile, tempFile);
     }
 
-    /**
-     * @return the file system name part of the path
-     */
-    public String getFileSystemName() {
-        if (!isAbsolute()) {
-            throw new IllegalStateException("File system name cannot be determined for relative paths.");
-        }
-        if (m_pathParts.isEmpty()) {
-            return null;
-        }
-        return m_pathParts.get(0);
-    }
+    @Override
+    public void copyToRemote(final AdlsPath remoteFile, final Path tempFile) throws IOException {
+        DataLakeFileClient client = remoteFile.getFileClient();
 
-    /**
-     * @return the path of the file i.e. the path without the file system name.
-     */
-    public String getFilePath() {
-        if (!isAbsolute()) {
-            throw new IllegalStateException("File path cannot be determined for relative paths.");
-        }
-        if (m_pathParts.size() <= 1) {
-            return null;
+        if (Files.size(tempFile) > 0) {
+            client.uploadFromFile(tempFile.toString(), true);
         } else {
-            return subpath(1, getNameCount()).toString();
+            client.create();
         }
     }
 
-    /**
-     * Returns the {@link DataLakeFileSystemClient} instance corresponding to the
-     * path or <code>null</code> if the path doesn't contain file system name (i.e.
-     * path is a virtual root).
-     *
-     * @return The file system client instance.
-     */
-    @SuppressWarnings("resource")
-    public DataLakeFileSystemClient getFileSystemClient() {
-        String filesystem = getFileSystemName();
-        if (filesystem != null) {
-            return getFileSystem().getClient().getFileSystemClient(filesystem);
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Returns {@link DataLakeFileClient} instance corresponding to the path or
-     * <code>null</code> if the path doesn't contain the 'file path' part (i.e. path
-     * is a virtual root or points to a filesystem).
-     *
-     * @return The file client instance.
-     */
-    public DataLakeFileClient getFileClient() {
-        String filePath = getFilePath();
-        if (filePath != null) {
-            return getFileSystemClient().getFileClient(filePath);
-        } else {
-            return null;
-        }
-    }
 }
