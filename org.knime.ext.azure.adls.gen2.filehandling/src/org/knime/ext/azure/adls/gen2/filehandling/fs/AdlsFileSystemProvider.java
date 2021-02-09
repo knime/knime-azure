@@ -56,8 +56,11 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream.Filter;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileTime;
 import java.util.Arrays;
@@ -65,12 +68,16 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.knime.filehandling.core.connections.FSFiles;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 
 import com.azure.storage.file.datalake.DataLakeFileClient;
 import com.azure.storage.file.datalake.DataLakeFileSystemClient;
+import com.azure.storage.file.datalake.models.DataLakeStorageException;
 import com.azure.storage.file.datalake.models.FileSystemProperties;
+import com.azure.storage.file.datalake.models.ListPathsOptions;
+import com.azure.storage.file.datalake.models.PathItem;
 import com.azure.storage.file.datalake.models.PathProperties;
 
 /**
@@ -98,8 +105,64 @@ public class AdlsFileSystemProvider extends BaseFileSystemProvider<AdlsPath, Adl
 
     @Override
     protected void copyInternal(final AdlsPath source, final AdlsPath target, final CopyOption... options) throws IOException {
-        // TODO Auto-generated method stub
+        if (FSFiles.isDirectory(source)) {
+            if (!existsCached(target)) {
+                createDirectory(target);
+            }
+        } else {
+            // ADLS API doesn't have a 'copy' method so we have to do it this way
+            try (InputStream in = newInputStream(source)) {
+                Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
+            }
+        }
+    }
 
+    @SuppressWarnings("resource")
+    @Override
+    protected void moveInternal(final AdlsPath source, final AdlsPath target, final CopyOption... options)
+            throws IOException {
+        if (target.getFilePath() == null && !FSFiles.isDirectory(source)) {
+            throw new IOException("Cannot move a file into the root directory");
+        }
+
+        if (source.getFilePath() == null || target.getFilePath() == null) {
+            moveChildren(source, target);
+        } else {
+            source.getFileClient().rename(target.getFileSystemName(), target.getFilePath());
+            source.getFileSystem().removeFromAttributeCacheDeep(source);
+        }
+    }
+
+    @SuppressWarnings("resource")
+    private void moveChildren(final AdlsPath source, final AdlsPath target) throws IOException {
+        if (!existsCached(target)) {
+            createDirectory(target);
+        }
+
+        AdlsFileSystem fs = source.getFileSystem();
+        Iterator<PathItem> iter = listChildren(source);
+        while (iter.hasNext()) {
+            PathItem item = iter.next();
+            AdlsPath itemPath = fs.getPath(fs.getSeparator() + source.getFileSystemName(), item.getName());
+
+            String destinationPath = itemPath.getFileName().toString();
+            if (target.getFilePath() != null) {
+                destinationPath = target.getFilePath() + AdlsFileSystem.PATH_SEPARATOR + destinationPath;
+            }
+
+            itemPath.getFileClient().rename(target.getFileSystemName(), destinationPath);
+            fs.removeFromAttributeCacheDeep(itemPath);
+        }
+
+        delete(source);
+    }
+
+    private static Iterator<PathItem> listChildren(final AdlsPath path) {
+        ListPathsOptions opts = new ListPathsOptions();
+        if (path.getFilePath() != null) {
+            opts.setPath(path.getFilePath());
+        }
+        return path.getFileSystemClient().listPaths(opts, null).iterator();
     }
 
     @Override
@@ -133,12 +196,16 @@ public class AdlsFileSystemProvider extends BaseFileSystemProvider<AdlsPath, Adl
 
     @Override
     protected BaseFileAttributes fetchAttributesInternal(final AdlsPath path, final Class<?> type) throws IOException {
-        if (path.isRoot()) {
-            return createFakeRootAttributes(path);
-        } else if (path.getFilePath() != null) {
-            return fetchAttributesForFile(path);
-        } else {
-            return fetchAttributesForFileSystem(path);
+        try {
+            if (path.isRoot()) {
+                return createFakeRootAttributes(path);
+            } else if (path.getFilePath() != null) {
+                return fetchAttributesForFile(path);
+            } else {
+                return fetchAttributesForFileSystem(path);
+            }
+        } catch (DataLakeStorageException ex) {
+            throw toIOE(ex, path);
         }
     }
 
@@ -166,13 +233,24 @@ public class AdlsFileSystemProvider extends BaseFileSystemProvider<AdlsPath, Adl
         return new BaseFileAttributes(false, path, modifiedAt, modifiedAt, modifiedAt, 0, false, false, null);
     }
 
-    @Override
-    protected boolean exists(final AdlsPath path) throws IOException {
-        if (path.getFilePath() != null) {
-            return path.getFileClient().exists();
-        } else {
-            return super.exists(path);
+    /**
+     * Converts {@link DataLakeStorageException} into {@link IOException}. Temporary
+     * method that is going to be removed after AzureUtils class become available to
+     * ADLS project
+     *
+     * @param ex
+     *            The {@link DataLakeStorageException}
+     * @param path
+     *            The path
+     * @return The {@link IOException}
+     */
+    public static IOException toIOE(final DataLakeStorageException ex, final AdlsPath path) {
+        if (ex.getStatusCode() == 404) {
+            NoSuchFileException nsfe = new NoSuchFileException(path.toString());
+            nsfe.initCause(ex);
+            return nsfe;
         }
+        return new IOException(ex.getMessage(), ex);
     }
 
     @Override
@@ -183,8 +261,11 @@ public class AdlsFileSystemProvider extends BaseFileSystemProvider<AdlsPath, Adl
 
     @Override
     protected void deleteInternal(final AdlsPath path) throws IOException {
-        // TODO Auto-generated method stub
-
+        if (path.getFilePath() != null) {
+            path.getFileClient().delete();
+        } else {
+            path.getFileSystemClient().delete();
+        }
     }
 
 }

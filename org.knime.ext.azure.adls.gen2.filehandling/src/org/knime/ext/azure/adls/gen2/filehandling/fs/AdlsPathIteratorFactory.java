@@ -59,6 +59,7 @@ import org.knime.filehandling.core.connections.base.attributes.BaseFileAttribute
 
 import com.azure.storage.file.datalake.DataLakeFileSystemClient;
 import com.azure.storage.file.datalake.DataLakeServiceClient;
+import com.azure.storage.file.datalake.models.DataLakeStorageException;
 import com.azure.storage.file.datalake.models.FileSystemItem;
 import com.azure.storage.file.datalake.models.ListPathsOptions;
 import com.azure.storage.file.datalake.models.PathItem;
@@ -98,9 +99,13 @@ public final class AdlsPathIteratorFactory {
 
             @SuppressWarnings("resource")
             DataLakeServiceClient client = m_path.getFileSystem().getClient();
-            Iterator<AdlsPath> iterator = client.listFileSystems().stream().map(this::toPath).iterator();
+            try {
+                Iterator<AdlsPath> iterator = client.listFileSystems().stream().map(this::toPath).iterator();
 
-            setFirstPage(iterator);
+                setFirstPage(iterator);
+            } catch (DataLakeStorageException ex) {
+                throw AdlsFileSystemProvider.toIOE(ex, m_path);
+            }
         }
 
         @SuppressWarnings("resource")
@@ -126,13 +131,19 @@ public final class AdlsPathIteratorFactory {
             DataLakeFileSystemClient client = m_path.getFileSystemClient();
             ListPathsOptions opts = new ListPathsOptions().setPath(m_path.getFilePath());
 
-            Iterator<AdlsPath> iterator = client.listPaths(opts, null).stream().map(this::toPath).iterator();
+            try {
+                Iterator<AdlsPath> iterator = client.listPaths(opts, null).stream().map(this::toPath).iterator();
 
-            setFirstPage(iterator);
+                setFirstPage(iterator);
+            } catch (DataLakeStorageException ex) {
+                throw AdlsFileSystemProvider.toIOE(ex, path);
+            }
         }
 
+        @SuppressWarnings("resource")
         private AdlsPath toPath(final PathItem item) {
-            return (AdlsPath) m_path.resolve(item.getName());
+            AdlsFileSystem fs = m_path.getFileSystem();
+            return fs.getPath(fs.getSeparator() + m_path.getFileSystemName(), item.getName());
         }
     }
 
