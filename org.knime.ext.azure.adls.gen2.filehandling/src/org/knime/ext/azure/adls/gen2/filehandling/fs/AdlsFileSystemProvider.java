@@ -57,7 +57,6 @@ import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -68,6 +67,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.knime.ext.azure.AzureUtils;
 import org.knime.filehandling.core.connections.FSFiles;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
@@ -205,7 +205,7 @@ public class AdlsFileSystemProvider extends BaseFileSystemProvider<AdlsPath, Adl
                 return fetchAttributesForFileSystem(path);
             }
         } catch (DataLakeStorageException ex) {
-            throw toIOE(ex, path);
+            throw AzureUtils.toIOE(ex, path.toString());
         }
     }
 
@@ -231,26 +231,6 @@ public class AdlsFileSystemProvider extends BaseFileSystemProvider<AdlsPath, Adl
         FileTime modifiedAt = FileTime.from(properties.getLastModified().toInstant());
 
         return new BaseFileAttributes(false, path, modifiedAt, modifiedAt, modifiedAt, 0, false, false, null);
-    }
-
-    /**
-     * Converts {@link DataLakeStorageException} into {@link IOException}. Temporary
-     * method that is going to be removed after AzureUtils class become available to
-     * ADLS project
-     *
-     * @param ex
-     *            The {@link DataLakeStorageException}
-     * @param path
-     *            The path
-     * @return The {@link IOException}
-     */
-    public static IOException toIOE(final DataLakeStorageException ex, final AdlsPath path) {
-        if (ex.getStatusCode() == 404) {
-            NoSuchFileException nsfe = new NoSuchFileException(path.toString());
-            nsfe.initCause(ex);
-            return nsfe;
-        }
-        return new IOException(ex.getMessage(), ex);
     }
 
     @Override

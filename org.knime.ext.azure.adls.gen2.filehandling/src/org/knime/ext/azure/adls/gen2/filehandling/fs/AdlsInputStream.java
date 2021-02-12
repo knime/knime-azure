@@ -51,7 +51,8 @@ package org.knime.ext.azure.adls.gen2.filehandling.fs;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.NoSuchFileException;
+
+import org.knime.ext.azure.AzureUtils;
 
 import com.azure.core.util.Context;
 import com.azure.storage.file.datalake.models.DataLakeStorageException;
@@ -108,18 +109,9 @@ public class AdlsInputStream extends InputStream {
                 // Datalake API returns 416 error when the requested file is empty.
                 return new byte[0];
             } else {
-                throw toIOE(ex);
+                throw AzureUtils.toIOE(ex, m_path.toString());
             }
         }
-    }
-
-    private IOException toIOE(final DataLakeStorageException ex) {
-        if (ex.getStatusCode() == 404) {
-            NoSuchFileException nsfe = new NoSuchFileException(m_path.toString());
-            nsfe.initCause(ex);
-            return nsfe;
-        }
-        return new IOException(ex.getMessage(), ex);
     }
 
     @Override

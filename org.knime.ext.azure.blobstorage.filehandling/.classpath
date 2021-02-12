@@ -1,19 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry exported="true" kind="lib" path="libs/stax2-api-4.2.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/jackson-annotations-2.10.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/jackson-core-2.10.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/jackson-databind-2.10.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/jackson-dataformat-xml-2.10.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/jackson-datatype-jsr310-2.10.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/jackson-module-jaxb-annotations-2.10.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/woodstox-core-6.0.2.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/azure-core-1.7.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/azure-core-http-netty-1.5.4.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/azure-storage-blob-12.8.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/azure-storage-common-12.8.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/azure-storage-internal-avro-12.0.0.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="output" path="bin"/>
