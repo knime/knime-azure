@@ -44,9 +44,9 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2020-08-17 (Bjoern Lohrmann, KNIME GmbH): created
+ *   2020-12-16 (Alexander Bondaletov): created
  */
-package org.knime.ext.azure.blobstorage.filehandling;
+package org.knime.ext.azure;
 
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.knime.core.node.NodeLogger;
@@ -56,20 +56,20 @@ import com.azure.core.http.HttpClientProvider;
 import com.azure.core.implementation.http.HttpClientProviders;
 
 /**
- * Plugin activator for the Azure BlobStorage plugin.
+ * Plugin activator for the Azure plugin.
  *
- * @author Bjoern Lohrmann, KNIME GmbH
+ * @author Alexander Bondaletov
  */
-public class AzureBlobStoragePlugin extends AbstractUIPlugin {
-    private static final NodeLogger LOG = NodeLogger.getLogger(AzureBlobStoragePlugin.class);
+public class AzurePlugin extends AbstractUIPlugin {
+    private static final NodeLogger LOG = NodeLogger.getLogger(AzurePlugin.class);
 
     // The shared instance.
-    private static AzureBlobStoragePlugin plugin;
+    private static AzurePlugin plugin;
 
     /**
      * The constructor.
      */
-    public AzureBlobStoragePlugin() {
+    public AzurePlugin() {
         plugin = this; // NOSONAR standard KNIME pattern
     }
 
@@ -87,7 +87,7 @@ public class AzureBlobStoragePlugin extends AbstractUIPlugin {
 
         final ClassLoader cl = Thread.currentThread().getContextClassLoader();
         try {
-            // To talk to Azure BlobStorage we need a
+            // To talk to Azure we need a
             // com.azure.core.http.HttpClientProvider, which is an interface
             // from azure-core. HttpClientProviders uses the ServiceLoader framework to
             // locate an implementation of this interface. The ServiceLoader framework tries
@@ -97,7 +97,7 @@ public class AzureBlobStoragePlugin extends AbstractUIPlugin {
             HttpClientProviders.createInstance();
         } catch (Exception e) { // NOSONAR we must catch all exceptions here as we don't know what might be
                                 // thrown
-            LOG.error("Failed to load Azure BlobStorage client", e);
+            LOG.error("Failed to load Azure client", e);
         } finally {
             Thread.currentThread().setContextClassLoader(cl);
         }
@@ -122,7 +122,7 @@ public class AzureBlobStoragePlugin extends AbstractUIPlugin {
      *
      * @return The shared instance
      */
-    public static AzureBlobStoragePlugin getDefault() {
+    public static AzurePlugin getDefault() {
         return plugin;
     }
 }

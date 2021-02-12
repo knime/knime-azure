@@ -44,85 +44,44 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2020-12-16 (Alexander Bondaletov): created
+ *   2020-09-18 (Alexander Bondaletov): created
  */
-package org.knime.ext.azure.adls.gen2.filehandling;
+package org.knime.ext.azure;
 
-import org.eclipse.ui.plugin.AbstractUIPlugin;
-import org.knime.core.node.NodeLogger;
-import org.osgi.framework.BundleContext;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 
-import com.azure.core.http.HttpClientProvider;
-import com.azure.core.implementation.http.HttpClientProviders;
+import org.knime.ext.microsoft.authentication.port.oauth2.OAuth2AccessToken;
+import org.knime.ext.microsoft.authentication.port.oauth2.OAuth2Credential;
+
+import com.azure.core.credential.AccessToken;
+import com.azure.core.credential.TokenCredential;
+import com.azure.core.credential.TokenRequestContext;
+
+import reactor.core.publisher.Mono;
 
 /**
- * Plugin activator for the ADLS plugin.
+ * {@link TokenCredential} implementation that acquires access token from
+ * {@link OAuth2Credential}.
  *
  * @author Alexander Bondaletov
  */
-public class AdlsPlugin extends AbstractUIPlugin {
-    private static final NodeLogger LOG = NodeLogger.getLogger(AdlsPlugin.class);
+public class OAuthTokenCredential implements TokenCredential {
 
-    // The shared instance.
-    private static AdlsPlugin plugin;
+    private AccessToken m_token;
 
     /**
-     * The constructor.
+     * @param credential
+     *            The credential.
      */
-    public AdlsPlugin() {
-        plugin = this; // NOSONAR standard KNIME pattern
+    public OAuthTokenCredential(final OAuth2AccessToken credential) {
+        m_token = new AccessToken(credential.getToken(),
+                OffsetDateTime.ofInstant(credential.getAccessTokenExpiresAt(), ZoneId.systemDefault()));
     }
 
-    /**
-     * This method is called upon plug-in activation.
-     *
-     * @param context
-     *            The bundle context.
-     * @throws Exception
-     *             If cause by super class.
-     */
     @Override
-    public void start(final BundleContext context) throws Exception {
-        super.start(context);
-
-        final ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        try {
-            // To talk to ADLS we need a
-            // com.azure.core.http.HttpClientProvider, which is an interface
-            // from azure-core. HttpClientProviders uses the ServiceLoader framework to
-            // locate an implementation of this interface. The ServiceLoader framework tries
-            // to find a suitable implementation from the TCCL, which we need to set
-            // accordingly here, otherwise the no implementation class can be found.
-            Thread.currentThread().setContextClassLoader(HttpClientProvider.class.getClassLoader());
-            HttpClientProviders.createInstance();
-        } catch (Exception e) { // NOSONAR we must catch all exceptions here as we don't know what might be
-                                // thrown
-            LOG.error("Failed to load ADLS client", e);
-        } finally {
-            Thread.currentThread().setContextClassLoader(cl);
-        }
+    public Mono<AccessToken> getToken(final TokenRequestContext arg0) {
+        return Mono.just(m_token);
     }
 
-    /**
-     * This method is called when the plug-in is stopped.
-     *
-     * @param context
-     *            The bundle context.
-     * @throws Exception
-     *             If cause by super class.
-     */
-    @Override
-    public void stop(final BundleContext context) throws Exception {
-        plugin = null; // NOSONAR standard KNIME pattern
-        super.stop(context);
-    }
-
-    /**
-     * Returns the shared instance.
-     *
-     * @return The shared instance
-     */
-    public static AdlsPlugin getDefault() {
-        return plugin;
-    }
 }

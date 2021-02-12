@@ -54,6 +54,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.util.Iterator;
 
+import org.knime.ext.azure.AzureUtils;
 import org.knime.filehandling.core.connections.base.BasePathIterator;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 
@@ -104,7 +105,7 @@ public final class AdlsPathIteratorFactory {
 
                 setFirstPage(iterator);
             } catch (DataLakeStorageException ex) {
-                throw AdlsFileSystemProvider.toIOE(ex, m_path);
+                throw AzureUtils.toIOE(ex, m_path.toString());
             }
         }
 
@@ -136,7 +137,7 @@ public final class AdlsPathIteratorFactory {
 
                 setFirstPage(iterator);
             } catch (DataLakeStorageException ex) {
-                throw AdlsFileSystemProvider.toIOE(ex, path);
+                throw AzureUtils.toIOE(ex, path.toString());
             }
         }
 

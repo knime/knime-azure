@@ -50,12 +50,7 @@ package org.knime.ext.azure.blobstorage.filehandling.node;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.regex.Pattern;
 
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -68,15 +63,14 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
-import org.knime.ext.azure.blobstorage.filehandling.AzureUtils;
-import org.knime.ext.azure.blobstorage.filehandling.OAuthTokenCredential;
+import org.knime.ext.azure.AzureUtils;
+import org.knime.ext.azure.OAuthTokenCredential;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSConnection;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFileSystem;
 import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
 import org.knime.ext.microsoft.authentication.port.MicrosoftCredential.Type;
 import org.knime.ext.microsoft.authentication.port.MicrosoftCredentialPortObject;
 import org.knime.ext.microsoft.authentication.port.MicrosoftCredentialPortObjectSpec;
-import org.knime.ext.microsoft.authentication.port.azure.storage.AzureSasTokenCredential;
 import org.knime.ext.microsoft.authentication.port.azure.storage.AzureSharedKeyCredential;
 import org.knime.ext.microsoft.authentication.port.oauth2.OAuth2Credential;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
@@ -89,8 +83,6 @@ import com.azure.storage.blob.BlobServiceClientBuilder;
 import com.azure.storage.blob.models.BlobStorageException;
 import com.azure.storage.common.StorageSharedKeyCredential;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
-
 /**
  * Azure Blob Storage Connector node.
  *
@@ -98,9 +90,8 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  */
 public class AzureBlobStorageConnectorNodeModel extends NodeModel {
 
+    @SuppressWarnings("unused")
     private static final NodeLogger LOG = NodeLogger.getLogger(AzureBlobStorageConnectorNodeModel.class);
-
-    private static final Pattern BLOB_STORAGE_SCOPE_PATTERN = Pattern.compile("https://[^.]+.blob.core.windows.net/.+");
 
     private static final String FILE_SYSTEM_NAME = "Azure Blob Storage";
 
@@ -128,7 +119,7 @@ public class AzureBlobStorageConnectorNodeModel extends NodeModel {
     }
 
     private FileSystemPortObjectSpec createSpec(final MicrosoftCredential credential) {
-        final String storageAccount = extractStorageAccount(credential);
+        final String storageAccount = AzureUtils.getStorageAccount(credential);
         return new FileSystemPortObjectSpec(FILE_SYSTEM_NAME, m_fsId,
                 AzureBlobStorageFileSystem.createFSLocationSpec(storageAccount));
     }
@@ -142,7 +133,9 @@ public class AzureBlobStorageConnectorNodeModel extends NodeModel {
             // initialize lazy iterator by calling haxNext to make list containers request
             client.listBlobContainers().iterator().hasNext();// NOSONAR
         } catch (BlobStorageException ex) {
-            handleBlobStorageException(ex);
+            AzureUtils.handleAuthException(ex);
+            setWarningMessage(
+                    "Authentication failed, or the account doesn't have enough permissions to list containers");
         }
 
         m_fsConnection = new AzureBlobStorageFSConnection(client, m_settings);
@@ -151,52 +144,24 @@ public class AzureBlobStorageConnectorNodeModel extends NodeModel {
         return new PortObject[] { new FileSystemPortObject(createSpec(credential)) };
     }
 
-    private static final Pattern[] INVALID_CREDENTIAL_MESSAGES = new Pattern[] {
-            Pattern.compile(
-                    "The MAC signature found in the HTTP request .* is not the same as any computed signature."), //
-            Pattern.compile("Signature fields not well formed"), //
-            Pattern.compile("Signature did not match."), //
-            Pattern.compile(".* is mandatory. Cannot be empty") };
-
-    private void handleBlobStorageException(final BlobStorageException ex) throws IOException {
-        if (ex.getStatusCode() == HttpResponseStatus.FORBIDDEN.code()) {
-            if (Arrays.stream(INVALID_CREDENTIAL_MESSAGES).anyMatch(p -> p.matcher(ex.getMessage()).find())) {
-                throw new IOException(
-                        "Authentication failure. Please check your credentials in the Microsoft Authentication node.",
-                        ex);
-            } else {
-                // there are probably more situations where authentication fails, which are not
-                // accounted for in INVALID_CREDENTIAL_MESSAGES. To facilitate debugging we are
-                // logging the
-                // actual exception
-                LOG.debug("Failed to list containers in storage account: " + ex.getMessage(), ex);
-                setWarningMessage(
-                        "Authentication failed, or the account doesn't have enough permissions to list containers");
-            }
-        } else {
-            throw AzureUtils.toIOE(ex, AzureBlobStorageFileSystem.PATH_SEPARATOR);
-        }
-    }
-
     static BlobServiceClient createServiceClient(final MicrosoftCredential credential,
             final AzureBlobStorageConnectorSettings settings) throws IOException {
 
         BlobServiceClientBuilder builder = new BlobServiceClientBuilder()
+                .endpoint(AzureUtils.getEndpoint(credential))
                 .addPolicy(new TimeoutPolicy(Duration.ofSeconds(settings.getTimeout())));
         Type type = credential.getType();
 
         switch (type) {
         case AZURE_SHARED_KEY:
             AzureSharedKeyCredential c = (AzureSharedKeyCredential) credential;
-            builder.endpoint(c.getEndpoint());
             builder.credential(new StorageSharedKeyCredential(c.getAccount(), c.getSecretKey()));
             break;
         case AZURE_SAS_TOKEN:
-            builder.endpoint(((AzureSasTokenCredential) credential).getSasUrl());
+            // SAS token is a part of the endpoint
             break;
         case OAUTH2_ACCESS_TOKEN:
             final OAuth2Credential oauth2Credential = (OAuth2Credential) credential;
-            builder.endpoint(extractEndpoint(oauth2Credential));
             builder.credential(new OAuthTokenCredential(oauth2Credential.getAccessToken()));
             break;
         default:
@@ -204,45 +169,6 @@ public class AzureBlobStorageConnectorNodeModel extends NodeModel {
         }
 
         return builder.buildClient();
-    }
-
-    private static String extractEndpoint(final OAuth2Credential credential) {
-        final String scope = credential.getScopes().stream() //
-                .filter(BLOB_STORAGE_SCOPE_PATTERN.asPredicate()) //
-                .findFirst() //
-                .orElseThrow(() -> new IllegalStateException(
-                        "Credentials do not provide access to Azure Blob Storage. Please request the appropriate access in the Microsoft Authentication node."));
-
-        try {
-            return "https://" + new URL(scope).getHost();
-        } catch (MalformedURLException ex) {
-            throw new UnsupportedOperationException("Malformed scope: " + scope, ex);
-        }
-    }
-
-    private static String extractStorageAccount(final MicrosoftCredential credential) {
-        switch (credential.getType()) {
-        case AZURE_SHARED_KEY:
-            final AzureSharedKeyCredential sharedKeyCredential = (AzureSharedKeyCredential) credential;
-            return sharedKeyCredential.getAccount();
-        case AZURE_SAS_TOKEN:
-            try {
-                return extractStorageAccount(((AzureSasTokenCredential) credential).getSasUrl());
-            } catch (IOException e) {
-                throw new IllegalArgumentException(e);
-            }
-        case OAUTH2_ACCESS_TOKEN:
-            final OAuth2Credential oauth2Credential = (OAuth2Credential) credential;
-            return extractStorageAccount(extractEndpoint(oauth2Credential));
-        default:
-            throw new UnsupportedOperationException("Unsupported credential type " + credential.getType());
-        }
-    }
-
-    private static String extractStorageAccount(final String urlString) {
-        final URI url = URI.create(urlString);
-        final String[] hostnameParts = url.getHost().split("\\.");
-        return hostnameParts[0];
     }
 
     /**

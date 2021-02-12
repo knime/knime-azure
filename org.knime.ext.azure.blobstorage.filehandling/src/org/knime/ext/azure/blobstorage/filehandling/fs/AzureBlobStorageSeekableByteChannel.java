@@ -54,7 +54,7 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.Set;
 
-import org.knime.ext.azure.blobstorage.filehandling.AzureUtils;
+import org.knime.ext.azure.AzureUtils;
 import org.knime.filehandling.core.connections.base.TempFileSeekableByteChannel;
 
 import com.azure.storage.blob.models.BlobStorageException;

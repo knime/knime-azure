@@ -55,7 +55,7 @@ import java.nio.file.attribute.FileTime;
 import java.util.Iterator;
 import java.util.stream.Collectors;
 
-import org.knime.ext.azure.blobstorage.filehandling.AzureUtils;
+import org.knime.ext.azure.AzureUtils;
 import org.knime.filehandling.core.connections.base.PagedPathIterator;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 

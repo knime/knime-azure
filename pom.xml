@@ -25,9 +25,9 @@
 
 	<modules>
                 <!-- this needs to go first because it ensures that jar files required by blobstorage.filehandling are present -->
-                <module>org.knime.ext.azure.blobstorage.filehandling/libs/fetch_jars</module>
-                <module>org.knime.ext.azure.adls.gen2.filehandling/libs/fetch_jars</module>
+                <module>org.knime.ext.azure/libs/fetch_jars</module>
 
+                <module>org.knime.ext.azure</module>
                 <module>org.knime.ext.azure.blobstorage.deprecated</module>
                 <module>org.knime.ext.azure.blobstorage.filehandling</module>
                 <module>org.knime.ext.azure.adls.gen2.filehandling</module>

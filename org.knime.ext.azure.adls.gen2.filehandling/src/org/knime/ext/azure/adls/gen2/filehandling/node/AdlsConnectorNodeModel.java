@@ -61,12 +61,20 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
+import org.knime.ext.azure.AzureUtils;
+import org.knime.ext.azure.OAuthTokenCredential;
 import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFSConnection;
 import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFileSystem;
+import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
+import org.knime.ext.microsoft.authentication.port.MicrosoftCredentialPortObject;
+import org.knime.ext.microsoft.authentication.port.MicrosoftCredentialPortObjectSpec;
+import org.knime.ext.microsoft.authentication.port.azure.storage.AzureSharedKeyCredential;
+import org.knime.ext.microsoft.authentication.port.oauth2.OAuth2Credential;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
 import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
 
+import com.azure.storage.common.StorageSharedKeyCredential;
 import com.azure.storage.file.datalake.DataLakeServiceClient;
 import com.azure.storage.file.datalake.DataLakeServiceClientBuilder;
 import com.azure.storage.file.datalake.models.DataLakeStorageException;
@@ -86,39 +94,67 @@ public class AdlsConnectorNodeModel extends NodeModel {
      * Creates new instance.
      */
     protected AdlsConnectorNodeModel() {
-        super(new PortType[] {}, new PortType[] { FileSystemPortObject.TYPE });
+        super(new PortType[] { MicrosoftCredentialPortObject.TYPE }, new PortType[] { FileSystemPortObject.TYPE });
     }
 
     @Override
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
+        MicrosoftCredential credential = ((MicrosoftCredentialPortObjectSpec) inSpecs[0]).getMicrosoftCredential();
+        if (credential == null) {
+            throw new InvalidSettingsException("Not authenticated");
+        }
+
         m_fsId = FSConnectionRegistry.getInstance().getKey();
 
-        return new PortObjectSpec[] { createSpec() };
+        return new PortObjectSpec[] { createSpec(credential) };
     }
 
-    private FileSystemPortObjectSpec createSpec() {
-        return new FileSystemPortObjectSpec(FILE_SYSTEM_NAME, m_fsId, AdlsFileSystem.createFSLocationSpec("TODO"));
+    private FileSystemPortObjectSpec createSpec(final MicrosoftCredential credential) {
+        String storageAccount = AzureUtils.getStorageAccount(credential);
+        return new FileSystemPortObjectSpec(FILE_SYSTEM_NAME, m_fsId,
+                AdlsFileSystem.createFSLocationSpec(storageAccount));
     }
 
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
-        DataLakeServiceClient client = createClient();
+        MicrosoftCredential credential = ((MicrosoftCredentialPortObject) inObjects[0]).getMicrosoftCredentials();
+        DataLakeServiceClient client = createClient(credential);
         try {
             // initialize lazy iterator by calling haxNext to make list containers request
             client.listFileSystems().iterator().hasNext();// NOSONAR
         } catch (DataLakeStorageException ex) {
-            throw new IOException(ex.getMessage(), ex);
+            AzureUtils.handleAuthException(ex);
+            setWarningMessage(
+                    "Authentication failed, or the account doesn't have enough permissions to list containers");
         }
 
         m_fsConnection = new AdlsFSConnection(client, AdlsFileSystem.PATH_SEPARATOR);
         FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
 
-        return new PortObject[] { new FileSystemPortObject(createSpec()) };
+        return new PortObject[] { new FileSystemPortObject(createSpec(credential)) };
     }
 
-    private static DataLakeServiceClient createClient() {
-        String url = System.getProperty("adls.sasurl");
-        return new DataLakeServiceClientBuilder().endpoint(url).buildClient();
+    private static DataLakeServiceClient createClient(final MicrosoftCredential credential) throws IOException {
+        DataLakeServiceClientBuilder builder = new DataLakeServiceClientBuilder()
+                .endpoint(AzureUtils.getEndpoint(credential));
+
+        switch (credential.getType()) {
+        case AZURE_SHARED_KEY:
+            AzureSharedKeyCredential c = (AzureSharedKeyCredential) credential;
+            builder.credential(new StorageSharedKeyCredential(c.getAccount(), c.getSecretKey()));
+            break;
+        case AZURE_SAS_TOKEN:
+            // SAS token is a part of the endpoint
+            break;
+        case OAUTH2_ACCESS_TOKEN:
+            final OAuth2Credential oauth2Credential = (OAuth2Credential) credential;
+            builder.credential(new OAuthTokenCredential(oauth2Credential.getAccessToken()));
+            break;
+        default:
+            throw new UnsupportedOperationException("Unsupported credential type " + credential.getType());
+        }
+
+        return builder.buildClient();
     }
 
     @Override
