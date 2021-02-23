@@ -74,6 +74,7 @@ import org.knime.filehandling.core.connections.FSConnectionRegistry;
 import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
 
+import com.azure.core.http.policy.TimeoutPolicy;
 import com.azure.storage.common.StorageSharedKeyCredential;
 import com.azure.storage.file.datalake.DataLakeServiceClient;
 import com.azure.storage.file.datalake.DataLakeServiceClientBuilder;
@@ -89,6 +90,8 @@ public class AdlsConnectorNodeModel extends NodeModel {
 
     private String m_fsId;
     private AdlsFSConnection m_fsConnection;
+
+    private final AdlsConnectorSettings m_settings = new AdlsConnectorSettings();
 
     /**
      * Creates new instance.
@@ -118,7 +121,7 @@ public class AdlsConnectorNodeModel extends NodeModel {
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
         MicrosoftCredential credential = ((MicrosoftCredentialPortObject) inObjects[0]).getMicrosoftCredentials();
-        DataLakeServiceClient client = createClient(credential);
+        DataLakeServiceClient client = createClient(credential, m_settings);
         try {
             // initialize lazy iterator by calling haxNext to make list containers request
             client.listFileSystems().iterator().hasNext();// NOSONAR
@@ -128,15 +131,17 @@ public class AdlsConnectorNodeModel extends NodeModel {
                     "Authentication failed, or the account doesn't have enough permissions to list containers");
         }
 
-        m_fsConnection = new AdlsFSConnection(client, AdlsFileSystem.PATH_SEPARATOR);
+        m_fsConnection = new AdlsFSConnection(client, m_settings.getWorkingDirectory());
         FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
 
         return new PortObject[] { new FileSystemPortObject(createSpec(credential)) };
     }
 
-    private static DataLakeServiceClient createClient(final MicrosoftCredential credential) throws IOException {
+    static DataLakeServiceClient createClient(final MicrosoftCredential credential,
+            final AdlsConnectorSettings settings) throws IOException {
         DataLakeServiceClientBuilder builder = new DataLakeServiceClientBuilder()
-                .endpoint(AzureUtils.getEndpoint(credential));
+                .endpoint(AzureUtils.getEndpoint(credential))//
+                .addPolicy(new TimeoutPolicy(settings.getTimeout()));
 
         switch (credential.getType()) {
         case AZURE_SHARED_KEY:
@@ -160,7 +165,7 @@ public class AdlsConnectorNodeModel extends NodeModel {
     @Override
     protected void loadInternals(final File nodeInternDir, final ExecutionMonitor exec)
             throws IOException, CanceledExecutionException {
-        setWarningMessage("Azure Blob Storage connection no longer available. Please re-execute the node.");
+        setWarningMessage("Connection no longer available. Please re-execute the node.");
     }
 
     @Override
@@ -171,20 +176,17 @@ public class AdlsConnectorNodeModel extends NodeModel {
 
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
-        // TODO Auto-generated method stub
-
+        m_settings.saveSettingsTo(settings);
     }
 
     @Override
     protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
-        // TODO Auto-generated method stub
-
+        m_settings.validateSettings(settings);
     }
 
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
-        // TODO Auto-generated method stub
-
+        m_settings.loadSettingsFrom(settings);
     }
 
     @Override

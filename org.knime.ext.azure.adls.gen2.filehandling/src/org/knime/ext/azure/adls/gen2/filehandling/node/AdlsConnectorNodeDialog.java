@@ -48,9 +48,31 @@
  */
 package org.knime.ext.azure.adls.gen2.filehandling.node;
 
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.io.IOException;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.event.ChangeListener;
+
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeDialogPane;
+import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.NotConfigurableException;
+import org.knime.core.node.defaultnodesettings.DialogComponentNumber;
+import org.knime.core.node.port.PortObjectSpec;
+import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFSConnection;
+import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
+import org.knime.ext.microsoft.authentication.port.MicrosoftCredentialPortObjectSpec;
+import org.knime.filehandling.core.connections.FSConnection;
+import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryChooser;
 
 /**
  * {@link AdlsConnectorNodeModel} node dialog.
@@ -59,10 +81,113 @@ import org.knime.core.node.NodeSettingsWO;
  */
 public class AdlsConnectorNodeDialog extends NodeDialogPane {
 
-    @Override
-    protected void saveSettingsTo(final NodeSettingsWO settings) throws InvalidSettingsException {
-        // TODO Auto-generated method stub
+    private final ChangeListener m_workdirListener;
+    private final AdlsConnectorSettings m_settings;
+    private final WorkingDirectoryChooser m_workingDirChooser;
 
+    private MicrosoftCredential m_credentials;
+
+    /**
+     * Creates new instance.
+     */
+    public AdlsConnectorNodeDialog() {
+        m_settings = new AdlsConnectorSettings();
+        m_workingDirChooser = new WorkingDirectoryChooser("adls-gen2.workingDir", this::createFSConnection);
+        m_workdirListener = e -> m_settings.getWorkingDirectoryModel()
+                .setStringValue(m_workingDirChooser.getSelectedWorkingDirectory());
+
+        addTab("Settings", createFilesystemSettingsPanel());
+        addTab("Advanced", createTimeoutsPanel());
     }
 
+    private FSConnection createFSConnection() throws IOException {
+        return new AdlsFSConnection(AdlsConnectorNodeModel.createClient(m_credentials, m_settings),
+                m_settings.getWorkingDirectory());
+    }
+
+    private JComponent createFilesystemSettingsPanel() {
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 1;
+        c.weighty = 0;
+        c.gridx = 0;
+        c.gridy = 0;
+        c.insets = new Insets(0, 10, 0, 0);
+        panel.add(m_workingDirChooser, c);
+
+        c.fill = GridBagConstraints.BOTH;
+        c.weighty = 1;
+        c.gridy += 1;
+        panel.add(Box.createVerticalGlue(), c);
+
+        panel.setBorder(BorderFactory.createTitledBorder("File system settings"));
+        return panel;
+    }
+
+    private JComponent createTimeoutsPanel() {
+        DialogComponentNumber timeout = new DialogComponentNumber(m_settings.getTimeoutModel(), "", 1);
+        timeout.getComponentPanel().setLayout(new FlowLayout(FlowLayout.LEFT));
+
+        final JPanel panel = new JPanel(new GridBagLayout());
+        final GridBagConstraints c = new GridBagConstraints();
+        c.anchor = GridBagConstraints.WEST;
+        c.fill = GridBagConstraints.NONE;
+        c.weightx = 0;
+        c.weighty = 0;
+        c.gridx = 0;
+        c.gridy = 0;
+        panel.add(new JLabel("Service calls timeout (seconds): "), c);
+
+        c.weightx = 1;
+        c.gridx = 1;
+        c.gridy = 0;
+        panel.add(timeout.getComponentPanel(), c);
+
+        c.fill = GridBagConstraints.BOTH;
+        c.gridx = 0;
+        c.gridy++;
+        c.gridwidth = 2;
+        c.weightx = 1;
+        c.weighty = 1;
+        panel.add(Box.createVerticalGlue(), c);
+
+        panel.setBorder(BorderFactory.createTitledBorder("Connection settings"));
+        return panel;
+    }
+
+    @Override
+    protected void saveSettingsTo(final NodeSettingsWO settings) throws InvalidSettingsException {
+        validateBeforeSaving();
+        m_settings.saveSettingsTo(settings);
+    }
+
+    private void validateBeforeSaving() throws InvalidSettingsException {
+        m_settings.validate();
+        m_workingDirChooser.addCurrentSelectionToHistory();
+    }
+
+    @Override
+    protected void loadSettingsFrom(final NodeSettingsRO settings, final PortObjectSpec[] specs)
+            throws NotConfigurableException {
+        try {
+            m_settings.loadSettingsFrom(settings);
+        } catch (InvalidSettingsException ex) { // NOSONAR can be ignored
+        }
+
+        m_credentials = ((MicrosoftCredentialPortObjectSpec) specs[0]).getMicrosoftCredential();
+
+        settingsLoaded();
+    }
+
+    private void settingsLoaded() {
+        m_workingDirChooser.setSelectedWorkingDirectory(m_settings.getWorkingDirectoryModel().getStringValue());
+        m_workingDirChooser.addListener(m_workdirListener);
+    }
+
+    @Override
+    public void onClose() {
+        m_workingDirChooser.removeListener(m_workdirListener);
+        m_workingDirChooser.onClose();
+    }
 }

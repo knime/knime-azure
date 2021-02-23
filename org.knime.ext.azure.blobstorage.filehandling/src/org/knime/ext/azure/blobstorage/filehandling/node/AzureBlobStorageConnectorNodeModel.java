@@ -177,7 +177,7 @@ public class AzureBlobStorageConnectorNodeModel extends NodeModel {
     @Override
     protected void loadInternals(final File nodeInternDir, final ExecutionMonitor exec)
             throws IOException, CanceledExecutionException {
-        setWarningMessage("Azure Blob Storage connection no longer available. Please re-execute the node.");
+        setWarningMessage("Connection no longer available. Please re-execute the node.");
     }
 
     /**
