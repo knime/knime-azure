@@ -49,7 +49,7 @@
         </tab>
         <tab name="Advanced">
         	<option name="Service calls timeout">
-        		The time allowed between sending a request and receiving the response
+        		The time allowed between sending a request and receiving the response.
         	</option>
         </tab>
     </fullDescription>

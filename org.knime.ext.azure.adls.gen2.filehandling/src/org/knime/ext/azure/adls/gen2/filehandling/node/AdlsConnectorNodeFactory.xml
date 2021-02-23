@@ -5,23 +5,59 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://knime.org/node/v4.1 http://knime.org/node/v4.1.xsd">
 
-    <name>Azure Data Lake Storage Gen2</name>
+    <name>Azure Data Lake Storage Gen2 Connector</name>
     
     <shortDescription>
-        Connects to Azure Data Lake Storage Gen2 in order to read/write files in downstream nodes.
+        Connects to Azure Data Lake Storage Gen2 (ADLS Gen2) in order to read/write files in downstream nodes.
     </shortDescription>
     
     <fullDescription>
         <intro>
-            <p>This node connects to Azure Data Lake Storage Gen2.
+            <p>This node connects to Azure Data Lake Storage Gen2 (ADLS Gen2). The resulting output port allows downstream nodes to access
+            the ADLS Gen2 data as a file system, e.g. to read or write files and folders,
+            or to perform other file system operations (browse/list files, copy, move, ...).
             </p>
             
+            <p>This node requires the <i>Microsoft Authentication</i> to perform authentication. The following authentication modes are supported:
+            <ul>
+            <li>Interactive Authentication</li>
+            <li>Username/password Authentication</li>
+            <li>Shared key authentication (Azure Storage only)</li>
+            <li>Shared access signature (SAS) authentication (Azure Storage only)</li>
+            </ul>
+            </p>
+            
+            
+            <p><b>Path syntax:</b> Paths for ADLS Gen2 are specified with a UNIX-like syntax, for example
+            <tt>/mycontainer/myfolder/myfile</tt>, which is an absolute path that consists of:
+                <ol>
+                    <li>A leading slash (<tt>/</tt>).</li>
+                    <li>The name of a container (<tt>mycontainer</tt>), followed by a slash.</li>
+                    <li>The name of a folder (<tt>myfolder</tt>), followed by a slash.</li>
+                    <li>Followed by the name of a file (<tt>file.csv</tt>).</li>
+                </ol>
+            </p>
         </intro>
+        <tab name="Settings">
+	        <option name="Working directory">
+	            Specifies the <i>working directory</i> using the path syntax explained above. The working directory must be specified as an absolute path. A working directory allows downstream
+	            nodes to access files/folders using <i>relative</i> paths, i.e. paths that do not have a leading slash. If not specified, the default working directory
+	            is <tt>/</tt>.
+	        </option>
+        </tab>
+        <tab name="Advanced">
+        	<option name="Service calls timeout">
+        		The time in seconds allowed between sending a request and receiving the response.
+        	</option>
+        </tab>
     </fullDescription>
     
     <ports>
-        <outPort index="0" name="ADLS File System Connection">
-            ADLS File System Connection
+        <inPort index="0" name="Microsoft Connection">
+    		Microsoft Connection that provides user authentication.
+    	</inPort>
+        <outPort index="0" name="Azure Data Lake Storage Gen2 File System Connection">
+             Azure Data Lake Storage Gen2 File System Connection
         </outPort>
     </ports>    
 </knimeNode>
