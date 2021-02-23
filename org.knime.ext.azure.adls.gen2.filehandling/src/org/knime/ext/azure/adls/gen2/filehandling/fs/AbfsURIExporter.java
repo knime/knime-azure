@@ -44,61 +44,56 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2020-12-18 (Alexander Bondaletov): created
+ *   2021-01-27 (Alexander Bondaletov): created
  */
 package org.knime.ext.azure.adls.gen2.filehandling.fs;
 
-import java.util.Map;
+import java.net.URI;
+import java.net.URISyntaxException;
 
-import org.knime.core.node.util.FileSystemBrowser;
-import org.knime.filehandling.core.connections.FSConnection;
-import org.knime.filehandling.core.connections.FSFileSystem;
+import org.knime.filehandling.core.connections.FSPath;
+import org.knime.filehandling.core.connections.uriexport.NoSettingsURIExporter;
 import org.knime.filehandling.core.connections.uriexport.URIExporter;
-import org.knime.filehandling.core.connections.uriexport.URIExporterID;
-import org.knime.filehandling.core.connections.uriexport.URIExporterIDs;
-import org.knime.filehandling.core.connections.uriexport.URIExporterMapBuilder;
-import org.knime.filehandling.core.filechooser.NioFileSystemBrowser;
-
-import com.azure.storage.file.datalake.DataLakeServiceClient;
 
 /**
- * ADLS implementation of the {@link FSConnection} interface.
+ * {@link URIExporter} implementation using "abfs" as scheme.
  *
  * @author Alexander Bondaletov
  */
-public class AdlsFSConnection implements FSConnection {
-    private static final Map<URIExporterID, URIExporter> URI_EXPORTERS = new URIExporterMapBuilder() //
-            .add(URIExporterIDs.DEFAULT, AbfsURIExporter.getInstance()) //
-            .add(URIExporterIDs.DEFAULT_HADOOP, AbfsURIExporter.getInstance()) //
-            .build();
+public final class AbfsURIExporter extends NoSettingsURIExporter {
 
-    private static final long CACHE_TTL = 6000;
+    private static final String SCHEME = "abfss";
 
-    private final AdlsFileSystem m_filesystem;
+    private static final AbfsURIExporter INSTANCE = new AbfsURIExporter();
+
+    private AbfsURIExporter() {
+    }
 
     /**
-     * @param client
-     *            The {@link DataLakeServiceClient} instance.
-     * @param workingDir
-     *            The working directory.
-     *
+     * @return singleton instance of this exporter
      */
-    public AdlsFSConnection(final DataLakeServiceClient client, final String workingDir) {
-        m_filesystem = new AdlsFileSystem(client, CACHE_TTL, workingDir);
+    public static AbfsURIExporter getInstance() {
+        return INSTANCE;
     }
 
     @Override
-    public FSFileSystem<?> getFileSystem() {
-        return m_filesystem;
+    public String getLabel() {
+        return "abfss:// URLs";
     }
 
     @Override
-    public FileSystemBrowser getFileSystemBrowser() {
-        return new NioFileSystemBrowser(this);
+    public String getDescription() {
+        return "Exports abfss:// URLs";
     }
 
+    @SuppressWarnings("resource")
     @Override
-    public Map<URIExporterID, URIExporter> getURIExporters() {
-        return URI_EXPORTERS;
+    public URI toUri(final FSPath path) throws URISyntaxException {
+        AdlsPath adlsPath = (AdlsPath) path;
+        String account = adlsPath.getFileSystem().getClient().getAccountName();
+        String host = account + ".dfs.core.windows.net";
+
+        return new URI(SCHEME, adlsPath.getFileSystemName(), host, -1, "/" + adlsPath.getFilePath(), null, null);
     }
+
 }
