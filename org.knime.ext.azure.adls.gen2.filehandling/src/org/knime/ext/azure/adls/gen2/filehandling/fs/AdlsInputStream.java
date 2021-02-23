@@ -121,9 +121,10 @@ public class AdlsInputStream extends InputStream {
         if (m_bufferOffset == m_buffer.length) {
             return -1;
         } else {
+            final int indexToRead = m_bufferOffset;
             m_bufferOffset++;
             // return byte as int between 0 and 255
-            return m_buffer[m_bufferOffset] & 0xff;
+            return m_buffer[indexToRead] & 0xff;
         }
     }
 
