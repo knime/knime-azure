@@ -54,9 +54,11 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.Set;
 
+import org.knime.ext.azure.AzureUtils;
 import org.knime.filehandling.core.connections.base.TempFileSeekableByteChannel;
 
 import com.azure.storage.file.datalake.DataLakeFileClient;
+import com.azure.storage.file.datalake.models.DataLakeStorageException;
 
 /**
  * Azure Data Lake Storage implementation of the
@@ -89,10 +91,14 @@ public class AdlsSeekableByteChannel extends TempFileSeekableByteChannel<AdlsPat
     public void copyToRemote(final AdlsPath remoteFile, final Path tempFile) throws IOException {
         DataLakeFileClient client = remoteFile.getFileClient();
 
-        if (Files.size(tempFile) > 0) {
-            client.uploadFromFile(tempFile.toString(), true);
-        } else {
-            client.create();
+        try {
+            if (Files.size(tempFile) > 0) {
+                client.uploadFromFile(tempFile.toString(), true);
+            } else {
+                client.create();
+            }
+        } catch (DataLakeStorageException ex) {
+            throw AzureUtils.toIOE(ex, remoteFile.toString());
         }
     }
 
