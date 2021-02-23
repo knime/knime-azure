@@ -125,11 +125,15 @@ public class AdlsFileSystemProvider extends BaseFileSystemProvider<AdlsPath, Adl
             throw new IOException("Cannot move a file into the root directory");
         }
 
-        if (source.getFilePath() == null || target.getFilePath() == null) {
-            moveChildren(source, target);
-        } else {
-            source.getFileClient().rename(target.getFileSystemName(), target.getFilePath());
-            source.getFileSystem().removeFromAttributeCacheDeep(source);
+        try {
+            if (source.getFilePath() == null || target.getFilePath() == null) {
+                moveChildren(source, target);
+            } else {
+                source.getFileClient().rename(target.getFileSystemName(), target.getFilePath());
+                source.getFileSystem().removeFromAttributeCacheDeep(source);
+            }
+        } catch (DataLakeStorageException ex) {
+            throw AzureUtils.toIOE(ex, source.toString(), target.toString());
         }
     }
 
@@ -187,10 +191,14 @@ public class AdlsFileSystemProvider extends BaseFileSystemProvider<AdlsPath, Adl
         DataLakeFileSystemClient fsClient = dir.getFileSystemClient();
         String filePath = dir.getFilePath();
 
-        if (filePath != null) {
-            fsClient.createDirectory(filePath);
-        } else {
-            fsClient.create();
+        try {
+            if (filePath != null) {
+                fsClient.createDirectory(filePath);
+            } else {
+                fsClient.create();
+            }
+        } catch (DataLakeStorageException ex) {
+            throw AzureUtils.toIOE(ex, dir.toString());
         }
     }
 
@@ -241,10 +249,14 @@ public class AdlsFileSystemProvider extends BaseFileSystemProvider<AdlsPath, Adl
 
     @Override
     protected void deleteInternal(final AdlsPath path) throws IOException {
-        if (path.getFilePath() != null) {
-            path.getFileClient().delete();
-        } else {
-            path.getFileSystemClient().delete();
+        try {
+            if (path.getFilePath() != null) {
+                path.getFileClient().delete();
+            } else {
+                path.getFileSystemClient().delete();
+            }
+        } catch (DataLakeStorageException ex) {
+            throw AzureUtils.toIOE(ex, path.toString());
         }
     }
 
