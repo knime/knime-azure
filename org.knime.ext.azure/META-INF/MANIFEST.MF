@@ -89,4 +89,6 @@ Export-Package: com.azure.core.credential;uses:="reactor.core.publisher",
    reactor.core.publisher,
    com.azure.core.http.rest",
  org.knime.ext.azure;uses:="org.osgi.framework,org.eclipse.ui.plugin"
+Automatic-Module-Name: org.knime.ext.azure
+Bundle-RequiredExecutionEnvironment: JavaSE-11
 
