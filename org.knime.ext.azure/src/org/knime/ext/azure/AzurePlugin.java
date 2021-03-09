@@ -48,6 +48,8 @@
  */
 package org.knime.ext.azure;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.knime.core.node.NodeLogger;
 import org.osgi.framework.BundleContext;
@@ -101,6 +103,9 @@ public class AzurePlugin extends AbstractUIPlugin {
         } finally {
             Thread.currentThread().setContextClassLoader(cl);
         }
+
+        // Ignore errors logged from within the datalake client
+        Logger.getLogger("com.azure.storage.file.datalake").setLevel(Level.OFF);
     }
 
     /**
