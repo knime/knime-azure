@@ -59,6 +59,7 @@ import org.knime.filehandling.core.connections.base.BlobStorePath;
  * @author Alexander Bondaletov
  */
 public class AzureBlobStoragePath extends BlobStorePath {
+    private static final String DIRECTORY_MARKER_NAME = ".directory-marker";
 
     /**
      * Creates path from the given path string.
@@ -102,6 +103,21 @@ public class AzureBlobStoragePath extends BlobStorePath {
     @Override
     public AzureBlobStoragePath toDirectoryPath() {
         return (AzureBlobStoragePath) super.toDirectoryPath();
+    }
+
+    /**
+     * @return The directory marker object for the directory represented by the
+     *         path.
+     */
+    public AzureBlobStoragePath getDirectoryMarkerFile() {
+        return (AzureBlobStoragePath) resolve(DIRECTORY_MARKER_NAME);
+    }
+
+    /**
+     * @return <code>true</code> if the path represents a directory marker object.
+     */
+    public boolean isDirectoryMarkerFile() {
+        return m_pathParts.get(m_pathParts.size() - 1).equals(DIRECTORY_MARKER_NAME);
     }
 
     @SuppressWarnings("resource")

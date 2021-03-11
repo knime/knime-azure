@@ -87,6 +87,8 @@ import com.azure.storage.blob.models.BlobStorageException;
 import com.azure.storage.blob.models.BlobType;
 import com.azure.storage.blob.models.ListBlobsOptions;
 
+import io.netty.handler.codec.http.HttpResponseStatus;
+
 /**
  * File system provider for the {@link AzureBlobStorageFileSystem}.
  *
@@ -243,51 +245,14 @@ public class AzureBlobStorageFileSystemProvider
 
         try {
             if (dir.getBlobName() != null) {
-                contClient.getBlobClient(dir.toDirectoryPath().getBlobName())
+                contClient.getBlobClient(dir.getDirectoryMarkerFile().getBlobName())
                         .upload(new ByteArrayInputStream(new byte[0]), 0, true);
+                removeDirectoryMarker((AzureBlobStoragePath) dir.getParent());
             } else {
                 contClient.create();
             }
         } catch (BlobStorageException ex) {
             throw AzureUtils.toIOE(ex, dir.toString());
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @SuppressWarnings("resource")
-    @Override
-    protected boolean exists(final AzureBlobStoragePath path) throws IOException {
-        if (path.isRoot()) {
-            // This is the fake root
-            return true;
-        }
-
-        if (!isContainerNameValid(path.getBucketName())) {
-            return false;
-        }
-
-        try {
-            boolean exists = false;
-
-            AzureBlobStorageFileSystem fs = path.getFileSystem();
-            BlobContainerClient contClient = fs.getClient().getBlobContainerClient(path.getBucketName());
-
-            if (path.getBlobName() == null) {
-                exists = contClient.exists();
-            } else {
-                exists = contClient.getBlobClient(path.getBlobName()).exists();
-                if (!exists) {
-                    ListBlobsOptions opts = new ListBlobsOptions().setPrefix(path.toDirectoryPath().getBlobName())
-                            .setMaxResultsPerPage(1);
-                    exists = contClient.listBlobsByHierarchy(fs.getSeparator(), opts, null).iterator().hasNext();
-                }
-            }
-
-            return exists;
-        } catch (BlobStorageException ex) {
-            throw AzureUtils.toIOE(ex, path.toString());
         }
     }
 
@@ -322,26 +287,71 @@ public class AzureBlobStorageFileSystemProvider
     }
 
     @SuppressWarnings("resource")
-    private static BaseFileAttributes createBlobAttributes(final AzureBlobStoragePath path) {
+    private static BaseFileAttributes createBlobAttributes(final AzureBlobStoragePath path) throws NoSuchFileException {
         final AzureBlobStorageFileSystem fs = path.getFileSystem();
 
-        final BlobClient blobClient = fs.getClient() //
-                .getBlobContainerClient(path.getBucketName()) //
-                .getBlobClient(path.getBlobName());
+        // 1. Check for exact match: 'foo/bar'
+        BlobProperties properties = fetchBlobProperties(path);
+        boolean isDirectory = path.isDirectory();
 
-        FileTime createdAt = FileTime.fromMillis(0);
-        FileTime modifiedAt = createdAt;
-        long size = 0;
-        boolean objectExists = blobClient.exists();
-
-        if (objectExists) {
-            final BlobProperties p = blobClient.getProperties();
-            createdAt = FileTime.from(p.getCreationTime().toInstant());
-            modifiedAt = FileTime.from(p.getLastModified().toInstant());
-            size = p.getBlobSize();
+        // 2. Check for directory marker: 'foo/bar/.knime-directory-marker'
+        if (properties == null) {
+            isDirectory = true;
+            properties = fetchBlobProperties(path.getDirectoryMarkerFile());
         }
 
-        return new BaseFileAttributes(!path.isDirectory() && objectExists, //
+        // 3. Check for legacy directory marker: 'foo/bar/'
+        if (properties == null && !path.isDirectory()) {
+            properties = fetchBlobProperties(path.toDirectoryPath());
+        }
+
+        if (properties != null) {
+            return createAttrsFromProperties(properties, path, isDirectory);
+        }
+
+        // 4. Check if the path exists as a prefix
+        BlobContainerClient contClient = fs.getClient().getBlobContainerClient(path.getBucketName());
+        ListBlobsOptions opts = new ListBlobsOptions().setPrefix(path.toDirectoryPath().getBlobName())
+                .setMaxResultsPerPage(1);
+        boolean exists = contClient.listBlobsByHierarchy(fs.getSeparator(), opts, null).iterator().hasNext();
+
+        if (exists) {
+            FileTime time = FileTime.fromMillis(0);
+            return new BaseFileAttributes(false, //
+                    path, //
+                    time, //
+                    time, //
+                    time, //
+                    0, //
+                    false, //
+                    false, //
+                    null);
+        } else {
+            throw new NoSuchFileException(path.toString());
+        }
+    }
+
+    @SuppressWarnings("resource")
+    private static BlobProperties fetchBlobProperties(final AzureBlobStoragePath path) {
+        try {
+            return path.getFileSystem().getClient().getBlobContainerClient(path.getBucketName())
+                    .getBlobClient(path.getBlobName()).getProperties();
+        } catch (BlobStorageException ex) {
+            if (ex.getStatusCode() == HttpResponseStatus.NOT_FOUND.code()) {
+                return null;
+            } else {
+                throw ex;
+            }
+        }
+    }
+
+    private static BaseFileAttributes createAttrsFromProperties(final BlobProperties properties,
+            final AzureBlobStoragePath path, final boolean isDirectory) {
+        FileTime createdAt = FileTime.from(properties.getCreationTime().toInstant());
+        FileTime modifiedAt = FileTime.from(properties.getLastModified().toInstant());
+        long size = properties.getBlobSize();
+
+        return new BaseFileAttributes(!isDirectory, //
                 path, //
                 modifiedAt, //
                 modifiedAt, //
@@ -398,25 +408,60 @@ public class AzureBlobStorageFileSystemProvider
     @SuppressWarnings("resource")
     @Override
     protected void deleteInternal(final AzureBlobStoragePath path) throws IOException {
-        String blobName = path.getBlobName();
-        if (isDirectory(path)) {
-            blobName = path.toDirectoryPath().getBlobName();
-            if (FSFiles.isNonEmptyDirectory(path)) {
-                throw new DirectoryNotEmptyException(path.toString());
-            }
-        }
-
         AzureBlobStorageFileSystem fs = path.getFileSystem();
         BlobContainerClient contClient = fs.getClient().getBlobContainerClient(path.getBucketName());
 
         try {
             if (path.getBlobName() != null) {
-                contClient.getBlobClient(blobName).delete();
+                final BasicFileAttributes attr = readAttributes(path, BasicFileAttributes.class);
+                if (!attr.isDirectory()) {
+                    contClient.getBlobClient(path.getBlobName()).delete();
+                } else {
+                    removeDirectoryMarker(path);
+                }
+
+                AzureBlobStoragePath parent = (AzureBlobStoragePath) path.getParent();
+                if(!exists(parent)) {
+                    createDirectoryInternal(parent);
+                }
+
             } else {
                 contClient.delete();
             }
         } catch (BlobStorageException ex) {
             throw AzureUtils.toIOE(ex, path.toString());
         }
+    }
+
+    /**
+     * Removes directory marker object corresponding to the given directory.
+     *
+     * @param dir
+     *            The directory path.
+     * @throws IOException
+     */
+    public static void removeDirectoryMarker(final AzureBlobStoragePath dir) throws IOException {
+        if (dir.getBlobName() != null) {
+            boolean deleted = tryToDeleteBlob(dir.getDirectoryMarkerFile());
+            if (!deleted) {
+                tryToDeleteBlob(dir.toDirectoryPath());
+            }
+        }
+    }
+
+    @SuppressWarnings("resource")
+    private static boolean tryToDeleteBlob(final AzureBlobStoragePath path) throws IOException {
+        BlobContainerClient contClient = path.getFileSystem().getClient().getBlobContainerClient(path.getBucketName());
+        try {
+            contClient.getBlobClient(path.getBlobName()).delete();
+            return true;
+        } catch (BlobStorageException ex) {
+            if (ex.getStatusCode() != HttpResponseStatus.NOT_FOUND.code()) {
+                throw AzureUtils.toIOE(ex, path.toString());
+            } else {
+                return false;
+            }
+        }
+
     }
 }

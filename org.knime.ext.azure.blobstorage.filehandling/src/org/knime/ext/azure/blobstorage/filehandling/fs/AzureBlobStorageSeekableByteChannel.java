@@ -98,6 +98,7 @@ public class AzureBlobStorageSeekableByteChannel extends TempFileSeekableByteCha
             AzureBlobStorageFileSystem fs = remoteFile.getFileSystem();
             fs.getBlobClientwithIncreasedTimeout(remoteFile.getBucketName(), remoteFile.getBlobName(),
                     Files.size(tempFile)).uploadFromFile(tempFile.toString(), true);
+            AzureBlobStorageFileSystemProvider.removeDirectoryMarker((AzureBlobStoragePath) remoteFile.getParent());
         } catch (BlobStorageException ex) {
             throw AzureUtils.toIOE(ex, remoteFile.toString());
         }

@@ -165,6 +165,7 @@ public final class AzureBlobStoragePathIteratorFactory {
                         .stream() //
                         .filter(blob -> !blob.getName().equals(m_path.getBlobName()))
                         .map(this::toPath) //
+                        .filter(path -> !path.isDirectoryMarkerFile()) //
                         .collect(Collectors.toList()) //
                         .iterator();
             } catch (BlobStorageException ex) {
