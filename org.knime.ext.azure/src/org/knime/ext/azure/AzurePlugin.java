@@ -56,6 +56,7 @@ import org.osgi.framework.BundleContext;
 
 import com.azure.core.http.HttpClientProvider;
 import com.azure.core.implementation.http.HttpClientProviders;
+import com.azure.storage.file.datalake.DataLakePathClient;
 
 /**
  * Plugin activator for the Azure plugin.
@@ -105,7 +106,7 @@ public class AzurePlugin extends AbstractUIPlugin {
         }
 
         // Ignore errors logged from within the datalake client
-        Logger.getLogger("com.azure.storage.file.datalake").setLevel(Level.OFF);
+        Logger.getLogger(DataLakePathClient.class).setLevel(Level.OFF);
     }
 
     /**
