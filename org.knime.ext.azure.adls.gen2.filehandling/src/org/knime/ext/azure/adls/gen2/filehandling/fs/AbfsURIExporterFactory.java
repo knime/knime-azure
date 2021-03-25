@@ -49,51 +49,43 @@
 package org.knime.ext.azure.adls.gen2.filehandling.fs;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 
-import org.knime.filehandling.core.connections.FSPath;
-import org.knime.filehandling.core.connections.uriexport.NoSettingsURIExporter;
-import org.knime.filehandling.core.connections.uriexport.URIExporter;
+import org.knime.filehandling.core.connections.uriexport.URIExporterFactory;
+import org.knime.filehandling.core.connections.uriexport.URIExporterID;
+import org.knime.filehandling.core.connections.uriexport.base.BaseURIExporterMetaInfo;
+import org.knime.filehandling.core.connections.uriexport.noconfig.NoConfigURIExporterFactory;
 
 /**
- * {@link URIExporter} implementation using "abfs" as scheme.
+ * {@link URIExporterFactory} implementation using "abfs" as scheme.
  *
+ * @author Ayaz Ali Qureshi, KNIME GmbH, Berlin, Germany
  * @author Alexander Bondaletov
  */
-public final class AbfsURIExporter extends NoSettingsURIExporter {
+public final class AbfsURIExporterFactory extends NoConfigURIExporterFactory {
+
+    static final URIExporterID EXPORTER_ID = new URIExporterID("microsoft-adlsgen2-abfss");
 
     private static final String SCHEME = "abfss";
 
-    private static final AbfsURIExporter INSTANCE = new AbfsURIExporter();
+    private static final BaseURIExporterMetaInfo META_INFO = new BaseURIExporterMetaInfo("abfss:// URLs",
+            "Generates abfss:// URLs");
 
-    private AbfsURIExporter() {
+    private static final AbfsURIExporterFactory INSTANCE = new AbfsURIExporterFactory();
+
+    private AbfsURIExporterFactory() {
+        super(META_INFO, p -> {
+            AdlsPath adlsPath = (AdlsPath) p;
+            String account = adlsPath.getFileSystem().getClient().getAccountName();
+            String host = account + ".dfs.core.windows.net";
+
+            return new URI(SCHEME, adlsPath.getFileSystemName(), host, -1, "/" + adlsPath.getFilePath(), null, null);
+        });
     }
 
     /**
      * @return singleton instance of this exporter
      */
-    public static AbfsURIExporter getInstance() {
+    public static AbfsURIExporterFactory getInstance() {
         return INSTANCE;
     }
-
-    @Override
-    public String getLabel() {
-        return "abfss:// URLs";
-    }
-
-    @Override
-    public String getDescription() {
-        return "Exports abfss:// URLs";
-    }
-
-    @SuppressWarnings("resource")
-    @Override
-    public URI toUri(final FSPath path) throws URISyntaxException {
-        AdlsPath adlsPath = (AdlsPath) path;
-        String account = adlsPath.getFileSystem().getClient().getAccountName();
-        String host = account + ".dfs.core.windows.net";
-
-        return new URI(SCHEME, adlsPath.getFileSystemName(), host, -1, "/" + adlsPath.getFilePath(), null, null);
-    }
-
 }

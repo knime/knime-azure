@@ -46,59 +46,44 @@
 package org.knime.ext.azure.blobstorage.filehandling.fs;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 
-import org.knime.filehandling.core.connections.FSPath;
-import org.knime.filehandling.core.connections.uriexport.NoSettingsURIExporter;
-import org.knime.filehandling.core.connections.uriexport.URIExporter;
+import org.knime.filehandling.core.connections.uriexport.URIExporterFactory;
 import org.knime.filehandling.core.connections.uriexport.URIExporterID;
+import org.knime.filehandling.core.connections.uriexport.base.BaseURIExporterMetaInfo;
+import org.knime.filehandling.core.connections.uriexport.noconfig.NoConfigURIExporterFactory;
 
 /**
- * {@link URIExporter} implementation using "wasbs" as scheme.
+ * {@link URIExporterFactory} implementation using "wasbs" as scheme.
  *
+ * @author Ayaz Ali Qureshi, KNIME GmbH, Berlin, Germany
  * @author Sascha Wolke, KNIME GmbH
  */
-final class WasbsURIExporter extends NoSettingsURIExporter {
+final class WasbsURIExporterFactory extends NoConfigURIExporterFactory {
+
+    static final URIExporterID EXPORTER_ID = new URIExporterID("microsoft-blobstorage-wasbs");
 
     private static final String SCHEME = "wasbs";
 
-    /**
-     * Unique identifier of this exporter.
-     */
-    public static final URIExporterID ID = new URIExporterID("microsoft-blobstorage-wasbs");
+    private static final BaseURIExporterMetaInfo META_INFO = new BaseURIExporterMetaInfo("wasbs:// URLs",
+            "Generates wasbs:// URLs");
 
-    private static final WasbsURIExporter INSTANCE = new WasbsURIExporter();
+    private static final WasbsURIExporterFactory INSTANCE = new WasbsURIExporterFactory();
 
-    private WasbsURIExporter() {
+    private WasbsURIExporterFactory() {
+        super(META_INFO, p -> {
+            // Exports the given path as
+            // {@code wasbs://<bucket>@<account>.blob.core.windows.net</path>}.
+            final AzureBlobStoragePath absPath = (AzureBlobStoragePath) p.toAbsolutePath();
+            final String account = absPath.getFileSystem().getAccountName();
+            final String host = account + ".blob.core.windows.net";
+            return new URI(SCHEME, absPath.getBucketName(), host, -1, '/' + absPath.getBlobName(), null, null);
+        });
     }
 
     /**
      * @return singleton instance of this exporter
      */
-    public static WasbsURIExporter getInstance() {
+    public static WasbsURIExporterFactory getInstance() {
         return INSTANCE;
-    }
-
-    @Override
-    public String getLabel() {
-        return "wasbs:// URLs";
-    }
-
-    @Override
-    public String getDescription() {
-        return "Exports wasbs:// URLs";
-    }
-
-    /**
-     * Exports the given path as
-     * {@code wasbs://<bucket>@<account>.blob.core.windows.net</path>}.
-     */
-    @Override
-    @SuppressWarnings("resource")
-    public URI toUri(final FSPath path) throws URISyntaxException {
-        final AzureBlobStoragePath absPath = (AzureBlobStoragePath) path.toAbsolutePath();
-        final String account = absPath.getFileSystem().getAccountName();
-        final String host = account + ".blob.core.windows.net";
-        return new URI(SCHEME, absPath.getBucketName(), host, -1, '/' + absPath.getBlobName(), null, null);
     }
 }

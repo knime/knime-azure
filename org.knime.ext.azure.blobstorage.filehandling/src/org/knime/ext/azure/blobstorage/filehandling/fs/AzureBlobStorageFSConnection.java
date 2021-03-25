@@ -54,10 +54,10 @@ import org.knime.core.node.util.FileSystemBrowser;
 import org.knime.ext.azure.blobstorage.filehandling.node.AzureBlobStorageConnectorSettings;
 import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.FSFileSystem;
-import org.knime.filehandling.core.connections.uriexport.URIExporter;
+import org.knime.filehandling.core.connections.uriexport.URIExporterFactory;
+import org.knime.filehandling.core.connections.uriexport.URIExporterFactoryMapBuilder;
 import org.knime.filehandling.core.connections.uriexport.URIExporterID;
 import org.knime.filehandling.core.connections.uriexport.URIExporterIDs;
-import org.knime.filehandling.core.connections.uriexport.URIExporterMapBuilder;
 import org.knime.filehandling.core.filechooser.NioFileSystemBrowser;
 
 import com.azure.storage.blob.BlobServiceClient;
@@ -69,9 +69,10 @@ import com.azure.storage.blob.BlobServiceClient;
  */
 public class AzureBlobStorageFSConnection implements FSConnection {
 
-    private static final Map<URIExporterID, URIExporter> URI_EXPORTERS = new URIExporterMapBuilder() //
-            .add(URIExporterIDs.DEFAULT, WasbsURIExporter.getInstance()) //
-            .add(URIExporterIDs.DEFAULT_HADOOP, WasbsURIExporter.getInstance()) //
+    private static final Map<URIExporterID, URIExporterFactory> URI_EXPORTER_FACTORIES = new URIExporterFactoryMapBuilder() //
+            .add(URIExporterIDs.DEFAULT, WasbsURIExporterFactory.getInstance()) //
+            .add(URIExporterIDs.DEFAULT_HADOOP, WasbsURIExporterFactory.getInstance()) //
+            .add(WasbsURIExporterFactory.EXPORTER_ID, WasbsURIExporterFactory.getInstance()) //
             .build();
 
     private static final long CACHE_TTL = 6000;
@@ -101,7 +102,7 @@ public class AzureBlobStorageFSConnection implements FSConnection {
     }
 
     @Override
-    public Map<URIExporterID, URIExporter> getURIExporters() {
-        return URI_EXPORTERS;
+    public Map<URIExporterID, URIExporterFactory> getURIExporterFactories() {
+        return URI_EXPORTER_FACTORIES;
     }
 }
