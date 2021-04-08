@@ -4,11 +4,9 @@ Bundle-Name: Azure utilites bundle for KNIME Workbench
 Bundle-SymbolicName: org.knime.ext.azure;singleton:=true
 Bundle-Version: 4.3.3.qualifier
 Bundle-Vendor: 
-Require-Bundle: org.knime.workbench.repository;bundle-version="[4.2.0,5.0.0)",
- org.knime.core;bundle-version="[4.2.0,5.0.0]",
- org.knime.filehandling.core;bundle-version="[4.2.0,5.0.0)",
+Require-Bundle: org.knime.core;bundle-version="[4.3.0,5.0.0]",
  org.eclipse.ui.workbench,
- org.knime.ext.microsoft.authentication;bundle-version="[4.2.0,5.0.0)";visibility:=reexport,
+ org.knime.ext.microsoft.authentication;bundle-version="[4.3.3,5.0.0)";visibility:=reexport,
  io.netty.all;bundle-version="4.1.51";visibility:=reexport,
  org.slf4j.api;bundle-version="1.7.2",
  io.projectreactor.reactor-core;bundle-version="3.3.5";visibility:=reexport,
