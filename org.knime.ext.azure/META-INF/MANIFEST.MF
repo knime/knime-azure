@@ -59,6 +59,7 @@ Export-Package: com.azure.core.credential;uses:="reactor.core.publisher",
  com.azure.core.util.polling,
  com.azure.storage.blob,
  com.azure.storage.blob.models,
+ com.azure.storage.blob.sas,
  com.azure.storage.blob.specialized,
  com.azure.storage.common;uses:="reactor.core.publisher,com.azure.core.http,com.azure.core.util.logging",
  com.azure.storage.file.datalake;

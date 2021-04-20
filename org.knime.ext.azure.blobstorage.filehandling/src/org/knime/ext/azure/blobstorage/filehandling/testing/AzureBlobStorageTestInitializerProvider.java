@@ -56,6 +56,7 @@ import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSConnect
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFileSystem;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFileSystemProvider;
 import org.knime.ext.azure.blobstorage.filehandling.node.AzureBlobStorageConnectorSettings;
+import org.knime.ext.microsoft.authentication.port.MicrosoftCredential.Type;
 import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializerProvider;
 
@@ -84,6 +85,7 @@ public class AzureBlobStorageTestInitializerProvider extends DefaultFSTestInitia
         AzureBlobStorageConnectorSettings settings = new AzureBlobStorageConnectorSettings();
         settings.getWorkingDirectoryModel().setStringValue(workingDir);
         AzureBlobStorageFSConnection fsConnection = new AzureBlobStorageFSConnection(createClient(configuration),
+                Type.AZURE_SHARED_KEY,
                 settings);
         return new AzureBlobStorageTestInitializer(fsConnection);
     }

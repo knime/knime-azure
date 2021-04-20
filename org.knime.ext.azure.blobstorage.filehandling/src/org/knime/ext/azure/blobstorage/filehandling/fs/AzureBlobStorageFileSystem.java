@@ -58,6 +58,7 @@ import java.util.Collections;
 import java.util.Locale;
 
 import org.knime.ext.azure.blobstorage.filehandling.node.AzureBlobStorageConnectorSettings;
+import org.knime.ext.microsoft.authentication.port.MicrosoftCredential.Type;
 import org.knime.filehandling.core.connections.DefaultFSLocationSpec;
 import org.knime.filehandling.core.connections.FSCategory;
 import org.knime.filehandling.core.connections.FSLocationSpec;
@@ -87,6 +88,7 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
     private final BlobServiceClient m_client;
     private final boolean m_normalizePaths;
     private final int m_standardTimeout;
+    private final Type m_credentialType;
 
     /**
      * Creates a new instance.
@@ -95,17 +97,21 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
      *            The time to live for cached elements in milliseconds.
      * @param client
      *            The {@link BlobServiceClient} instance.
+     * @param type
+     *            The type of credential used to init the {@link BlobServiceClient}
+     *            instance.
      * @param settings
      *            The settings.
      */
-    public AzureBlobStorageFileSystem(final BlobServiceClient client, final AzureBlobStorageConnectorSettings settings,
-            final long cacheTTL) {
+    public AzureBlobStorageFileSystem(final BlobServiceClient client, final Type type,
+            final AzureBlobStorageConnectorSettings settings, final long cacheTTL) {
         super(new AzureBlobStorageFileSystemProvider(), //
                 createURL(client.getAccountName()), //
                 cacheTTL, settings.getWorkingDirectory(), //
                 createFSLocationSpec(client.getAccountName()));
 
         m_client = client;
+        m_credentialType = type;
         m_normalizePaths = settings.shouldNormalizePaths();
         m_standardTimeout = settings.getTimeout();
     }
@@ -140,8 +146,16 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
     /**
      * @return account name used by client
      */
-    String getAccountName() {
+    public String getAccountName() {
         return m_client.getAccountName();
+    }
+
+    /**
+     * @return the type of credential used to authenticate against Azure Blob
+     *         Storage.
+     */
+    public Type getCredentialType() {
+        return m_credentialType;
     }
 
     /**

@@ -43,47 +43,60 @@
  *  when such Node is propagated with or for interoperation with KNIME.
  * ---------------------------------------------------------------------
  */
-package org.knime.ext.azure.blobstorage.filehandling.fs;
+package org.knime.ext.azure.blobstorage.filehandling.uriexporter;
 
-import java.net.URI;
+import java.time.Duration;
 
+import org.knime.cloud.core.filehandling.signedurl.SignedUrlConfig;
+import org.knime.cloud.core.filehandling.signedurl.SignedUrlPanel;
+import org.knime.filehandling.core.connections.uriexport.URIExporter;
+import org.knime.filehandling.core.connections.uriexport.URIExporterConfig;
 import org.knime.filehandling.core.connections.uriexport.URIExporterFactory;
 import org.knime.filehandling.core.connections.uriexport.URIExporterID;
+import org.knime.filehandling.core.connections.uriexport.base.BaseURIExporterFactory;
 import org.knime.filehandling.core.connections.uriexport.base.BaseURIExporterMetaInfo;
-import org.knime.filehandling.core.connections.uriexport.noconfig.NoConfigURIExporterFactory;
 
 /**
- * {@link URIExporterFactory} implementation using "wasbs" as scheme.
+ * {@link URIExporterFactory} implementation using "sas" as scheme.
  *
  * @author Ayaz Ali Qureshi, KNIME GmbH, Berlin, Germany
- * @author Sascha Wolke, KNIME GmbH
  */
-final class WasbsURIExporterFactory extends NoConfigURIExporterFactory {
+public final class AzureSASURIExporterFactory extends BaseURIExporterFactory {
 
-    static final URIExporterID EXPORTER_ID = new URIExporterID("microsoft-blobstorage-wasbs");
+    /**
+     * Unique identifier of this exporter.
+     */
+    public static final URIExporterID EXPORTER_ID = new URIExporterID("microsoft-blobstorage-azure-sas");
 
-    private static final String SCHEME = "wasbs";
+    private static final BaseURIExporterMetaInfo META_INFO = new BaseURIExporterMetaInfo(
+            "Shared Access Signature (SAS) URL",
+            "Generates https:// URLs that contain credentials, which allow to access files for a certain amount of time.");
 
-    private static final BaseURIExporterMetaInfo META_INFO = new BaseURIExporterMetaInfo("wasbs:// URLs",
-            "Generates wasbs:// URLs");
+    private static final AzureSASURIExporterFactory INSTANCE = new AzureSASURIExporterFactory(META_INFO);
 
-    private static final WasbsURIExporterFactory INSTANCE = new WasbsURIExporterFactory();
-
-    private WasbsURIExporterFactory() {
-        super(META_INFO, p -> {
-            // Exports the given path as
-            // {@code wasbs://<bucket>@<account>.blob.core.windows.net</path>}.
-            final AzureBlobStoragePath absPath = (AzureBlobStoragePath) p.toAbsolutePath();
-            final String account = absPath.getFileSystem().getAccountName();
-            final String host = account + ".blob.core.windows.net";
-            return new URI(SCHEME, absPath.getBucketName(), host, -1, '/' + absPath.getBlobName(), null, null);
-        });
+    private AzureSASURIExporterFactory(final BaseURIExporterMetaInfo metaInfo) {
+        super(metaInfo);
     }
 
     /**
      * @return singleton instance of this exporter
      */
-    public static WasbsURIExporterFactory getInstance() {
+    public static AzureSASURIExporterFactory getInstance() {
         return INSTANCE;
+    }
+
+    @Override
+    public final SignedUrlPanel createPanel(final URIExporterConfig config) {
+        return new SignedUrlPanel((SignedUrlConfig) config);
+    }
+
+    @Override
+    public final SignedUrlConfig initConfig() {
+        return new SignedUrlConfig(Duration.ofDays(1000));
+    }
+
+    @Override
+    public final URIExporter createExporter(final URIExporterConfig settings) {
+        return new AzureSASURIExporter((SignedUrlConfig) settings);
     }
 }
