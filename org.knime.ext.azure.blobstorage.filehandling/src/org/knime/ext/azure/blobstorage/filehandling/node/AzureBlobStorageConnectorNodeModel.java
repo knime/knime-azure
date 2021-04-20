@@ -138,7 +138,7 @@ public class AzureBlobStorageConnectorNodeModel extends NodeModel {
                     "Authentication failed, or the account doesn't have enough permissions to list containers");
         }
 
-        m_fsConnection = new AzureBlobStorageFSConnection(client, m_settings);
+        m_fsConnection = new AzureBlobStorageFSConnection(client, credential.getType(), m_settings);
         FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
 
         return new PortObject[] { new FileSystemPortObject(createSpec(credential)) };

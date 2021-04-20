@@ -42,73 +42,52 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ---------------------------------------------------------------------
- *
- * History
- *   2020-07-14 (Alexander Bondaletov): created
  */
-package org.knime.ext.azure.blobstorage.filehandling.fs;
+package org.knime.ext.azure.blobstorage.filehandling.uriexporter;
 
-import java.util.Map;
+import java.net.URI;
 
-import org.knime.core.node.util.FileSystemBrowser;
-import org.knime.ext.azure.blobstorage.filehandling.node.AzureBlobStorageConnectorSettings;
-import org.knime.ext.azure.blobstorage.filehandling.uriexporter.AzureSASURIExporterFactory;
-import org.knime.ext.azure.blobstorage.filehandling.uriexporter.WasbsURIExporterFactory;
-import org.knime.ext.microsoft.authentication.port.MicrosoftCredential.Type;
-import org.knime.filehandling.core.connections.FSConnection;
-import org.knime.filehandling.core.connections.FSFileSystem;
+import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStoragePath;
 import org.knime.filehandling.core.connections.uriexport.URIExporterFactory;
-import org.knime.filehandling.core.connections.uriexport.URIExporterFactoryMapBuilder;
 import org.knime.filehandling.core.connections.uriexport.URIExporterID;
-import org.knime.filehandling.core.connections.uriexport.URIExporterIDs;
-import org.knime.filehandling.core.filechooser.NioFileSystemBrowser;
-
-import com.azure.storage.blob.BlobServiceClient;
+import org.knime.filehandling.core.connections.uriexport.base.BaseURIExporterMetaInfo;
+import org.knime.filehandling.core.connections.uriexport.noconfig.NoConfigURIExporterFactory;
 
 /**
- * Azure Blob Storage implementation of the {@link FSConnection} interface.
+ * {@link URIExporterFactory} implementation using "wasbs" as scheme.
  *
- * @author Alexander Bondaletov
+ * @author Sascha Wolke, KNIME GmbH
  */
-public class AzureBlobStorageFSConnection implements FSConnection {
-
-    private static final Map<URIExporterID, URIExporterFactory> URI_EXPORTER_FACTORIES = new URIExporterFactoryMapBuilder() //
-            .add(URIExporterIDs.DEFAULT, WasbsURIExporterFactory.getInstance()) //
-            .add(URIExporterIDs.DEFAULT_HADOOP, WasbsURIExporterFactory.getInstance()) //
-            .add(WasbsURIExporterFactory.EXPORTER_ID, WasbsURIExporterFactory.getInstance()) //
-            .add(AzureSASURIExporterFactory.EXPORTER_ID, AzureSASURIExporterFactory.getInstance()) //
-            .build();
-
-    private static final long CACHE_TTL = 6000;
-
-    private final AzureBlobStorageFileSystem m_filesystem;
+public final class WasbsURIExporterFactory extends NoConfigURIExporterFactory {
 
     /**
-     * @param client
-     *            The {@link BlobServiceClient} instance.
-     * @param type
-     *            The type of credential used to init the {@link BlobServiceClient}
-     *            instance.
-     * @param settings
-     *            The settings.
+     * ID of this {@link URIExporterFactory}.
      */
-    public AzureBlobStorageFSConnection(final BlobServiceClient client, final Type type,
-            final AzureBlobStorageConnectorSettings settings) {
-        m_filesystem = new AzureBlobStorageFileSystem(client, type, settings, CACHE_TTL);
+    public static final URIExporterID EXPORTER_ID = new URIExporterID("microsoft-blobstorage-wasbs");
+
+    private static final String SCHEME = "wasbs";
+
+    private static final BaseURIExporterMetaInfo META_INFO = new BaseURIExporterMetaInfo("wasbs:// URLs",
+            "Generates wasbs:// URLs");
+
+    private static final WasbsURIExporterFactory INSTANCE = new WasbsURIExporterFactory();
+
+    @SuppressWarnings("resource")
+    private WasbsURIExporterFactory() {
+        super(META_INFO, p -> {
+            // Exports the given path as
+            // {@code wasbs://<bucket>@<account>.blob.core.windows.net</path>}.
+            final AzureBlobStoragePath absPath = (AzureBlobStoragePath) p.toAbsolutePath();
+            final String account = absPath.getFileSystem().getAccountName();
+            final String host = account + ".blob.core.windows.net";
+            return new URI(SCHEME, absPath.getBucketName(), host, -1, '/' + absPath.getBlobName(), null, null);
+        });
     }
 
-    @Override
-    public FSFileSystem<?> getFileSystem() {
-        return m_filesystem;
-    }
-
-    @Override
-    public FileSystemBrowser getFileSystemBrowser() {
-        return new NioFileSystemBrowser(this);
-    }
-
-    @Override
-    public Map<URIExporterID, URIExporterFactory> getURIExporterFactories() {
-        return URI_EXPORTER_FACTORIES;
+    /**
+     * @return singleton instance of this exporter
+     */
+    public static WasbsURIExporterFactory getInstance() {
+        return INSTANCE;
     }
 }

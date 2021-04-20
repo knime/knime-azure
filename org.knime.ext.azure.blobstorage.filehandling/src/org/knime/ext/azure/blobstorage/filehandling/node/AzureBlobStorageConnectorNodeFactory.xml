@@ -35,6 +35,15 @@
                     <li>Followed by the name of an object within the container (<tt>myfolder/myfile</tt> in the above example).</li>
                 </ol>
             </p>
+            
+            
+            <p><b>URI formats:</b> When you apply the <i>Path to URI</i> node to paths coming from this connector, you can create URIs with the following formats:
+                <ol>
+                    <li><b>Shared Access Signature (SAS) URLs</b> which contain credentials, that allow to access files for a certain amount of time
+                    (see <a href="https://docs.microsoft.com/en-us/azure/storage/common/storage-sas-overview">Azure documentation</a>).</li>
+                    <li><b>wasbs:// URLs</b> to access Azure Blob Storage from inside Hadoop environments.</li>
+                </ol>
+            </p>
         </intro>
         <tab name="Settings">
 	        <option name="Working directory">

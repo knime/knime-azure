@@ -162,7 +162,9 @@ public class AzureBlobStorageConnectorNodeDialog extends NodeDialogPane {
 
     private FSConnection createFSConnection() throws IOException {
         return new AzureBlobStorageFSConnection(
-                AzureBlobStorageConnectorNodeModel.createServiceClient(m_credentials, m_settings), m_settings);
+                AzureBlobStorageConnectorNodeModel.createServiceClient(m_credentials, m_settings),
+                m_credentials.getType(),
+                m_settings);
     }
 
     @Override
