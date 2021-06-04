@@ -106,7 +106,7 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
     public AzureBlobStorageFileSystem(final BlobServiceClient client, final Type type,
             final AzureBlobStorageConnectorSettings settings, final long cacheTTL) {
         super(new AzureBlobStorageFileSystemProvider(), //
-                createURL(client.getAccountName()), //
+                // createURL(client.getAccountName()), //
                 cacheTTL, settings.getWorkingDirectory(), //
                 createFSLocationSpec(client.getAccountName()));
 
@@ -118,7 +118,7 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
 
     private static URI createURL(final String accountName) {
         try {
-            return new URI(AzureBlobStorageFileSystemProvider.FS_TYPE, accountName, null, null);
+            return new URI(AzureBlobStorageFileSystemProvider.FS_TYPE.getTypeId(), accountName, null, null);
         } catch (URISyntaxException ex) {
             // never happens
             throw new IllegalArgumentException(accountName, ex);

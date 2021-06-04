@@ -85,11 +85,7 @@ import com.azure.storage.file.datalake.models.PathProperties;
  *
  * @author Alexander Bondaletov
  */
-public class AdlsFileSystemProvider extends BaseFileSystemProvider<AdlsPath, AdlsFileSystem> {
-    /**
-     * ADLS URI scheme.
-     */
-    public static final String FS_TYPE = "microsoft-adlsgen2";
+class AdlsFileSystemProvider extends BaseFileSystemProvider<AdlsPath, AdlsFileSystem> {
 
     @Override
     protected SeekableByteChannel newByteChannelInternal(final AdlsPath path, final Set<? extends OpenOption> options,
@@ -104,7 +100,8 @@ public class AdlsFileSystemProvider extends BaseFileSystemProvider<AdlsPath, Adl
     }
 
     @Override
-    protected void copyInternal(final AdlsPath source, final AdlsPath target, final CopyOption... options) throws IOException {
+    protected void copyInternal(final AdlsPath source, final AdlsPath target, final CopyOption... options)
+            throws IOException {
         if (FSFiles.isDirectory(source)) {
             if (!existsCached(target)) {
                 createDirectory(target);
@@ -176,13 +173,15 @@ public class AdlsFileSystemProvider extends BaseFileSystemProvider<AdlsPath, Adl
 
     @SuppressWarnings("resource")
     @Override
-    protected OutputStream newOutputStreamInternal(final AdlsPath path, final OpenOption... options) throws IOException {
+    protected OutputStream newOutputStreamInternal(final AdlsPath path, final OpenOption... options)
+            throws IOException {
         final Set<OpenOption> opts = new HashSet<>(Arrays.asList(options));
         return Channels.newOutputStream(newByteChannel(path, opts));
     }
 
     @Override
-    protected Iterator<AdlsPath> createPathIterator(final AdlsPath dir, final Filter<? super Path> filter) throws IOException {
+    protected Iterator<AdlsPath> createPathIterator(final AdlsPath dir, final Filter<? super Path> filter)
+            throws IOException {
         return AdlsPathIteratorFactory.create(dir, filter);
     }
 

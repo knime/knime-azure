@@ -85,7 +85,7 @@ import com.azure.storage.file.datalake.models.DataLakeStorageException;
  *
  * @author Alexander Bondaletov
  */
-public class AdlsConnectorNodeModel extends NodeModel {
+final class AdlsConnectorNodeModel extends NodeModel {
     private static final String FILE_SYSTEM_NAME = "Azure Data Lake Storage Gen2";
 
     private String m_fsId;
@@ -131,7 +131,7 @@ public class AdlsConnectorNodeModel extends NodeModel {
                     "Authentication failed, or the account doesn't have enough permissions to list containers");
         }
 
-        m_fsConnection = new AdlsFSConnection(client, m_settings.getWorkingDirectory());
+        m_fsConnection = new AdlsFSConnection(m_settings.toFSConnectionConfig(client));
         FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
 
         return new PortObject[] { new FileSystemPortObject(createSpec(credential)) };

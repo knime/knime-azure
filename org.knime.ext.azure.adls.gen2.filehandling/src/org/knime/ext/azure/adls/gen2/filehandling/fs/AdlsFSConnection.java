@@ -48,18 +48,10 @@
  */
 package org.knime.ext.azure.adls.gen2.filehandling.fs;
 
-import java.util.Map;
-
 import org.knime.core.node.util.FileSystemBrowser;
 import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.FSFileSystem;
-import org.knime.filehandling.core.connections.uriexport.URIExporterFactory;
-import org.knime.filehandling.core.connections.uriexport.URIExporterFactoryMapBuilder;
-import org.knime.filehandling.core.connections.uriexport.URIExporterID;
-import org.knime.filehandling.core.connections.uriexport.URIExporterIDs;
 import org.knime.filehandling.core.filechooser.NioFileSystemBrowser;
-
-import com.azure.storage.file.datalake.DataLakeServiceClient;
 
 /**
  * ADLS implementation of the {@link FSConnection} interface.
@@ -67,25 +59,18 @@ import com.azure.storage.file.datalake.DataLakeServiceClient;
  * @author Alexander Bondaletov
  */
 public class AdlsFSConnection implements FSConnection {
-    private static final Map<URIExporterID, URIExporterFactory> URI_EXPORTER_FACTORIES = new URIExporterFactoryMapBuilder() //
-            .add(URIExporterIDs.DEFAULT, AbfsURIExporterFactory.getInstance()) //
-            .add(URIExporterIDs.DEFAULT_HADOOP, AbfsURIExporterFactory.getInstance()) //
-            .add(AbfsURIExporterFactory.EXPORTER_ID, AbfsURIExporterFactory.getInstance()) //
-            .build();
 
     private static final long CACHE_TTL = 6000;
 
     private final AdlsFileSystem m_filesystem;
 
     /**
-     * @param client
-     *            The {@link DataLakeServiceClient} instance.
-     * @param workingDir
-     *            The working directory.
+     * @param config
+     *            The connection configuration
      *
      */
-    public AdlsFSConnection(final DataLakeServiceClient client, final String workingDir) {
-        m_filesystem = new AdlsFileSystem(client, CACHE_TTL, workingDir);
+    public AdlsFSConnection(final AdlsConnectionConfig config) {
+        m_filesystem = new AdlsFileSystem(config, CACHE_TTL);
     }
 
     @Override
@@ -98,8 +83,4 @@ public class AdlsFSConnection implements FSConnection {
         return new NioFileSystemBrowser(this);
     }
 
-    @Override
-    public Map<URIExporterID, URIExporterFactory> getURIExporterFactories() {
-        return URI_EXPORTER_FACTORIES;
-    }
 }

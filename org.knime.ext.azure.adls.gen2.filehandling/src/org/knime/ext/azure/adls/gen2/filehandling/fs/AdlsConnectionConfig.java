@@ -44,49 +44,38 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2021-01-27 (Alexander Bondaletov): created
+ *   2021-06-04 Moditha Hewasinghage: created
  */
 package org.knime.ext.azure.adls.gen2.filehandling.fs;
 
-import java.net.URI;
+import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig;
 
-import org.knime.filehandling.core.connections.uriexport.URIExporterFactory;
-import org.knime.filehandling.core.connections.uriexport.URIExporterID;
-import org.knime.filehandling.core.connections.uriexport.base.BaseURIExporterMetaInfo;
-import org.knime.filehandling.core.connections.uriexport.noconfig.NoConfigURIExporterFactory;
+import com.azure.storage.file.datalake.DataLakeServiceClient;
 
 /**
- * {@link URIExporterFactory} implementation using "abfs" as scheme.
+ * Azure Datalake connection configuration implementation.
  *
- * @author Ayaz Ali Qureshi, KNIME GmbH, Berlin, Germany
- * @author Alexander Bondaletov
+ * @author Moditha Hewasinghage
  */
-final class AbfsURIExporterFactory extends NoConfigURIExporterFactory {
+public class AdlsConnectionConfig extends BaseFSConnectionConfig {
 
-    static final URIExporterID EXPORTER_ID = new URIExporterID("microsoft-adlsgen2-abfss");
+    private final DataLakeServiceClient m_client;
 
-    private static final String SCHEME = "abfss";
-
-    private static final BaseURIExporterMetaInfo META_INFO = new BaseURIExporterMetaInfo("abfss:// URLs",
-            "Generates abfss:// URLs");
-
-    private static final AbfsURIExporterFactory INSTANCE = new AbfsURIExporterFactory();
-
-    private AbfsURIExporterFactory() {
-        super(META_INFO, p -> {
-            AdlsPath adlsPath = (AdlsPath) p;
-            @SuppressWarnings("resource")
-            String account = adlsPath.getFileSystem().getClient().getAccountName();
-            String host = account + ".dfs.core.windows.net";
-
-            return new URI(SCHEME, adlsPath.getFileSystemName(), host, -1, "/" + adlsPath.getFilePath(), null, null);
-        });
+    /**
+     *
+     * @param workingDirectory
+     * @param client
+     */
+    public AdlsConnectionConfig(final String workingDirectory, final DataLakeServiceClient client) {
+        super(workingDirectory, true);
+        m_client = client;
     }
 
     /**
-     * @return singleton instance of this exporter
+     * @return the data lake client
      */
-    public static AbfsURIExporterFactory getInstance() {
-        return INSTANCE;
+    public DataLakeServiceClient getClient() {
+        return m_client;
     }
+
 }

@@ -51,10 +51,12 @@ package org.knime.ext.azure.adls.gen2.filehandling.testing;
 import java.io.IOException;
 import java.util.Map;
 
+import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsConnectionConfig;
 import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFSConnection;
+import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFSDescriptorProvider;
 import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFileSystem;
-import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFileSystemProvider;
 import org.knime.filehandling.core.connections.FSLocationSpec;
+import org.knime.filehandling.core.connections.meta.FSType;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializerProvider;
 
 import com.azure.storage.common.StorageSharedKeyCredential;
@@ -78,8 +80,8 @@ public class AdlsTestInitializerProvider extends DefaultFSTestInitializerProvide
         DataLakeServiceClient client = createClient(configuration);
         String workDir = generateRandomizedWorkingDir(getParameter(configuration, WORKDIR_PREFIX),
                 AdlsFileSystem.PATH_SEPARATOR);
-
-        AdlsFSConnection connection = new AdlsFSConnection(client, workDir);
+        final AdlsConnectionConfig config = new AdlsConnectionConfig(workDir, client);
+        AdlsFSConnection connection = new AdlsFSConnection(config);
         return new AdlsTestInitializer(connection);
     }
 
@@ -93,8 +95,8 @@ public class AdlsTestInitializerProvider extends DefaultFSTestInitializerProvide
     }
 
     @Override
-    public String getFSType() {
-        return AdlsFileSystemProvider.FS_TYPE;
+    public FSType getFSType() {
+        return AdlsFSDescriptorProvider.FS_TYPE;
     }
 
     @Override

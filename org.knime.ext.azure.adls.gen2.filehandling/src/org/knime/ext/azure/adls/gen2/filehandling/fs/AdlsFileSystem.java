@@ -49,8 +49,6 @@
 package org.knime.ext.azure.adls.gen2.filehandling.fs;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -76,28 +74,16 @@ public class AdlsFileSystem extends BaseFileSystem<AdlsPath> {
     private final DataLakeServiceClient m_client;
 
     /**
-     * @param client
-     *            The {@link DataLakeServiceClient} instance.
+     * @param config
+     *            Connection configuration
      * @param cacheTTL
      *            The time to live for cached elements in milliseconds.
-     * @param workingDirectory
-     *            The working directory.
      */
-    protected AdlsFileSystem(final DataLakeServiceClient client, final long cacheTTL, final String workingDirectory) {
+    protected AdlsFileSystem(final AdlsConnectionConfig config, final long cacheTTL) {
         super(new AdlsFileSystemProvider(), //
-                createURL(client.getAccountName()), //
-                cacheTTL, workingDirectory, //
-                createFSLocationSpec(client.getAccountName()));
-
-        m_client = client;
-    }
-
-    private static URI createURL(final String accountName) {
-        try {
-            return new URI(AdlsFileSystemProvider.FS_TYPE, accountName, null, null);
-        } catch (URISyntaxException ex) {
-            throw new IllegalArgumentException(accountName, ex);
-        }
+                cacheTTL, config.getWorkingDirectory(), //
+                createFSLocationSpec(config.getClient().getAccountName()));
+        m_client = config.getClient();
     }
 
     /**
@@ -107,7 +93,7 @@ public class AdlsFileSystem extends BaseFileSystem<AdlsPath> {
      */
     public static DefaultFSLocationSpec createFSLocationSpec(final String accountName) {
         return new DefaultFSLocationSpec(FSCategory.CONNECTED, //
-                String.format("%s:%s", AdlsFileSystemProvider.FS_TYPE, accountName));
+                String.format("%s:%s", AdlsFSDescriptorProvider.FS_TYPE, accountName));
     }
 
     /**

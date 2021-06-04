@@ -64,7 +64,7 @@ import com.azure.storage.file.datalake.models.FileRange;
  *
  * @author Alexander Bondaletov
  */
-public class AdlsInputStream extends InputStream {
+class AdlsInputStream extends InputStream {
     private static final int BLOCK_SIZE = 1024 * 1024;
 
     private final AdlsPath m_path;

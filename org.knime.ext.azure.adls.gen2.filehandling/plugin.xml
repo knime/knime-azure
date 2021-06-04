@@ -9,10 +9,10 @@
             id="org.knime.ext.azure.adls.gen2.filehandling.node.AdlsConnectorNodeFactory">
       </node>
    </extension>
-      <extension
-         point="org.knime.filehandling.FSTestInitializerProvider">
-         <FSTestInitializerProvider
-               ProviderClass="org.knime.ext.azure.adls.gen2.filehandling.testing.AdlsTestInitializerProvider">
-         </FSTestInitializerProvider>
+   <extension
+         point="org.knime.filehandling.core.FSDescriptorProvider">
+      <FSDescriptorProvider
+            class="org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFSDescriptorProvider">
+      </FSDescriptorProvider>
    </extension>
 </plugin>

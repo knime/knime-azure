@@ -55,14 +55,17 @@ import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsConnectionConfig;
 import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFileSystem;
 
+import com.azure.storage.file.datalake.DataLakeServiceClient;
+
 /**
- * Settings for {@link AdlsConnectorNodeModel} node.
+ * Settings for Adls connector node.
  *
  * @author Alexander Bondaletov
  */
-public class AdlsConnectorSettings {
+final class AdlsConnectorSettings {
     private static final String KEY_WORKING_DIRECTORY = "workingDirectory";
     private static final String KEY_TIMEOUT = "timeout";
 
@@ -156,5 +159,14 @@ public class AdlsConnectorSettings {
      */
     public Duration getTimeout() {
         return Duration.ofSeconds(m_timeout.getIntValue());
+    }
+
+    /**
+     *
+     * @param client
+     * @return The FSConnectionConfig for Google Drive
+     */
+    public AdlsConnectionConfig toFSConnectionConfig(final DataLakeServiceClient client) {
+        return new AdlsConnectionConfig(getWorkingDirectory(), client);
     }
 }

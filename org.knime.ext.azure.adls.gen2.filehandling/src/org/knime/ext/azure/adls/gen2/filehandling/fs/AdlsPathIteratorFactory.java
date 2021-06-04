@@ -70,7 +70,7 @@ import com.azure.storage.file.datalake.models.PathItem;
  *
  * @author Alexander Bondaletov
  */
-public final class AdlsPathIteratorFactory {
+final class AdlsPathIteratorFactory {
 
     private AdlsPathIteratorFactory() {
     }

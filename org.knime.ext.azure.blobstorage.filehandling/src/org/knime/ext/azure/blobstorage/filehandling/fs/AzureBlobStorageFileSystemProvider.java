@@ -75,6 +75,8 @@ import org.knime.ext.azure.AzureUtils;
 import org.knime.filehandling.core.connections.FSFiles;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
+import org.knime.filehandling.core.connections.meta.FSType;
+import org.knime.filehandling.core.connections.meta.FSTypeRegistry;
 
 import com.azure.core.util.polling.SyncPoller;
 import com.azure.storage.blob.BlobClient;
@@ -97,9 +99,10 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 public class AzureBlobStorageFileSystemProvider
         extends BaseFileSystemProvider<AzureBlobStoragePath, AzureBlobStorageFileSystem> {
     /**
-     * Azure Blob Storage URI scheme.
+     * Azure Blob Storage FS Type.
      */
-    public static final String FS_TYPE = "microsoft-blobstorage";
+    public static final FSType FS_TYPE = FSTypeRegistry.getOrCreateFSType("microsoft-blobstorage",
+            "Azure Blob Storage");
 
     private static final Pattern VALID_CONTAINER_NAME_PATTERN = Pattern.compile("^(\\w|\\w-\\w)*$");
 
