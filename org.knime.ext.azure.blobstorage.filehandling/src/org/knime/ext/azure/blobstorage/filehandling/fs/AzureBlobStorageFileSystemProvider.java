@@ -72,7 +72,6 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.knime.ext.azure.AzureUtils;
-import org.knime.filehandling.core.connections.FSFiles;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
 import org.knime.filehandling.core.connections.meta.FSType;
@@ -133,7 +132,7 @@ public class AzureBlobStorageFileSystemProvider
     protected void copyInternal(final AzureBlobStoragePath source, final AzureBlobStoragePath target, final CopyOption... options)
             throws IOException {
         if (isDirectory(source)) {
-            if (FSFiles.isNonEmptyDirectory(target)) {
+            if (isNonEmptyDirectory(target)) {
                 throw new DirectoryNotEmptyException(
                         String.format("Target directory %s exists and is not empty", target.toString()));
             }
