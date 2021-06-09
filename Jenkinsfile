@@ -9,6 +9,7 @@ properties([
         // knime-tp -> knime-base -> knime-svg -> knime-js-core -> knime-workbench
         upstream('knime-workbench/' + env.BRANCH_NAME.replaceAll('/', '%2F'))
     ]),
+    parameters(workflowTests.getConfigurationsAsParameters()),
     buildDiscarder(logRotator(numToKeepStr: '5')),
     disableConcurrentBuilds()
 ])
