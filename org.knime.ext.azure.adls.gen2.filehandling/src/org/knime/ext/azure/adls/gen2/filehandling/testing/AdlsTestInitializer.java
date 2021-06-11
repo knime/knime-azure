@@ -66,7 +66,7 @@ import com.azure.storage.file.datalake.DataLakeServiceClient;
  *
  * @author Alexander Bondaletov
  */
-public class AdlsTestInitializer extends DefaultFSTestInitializer<AdlsPath, AdlsFileSystem> {
+class AdlsTestInitializer extends DefaultFSTestInitializer<AdlsPath, AdlsFileSystem> {
 
     private DataLakeServiceClient m_client;
 

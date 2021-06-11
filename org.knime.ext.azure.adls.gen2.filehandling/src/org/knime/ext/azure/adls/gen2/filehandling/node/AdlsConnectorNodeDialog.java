@@ -75,11 +75,11 @@ import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryChooser;
 
 /**
- * {@link AdlsConnectorNodeModel} node dialog.
+ * Adls connector node dialog.
  *
  * @author Alexander Bondaletov
  */
-public class AdlsConnectorNodeDialog extends NodeDialogPane {
+final class AdlsConnectorNodeDialog extends NodeDialogPane {
 
     private final ChangeListener m_workdirListener;
     private final AdlsConnectorSettings m_settings;
@@ -90,7 +90,7 @@ public class AdlsConnectorNodeDialog extends NodeDialogPane {
     /**
      * Creates new instance.
      */
-    public AdlsConnectorNodeDialog() {
+    AdlsConnectorNodeDialog() {
         m_settings = new AdlsConnectorSettings();
         m_workingDirChooser = new WorkingDirectoryChooser("adls-gen2.workingDir", this::createFSConnection);
         m_workdirListener = e -> m_settings.getWorkingDirectoryModel()
@@ -101,8 +101,7 @@ public class AdlsConnectorNodeDialog extends NodeDialogPane {
     }
 
     private FSConnection createFSConnection() throws IOException {
-        return new AdlsFSConnection(AdlsConnectorNodeModel.createClient(m_credentials, m_settings),
-                m_settings.getWorkingDirectory());
+        return new AdlsFSConnection(m_settings.toFSConnectionConfig(m_credentials));
     }
 
     private JComponent createFilesystemSettingsPanel() {

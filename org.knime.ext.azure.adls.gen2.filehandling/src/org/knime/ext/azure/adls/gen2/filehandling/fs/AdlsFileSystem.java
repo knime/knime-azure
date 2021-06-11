@@ -49,18 +49,18 @@
 package org.knime.ext.azure.adls.gen2.filehandling.fs;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.util.Collections;
 
+import org.knime.ext.azure.AzureUtils;
 import org.knime.filehandling.core.connections.DefaultFSLocationSpec;
 import org.knime.filehandling.core.connections.FSCategory;
 import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.connections.base.BaseFileSystem;
 
 import com.azure.storage.file.datalake.DataLakeServiceClient;
+import com.azure.storage.file.datalake.models.DataLakeStorageException;
 
 /**
  * ADLS implementation of the {@link FileSystem} interface.
@@ -75,29 +75,56 @@ public class AdlsFileSystem extends BaseFileSystem<AdlsPath> {
 
     private final DataLakeServiceClient m_client;
 
+    private final boolean m_credentialsCanListContainers;
+
     /**
+     * @param config
+     *            Connection configuration
      * @param client
-     *            The {@link DataLakeServiceClient} instance.
+     *            The client to use.
      * @param cacheTTL
      *            The time to live for cached elements in milliseconds.
-     * @param workingDirectory
-     *            The working directory.
+     * @throws IOException
      */
-    protected AdlsFileSystem(final DataLakeServiceClient client, final long cacheTTL, final String workingDirectory) {
+    protected AdlsFileSystem(final AdlsFSConnectionConfig config, final DataLakeServiceClient client,
+            final long cacheTTL) throws IOException {
+
         super(new AdlsFileSystemProvider(), //
-                createURL(client.getAccountName()), //
-                cacheTTL, workingDirectory, //
+                cacheTTL, //
+                config.getWorkingDirectory(), //
                 createFSLocationSpec(client.getAccountName()));
 
         m_client = client;
+        m_credentialsCanListContainers = ensureSuccessfulAuthentication();
     }
 
-    private static URI createURL(final String accountName) {
+    /**
+     * Tests whether Blob storage can be accessed with the given credentials.
+     *
+     * @return true the user could list containers, false if the service did not
+     *         reject the credentials but they don't have permission to list
+     *         containers.
+     * @throws IOException
+     *             If authentication failed completely.
+     */
+    private boolean ensureSuccessfulAuthentication() throws IOException {
         try {
-            return new URI(AdlsFileSystemProvider.FS_TYPE, accountName, null, null);
-        } catch (URISyntaxException ex) {
-            throw new IllegalArgumentException(accountName, ex);
+            // initialize lazy iterator by calling haxNext to make list containers request
+            m_client.listFileSystems().iterator().hasNext();// NOSONAR
+            return true;
+        } catch (DataLakeStorageException ex) {
+            // rethrows the given exception as IOE, if error is non-recoverable
+            AzureUtils.handleAuthException(ex);
+            return false;
         }
+    }
+
+    /**
+     * @return true if the provided credentials have permission to list containers,
+     *         false otherwise.
+     */
+    public boolean canCredentialsListContainers() {
+        return m_credentialsCanListContainers;
     }
 
     /**
@@ -107,7 +134,7 @@ public class AdlsFileSystem extends BaseFileSystem<AdlsPath> {
      */
     public static DefaultFSLocationSpec createFSLocationSpec(final String accountName) {
         return new DefaultFSLocationSpec(FSCategory.CONNECTED, //
-                String.format("%s:%s", AdlsFileSystemProvider.FS_TYPE, accountName));
+                String.format("%s:%s", AdlsFSDescriptorProvider.FS_TYPE, accountName));
     }
 
     /**

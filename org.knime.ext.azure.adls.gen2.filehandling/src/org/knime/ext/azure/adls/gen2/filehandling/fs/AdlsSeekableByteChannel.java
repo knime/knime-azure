@@ -66,7 +66,7 @@ import com.azure.storage.file.datalake.models.DataLakeStorageException;
  *
  * @author Alexander Bondaletov
  */
-public class AdlsSeekableByteChannel extends TempFileSeekableByteChannel<AdlsPath> {
+class AdlsSeekableByteChannel extends TempFileSeekableByteChannel<AdlsPath> {
 
     /**
      * Creates new instance.

@@ -53,7 +53,7 @@ import org.knime.core.node.NodeFactory;
 import org.knime.core.node.NodeView;
 
 /**
- * Factory class for the {@link AdlsConnectorNodeModel} node.
+ * Factory class for the Adls connector node.
  *
  * @author Alexander Bondaletov
  */

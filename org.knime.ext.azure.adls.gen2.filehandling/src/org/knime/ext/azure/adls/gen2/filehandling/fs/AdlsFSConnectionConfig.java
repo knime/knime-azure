@@ -44,49 +44,67 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2021-01-27 (Alexander Bondaletov): created
+ *   2021-06-04 Moditha Hewasinghage: created
  */
 package org.knime.ext.azure.adls.gen2.filehandling.fs;
 
-import java.net.URI;
+import java.time.Duration;
 
-import org.knime.filehandling.core.connections.uriexport.URIExporterFactory;
-import org.knime.filehandling.core.connections.uriexport.URIExporterID;
-import org.knime.filehandling.core.connections.uriexport.base.BaseURIExporterMetaInfo;
-import org.knime.filehandling.core.connections.uriexport.noconfig.NoConfigURIExporterFactory;
+import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
+import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig;
 
 /**
- * {@link URIExporterFactory} implementation using "abfs" as scheme.
+ * Azure Datalake connection configuration implementation.
  *
- * @author Ayaz Ali Qureshi, KNIME GmbH, Berlin, Germany
- * @author Alexander Bondaletov
+ * @author Moditha Hewasinghage
  */
-final class AbfsURIExporterFactory extends NoConfigURIExporterFactory {
+public class AdlsFSConnectionConfig extends BaseFSConnectionConfig {
 
-    static final URIExporterID EXPORTER_ID = new URIExporterID("microsoft-adlsgen2-abfss");
+    /**
+     * Default timeout in seconds for making connections and requests.
+     */
+    public static final int DEFAULT_TIMEOUT = 30;
 
-    private static final String SCHEME = "abfss";
+    private MicrosoftCredential m_credential;
 
-    private static final BaseURIExporterMetaInfo META_INFO = new BaseURIExporterMetaInfo("abfss:// URLs",
-            "Generates abfss:// URLs");
+    private Duration m_timeout;
 
-    private static final AbfsURIExporterFactory INSTANCE = new AbfsURIExporterFactory();
-
-    private AbfsURIExporterFactory() {
-        super(META_INFO, p -> {
-            AdlsPath adlsPath = (AdlsPath) p;
-            @SuppressWarnings("resource")
-            String account = adlsPath.getFileSystem().getClient().getAccountName();
-            String host = account + ".dfs.core.windows.net";
-
-            return new URI(SCHEME, adlsPath.getFileSystemName(), host, -1, "/" + adlsPath.getFilePath(), null, null);
-        });
+    /**
+     * Constructor.
+     *
+     * @param workingDirectory
+     */
+    public AdlsFSConnectionConfig(final String workingDirectory) {
+        super(workingDirectory, true);
     }
 
     /**
-     * @return singleton instance of this exporter
+     * @return the {@link MicrosoftCredential}
      */
-    public static AbfsURIExporterFactory getInstance() {
-        return INSTANCE;
+    public MicrosoftCredential getCredential() {
+        return m_credential;
+    }
+
+    /**
+     * @param credential
+     *            the {@link MicrosoftCredential} to set
+     */
+    public void setCredential(final MicrosoftCredential credential) {
+        m_credential = credential;
+    }
+
+    /**
+     * @return the timeout
+     */
+    public Duration getTimeout() {
+        return m_timeout;
+    }
+
+    /**
+     * @param timeout
+     *            the timeout to set
+     */
+    public void setTimeout(final Duration timeout) {
+        m_timeout = timeout;
     }
 }

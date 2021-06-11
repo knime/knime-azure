@@ -44,49 +44,43 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2021-01-27 (Alexander Bondaletov): created
+ *   2021-06-04 (modithahewasinghage): created
  */
 package org.knime.ext.azure.adls.gen2.filehandling.fs;
 
-import java.net.URI;
-
-import org.knime.filehandling.core.connections.uriexport.URIExporterFactory;
-import org.knime.filehandling.core.connections.uriexport.URIExporterID;
-import org.knime.filehandling.core.connections.uriexport.base.BaseURIExporterMetaInfo;
-import org.knime.filehandling.core.connections.uriexport.noconfig.NoConfigURIExporterFactory;
+import org.knime.ext.azure.adls.gen2.filehandling.testing.AdlsTestInitializerProvider;
+import org.knime.filehandling.core.connections.meta.FSDescriptorProvider;
+import org.knime.filehandling.core.connections.meta.FSType;
+import org.knime.filehandling.core.connections.meta.FSTypeRegistry;
+import org.knime.filehandling.core.connections.meta.base.BaseFSDescriptor;
+import org.knime.filehandling.core.connections.meta.base.BaseFSDescriptorProvider;
+import org.knime.filehandling.core.connections.uriexport.URIExporterIDs;
 
 /**
- * {@link URIExporterFactory} implementation using "abfs" as scheme.
+ * {@link FSDescriptorProvider} implementation for the Azure Datalake file
+ * system.
  *
- * @author Ayaz Ali Qureshi, KNIME GmbH, Berlin, Germany
- * @author Alexander Bondaletov
+ * @author modithahewasinghage
  */
-final class AbfsURIExporterFactory extends NoConfigURIExporterFactory {
-
-    static final URIExporterID EXPORTER_ID = new URIExporterID("microsoft-adlsgen2-abfss");
-
-    private static final String SCHEME = "abfss";
-
-    private static final BaseURIExporterMetaInfo META_INFO = new BaseURIExporterMetaInfo("abfss:// URLs",
-            "Generates abfss:// URLs");
-
-    private static final AbfsURIExporterFactory INSTANCE = new AbfsURIExporterFactory();
-
-    private AbfsURIExporterFactory() {
-        super(META_INFO, p -> {
-            AdlsPath adlsPath = (AdlsPath) p;
-            @SuppressWarnings("resource")
-            String account = adlsPath.getFileSystem().getClient().getAccountName();
-            String host = account + ".dfs.core.windows.net";
-
-            return new URI(SCHEME, adlsPath.getFileSystemName(), host, -1, "/" + adlsPath.getFilePath(), null, null);
-        });
-    }
+public class AdlsFSDescriptorProvider extends BaseFSDescriptorProvider {
 
     /**
-     * @return singleton instance of this exporter
+     * ADLS {@link FSType}.
      */
-    public static AbfsURIExporterFactory getInstance() {
-        return INSTANCE;
+    public static final FSType FS_TYPE = FSTypeRegistry.getOrCreateFSType("microsoft-adlsgen2", "Azure Data Lake Gen2");
+
+    /**
+     * Constructor.
+     */
+    public AdlsFSDescriptorProvider() {
+        super(AdlsFSDescriptorProvider.FS_TYPE, //
+                new BaseFSDescriptor.Builder() //
+                        .withConnectionFactory(AdlsFSConnection::new) //
+                        .withURIExporterFactory(URIExporterIDs.DEFAULT, AbfsURIExporterFactory.getInstance()) //
+                        .withURIExporterFactory(URIExporterIDs.DEFAULT_HADOOP, AbfsURIExporterFactory.getInstance()) //
+                        .withURIExporterFactory(AbfsURIExporterFactory.EXPORTER_ID,
+                                AbfsURIExporterFactory.getInstance()) //
+                        .withTestInitializerProvider(new AdlsTestInitializerProvider()) //
+                        .build());
     }
 }

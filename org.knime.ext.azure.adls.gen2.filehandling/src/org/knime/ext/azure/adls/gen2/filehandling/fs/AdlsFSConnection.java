@@ -48,18 +48,21 @@
  */
 package org.knime.ext.azure.adls.gen2.filehandling.fs;
 
-import java.util.Map;
+import java.io.IOException;
 
 import org.knime.core.node.util.FileSystemBrowser;
+import org.knime.ext.azure.AzureUtils;
+import org.knime.ext.azure.OAuthTokenCredential;
+import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
+import org.knime.ext.microsoft.authentication.port.azure.storage.AzureSharedKeyCredential;
+import org.knime.ext.microsoft.authentication.port.oauth2.OAuth2Credential;
 import org.knime.filehandling.core.connections.FSConnection;
-import org.knime.filehandling.core.connections.FSFileSystem;
-import org.knime.filehandling.core.connections.uriexport.URIExporterFactory;
-import org.knime.filehandling.core.connections.uriexport.URIExporterFactoryMapBuilder;
-import org.knime.filehandling.core.connections.uriexport.URIExporterID;
-import org.knime.filehandling.core.connections.uriexport.URIExporterIDs;
 import org.knime.filehandling.core.filechooser.NioFileSystemBrowser;
 
+import com.azure.core.http.policy.TimeoutPolicy;
+import com.azure.storage.common.StorageSharedKeyCredential;
 import com.azure.storage.file.datalake.DataLakeServiceClient;
+import com.azure.storage.file.datalake.DataLakeServiceClientBuilder;
 
 /**
  * ADLS implementation of the {@link FSConnection} interface.
@@ -67,29 +70,52 @@ import com.azure.storage.file.datalake.DataLakeServiceClient;
  * @author Alexander Bondaletov
  */
 public class AdlsFSConnection implements FSConnection {
-    private static final Map<URIExporterID, URIExporterFactory> URI_EXPORTER_FACTORIES = new URIExporterFactoryMapBuilder() //
-            .add(URIExporterIDs.DEFAULT, AbfsURIExporterFactory.getInstance()) //
-            .add(URIExporterIDs.DEFAULT_HADOOP, AbfsURIExporterFactory.getInstance()) //
-            .add(AbfsURIExporterFactory.EXPORTER_ID, AbfsURIExporterFactory.getInstance()) //
-            .build();
 
     private static final long CACHE_TTL = 6000;
 
     private final AdlsFileSystem m_filesystem;
 
     /**
-     * @param client
-     *            The {@link DataLakeServiceClient} instance.
-     * @param workingDir
-     *            The working directory.
+     * @param config
+     *            The connection configuration
+     * @throws IOException
      *
      */
-    public AdlsFSConnection(final DataLakeServiceClient client, final String workingDir) {
-        m_filesystem = new AdlsFileSystem(client, CACHE_TTL, workingDir);
+    public AdlsFSConnection(final AdlsFSConnectionConfig config) throws IOException {
+        final DataLakeServiceClient client = createClient(config);
+        m_filesystem = new AdlsFileSystem(config, client, CACHE_TTL);
+    }
+
+    static DataLakeServiceClient createClient(final AdlsFSConnectionConfig config)
+            throws IOException {
+
+        final MicrosoftCredential credential = config.getCredential();
+
+        DataLakeServiceClientBuilder builder = new DataLakeServiceClientBuilder()
+                .endpoint(AzureUtils.getEndpoint(credential))//
+                .addPolicy(new TimeoutPolicy(config.getTimeout()));
+
+        switch (credential.getType()) {
+        case AZURE_SHARED_KEY:
+            AzureSharedKeyCredential c = (AzureSharedKeyCredential) credential;
+            builder.credential(new StorageSharedKeyCredential(c.getAccount(), c.getSecretKey()));
+            break;
+        case AZURE_SAS_TOKEN:
+            // SAS token is a part of the endpoint
+            break;
+        case OAUTH2_ACCESS_TOKEN:
+            final OAuth2Credential oauth2Credential = (OAuth2Credential) credential;
+            builder.credential(new OAuthTokenCredential(oauth2Credential.getAccessToken()));
+            break;
+        default:
+            throw new UnsupportedOperationException("Unsupported credential type " + credential.getType());
+        }
+
+        return builder.buildClient();
     }
 
     @Override
-    public FSFileSystem<?> getFileSystem() {
+    public AdlsFileSystem getFileSystem() {
         return m_filesystem;
     }
 
@@ -98,8 +124,4 @@ public class AdlsFSConnection implements FSConnection {
         return new NioFileSystemBrowser(this);
     }
 
-    @Override
-    public Map<URIExporterID, URIExporterFactory> getURIExporterFactories() {
-        return URI_EXPORTER_FACTORIES;
-    }
 }

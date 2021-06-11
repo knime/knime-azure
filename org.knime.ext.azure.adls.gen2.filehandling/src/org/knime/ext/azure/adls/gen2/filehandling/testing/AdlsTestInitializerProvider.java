@@ -49,17 +49,17 @@
 package org.knime.ext.azure.adls.gen2.filehandling.testing;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Map;
 
 import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFSConnection;
+import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFSConnectionConfig;
+import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFSDescriptorProvider;
 import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFileSystem;
-import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFileSystemProvider;
+import org.knime.ext.microsoft.authentication.port.azure.storage.AzureSharedKeyCredential;
 import org.knime.filehandling.core.connections.FSLocationSpec;
+import org.knime.filehandling.core.connections.meta.FSType;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializerProvider;
-
-import com.azure.storage.common.StorageSharedKeyCredential;
-import com.azure.storage.file.datalake.DataLakeServiceClient;
-import com.azure.storage.file.datalake.DataLakeServiceClientBuilder;
 
 /**
  * Test initializer provider for the ADLS
@@ -75,26 +75,24 @@ public class AdlsTestInitializerProvider extends DefaultFSTestInitializerProvide
     @SuppressWarnings("resource")
     @Override
     public AdlsTestInitializer setup(final Map<String, String> configuration) throws IOException {
-        DataLakeServiceClient client = createClient(configuration);
         String workDir = generateRandomizedWorkingDir(getParameter(configuration, WORKDIR_PREFIX),
                 AdlsFileSystem.PATH_SEPARATOR);
 
-        AdlsFSConnection connection = new AdlsFSConnection(client, workDir);
-        return new AdlsTestInitializer(connection);
-    }
+        final AdlsFSConnectionConfig config = new AdlsFSConnectionConfig(workDir);
+        config.setCredential(new AzureSharedKeyCredential(getParameter(configuration, ACCOUNT), "ignore") {
+            @Override
+            public String getSecretKey() {
+                return getParameter(configuration, KEY);
+            }
+        });
+        config.setTimeout(Duration.ofSeconds(AdlsFSConnectionConfig.DEFAULT_TIMEOUT));
 
-    private DataLakeServiceClient createClient(final Map<String, String> config) {
-        String urlFormat = "https://%s.blob.core.windows.net";
-        String account = getParameter(config, ACCOUNT);
-        String key = getParameter(config, KEY);
-
-        return new DataLakeServiceClientBuilder().endpoint(String.format(urlFormat, account))
-                .credential(new StorageSharedKeyCredential(account, key)).buildClient();
+        return new AdlsTestInitializer(new AdlsFSConnection(config));
     }
 
     @Override
-    public String getFSType() {
-        return AdlsFileSystemProvider.FS_TYPE;
+    public FSType getFSType() {
+        return AdlsFSDescriptorProvider.FS_TYPE;
     }
 
     @Override

@@ -55,18 +55,18 @@ import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFSConnectionConfig;
 import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFileSystem;
+import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
 
 /**
- * Settings for {@link AdlsConnectorNodeModel} node.
+ * Settings for Adls connector node.
  *
  * @author Alexander Bondaletov
  */
-public class AdlsConnectorSettings {
+final class AdlsConnectorSettings {
     private static final String KEY_WORKING_DIRECTORY = "workingDirectory";
     private static final String KEY_TIMEOUT = "timeout";
-
-    private static final int DEFAULT_TIMEOUT = 30;
 
     private final SettingsModelString m_workingDirectory;
     private final SettingsModelIntegerBounded m_timeout;
@@ -76,7 +76,7 @@ public class AdlsConnectorSettings {
      */
     public AdlsConnectorSettings() {
         m_workingDirectory = new SettingsModelString(KEY_WORKING_DIRECTORY, AdlsFileSystem.PATH_SEPARATOR);
-        m_timeout = new SettingsModelIntegerBounded(KEY_TIMEOUT, DEFAULT_TIMEOUT, 0, Integer.MAX_VALUE);
+        m_timeout = new SettingsModelIntegerBounded(KEY_TIMEOUT, AdlsFSConnectionConfig.DEFAULT_TIMEOUT, 0, Integer.MAX_VALUE);
     }
 
     /**
@@ -156,5 +156,19 @@ public class AdlsConnectorSettings {
      */
     public Duration getTimeout() {
         return Duration.ofSeconds(m_timeout.getIntValue());
+    }
+
+    /**
+     *
+     * @param credential
+     *            The {@link MicrosoftCredential} to use.
+     * @return The FSConnectionConfig for Azure data lake
+     */
+    public AdlsFSConnectionConfig toFSConnectionConfig(final MicrosoftCredential credential) {
+        var config = new AdlsFSConnectionConfig(getWorkingDirectory());
+        config.setCredential(credential);
+        config.setTimeout(getTimeout());
+        return config;
+
     }
 }
