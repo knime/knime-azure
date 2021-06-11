@@ -10,10 +10,10 @@
       </node>
    </extension>
    <extension
-         point="org.knime.filehandling.FSTestInitializerProvider">
-         <FSTestInitializerProvider
-               ProviderClass="org.knime.ext.azure.blobstorage.filehandling.testing.AzureBlobStorageTestInitializerProvider">
-         </FSTestInitializerProvider>
+         point="org.knime.filehandling.core.FSDescriptorProvider">
+      <FSDescriptorProvider
+            class="org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSDescriptorProvider">
+      </FSDescriptorProvider>
    </extension>
 
 </plugin>

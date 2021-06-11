@@ -89,17 +89,11 @@ public class AzureBlobStoragePath extends BlobStorePath {
         super(fileSystem, bucketName, blobName);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public AzureBlobStorageFileSystem getFileSystem() {
         return (AzureBlobStorageFileSystem) super.getFileSystem();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public AzureBlobStoragePath toDirectoryPath() {
         return (AzureBlobStoragePath) super.toDirectoryPath();

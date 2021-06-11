@@ -48,26 +48,28 @@
  */
 package org.knime.ext.azure.blobstorage.filehandling.node;
 
+import java.time.Duration;
+
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSConnectionConfig;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFileSystem;
+import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
 
 /**
- * Settings for the {@link AzureBlobStorageConnectorNodeModel} node.
+ * Settings for the Azure Blob Storage Connector node.
  *
  * @author Alexander Bondaletov
  */
-public class AzureBlobStorageConnectorSettings {
+class AzureBlobStorageConnectorSettings {
 
     private static final String KEY_WORKING_DIRECTORY = "workingDirectory";
     private static final String KEY_NORMALIZE_PATHS = "normalizePaths";
     private static final String KEY_TIMEOUT = "timeout";
-
-    private static final int DEFAULT_TIMEOUT = 30;
 
     private final SettingsModelString m_workingDirectory;
     private final SettingsModelBoolean m_normalizePaths;
@@ -79,7 +81,8 @@ public class AzureBlobStorageConnectorSettings {
     public AzureBlobStorageConnectorSettings() {
         m_workingDirectory = new SettingsModelString(KEY_WORKING_DIRECTORY, AzureBlobStorageFileSystem.PATH_SEPARATOR);
         m_normalizePaths = new SettingsModelBoolean(KEY_NORMALIZE_PATHS, true);
-        m_timeout = new SettingsModelIntegerBounded(KEY_TIMEOUT, DEFAULT_TIMEOUT, 0, Integer.MAX_VALUE);
+        m_timeout = new SettingsModelIntegerBounded(KEY_TIMEOUT, AzureBlobStorageFSConnectionConfig.DEFAULT_TIMEOUT, 0,
+                Integer.MAX_VALUE);
     }
 
     /**
@@ -174,8 +177,21 @@ public class AzureBlobStorageConnectorSettings {
     /**
      * @return the timeout
      */
-    public int getTimeout() {
-        return m_timeout.getIntValue();
+    public Duration getTimeout() {
+        return Duration.ofSeconds(m_timeout.getIntValue());
+    }
+
+    /**
+     * @param credential
+     *            The {@link MicrosoftCredential} to use when connecting.
+     * @return The FSConnectionConfig for Azure blob store
+     */
+    public AzureBlobStorageFSConnectionConfig toFSConnectionConfig(final MicrosoftCredential credential) {
+        final AzureBlobStorageFSConnectionConfig config = new AzureBlobStorageFSConnectionConfig(getWorkingDirectory());
+        config.setCredential(credential);
+        config.setNormalizePaths(shouldNormalizePaths());
+        config.setTimeout(getTimeout());
+        return config;
     }
 
 }

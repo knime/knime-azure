@@ -49,19 +49,13 @@
 package org.knime.ext.azure.blobstorage.filehandling.fs;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collections;
-import java.util.Locale;
 
-import org.knime.ext.azure.blobstorage.filehandling.node.AzureBlobStorageConnectorSettings;
+import org.knime.ext.azure.AzureUtils;
 import org.knime.ext.microsoft.authentication.port.MicrosoftCredential.Type;
-import org.knime.filehandling.core.connections.DefaultFSLocationSpec;
-import org.knime.filehandling.core.connections.FSCategory;
-import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.connections.base.BaseFileSystem;
 
 import com.azure.core.http.HttpPipeline;
@@ -71,6 +65,7 @@ import com.azure.core.http.policy.TimeoutPolicy;
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobClientBuilder;
 import com.azure.storage.blob.BlobServiceClient;
+import com.azure.storage.blob.models.BlobStorageException;
 
 /**
  * Azure Blob Storage implementation of the {@link FileSystem} interface.
@@ -86,54 +81,62 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
     private static final long FILE_SIZE_TIMEOUT_FACTOR = 10 * 1024 * 1024L;// 10Mb
 
     private final BlobServiceClient m_client;
-    private final boolean m_normalizePaths;
-    private final int m_standardTimeout;
-    private final Type m_credentialType;
+
+    private final AzureBlobStorageFSConnectionConfig m_config;
+
+    private final boolean m_credentialsCanListContainers;
 
     /**
      * Creates a new instance.
      *
+     * @param config
+     *            Connection configuration
+     * @param client
+     *
      * @param cacheTTL
      *            The time to live for cached elements in milliseconds.
-     * @param client
-     *            The {@link BlobServiceClient} instance.
-     * @param type
-     *            The type of credential used to init the {@link BlobServiceClient}
-     *            instance.
-     * @param settings
-     *            The settings.
+     * @throws IOException
      */
-    public AzureBlobStorageFileSystem(final BlobServiceClient client, final Type type,
-            final AzureBlobStorageConnectorSettings settings, final long cacheTTL) {
+    public AzureBlobStorageFileSystem(final AzureBlobStorageFSConnectionConfig config, final BlobServiceClient client,
+            final long cacheTTL)
+            throws IOException {
         super(new AzureBlobStorageFileSystemProvider(), //
-                createURL(client.getAccountName()), //
-                cacheTTL, settings.getWorkingDirectory(), //
-                createFSLocationSpec(client.getAccountName()));
+                cacheTTL, //
+                config.getWorkingDirectory(), //
+                AzureBlobStorageFSConnectionConfig.createFSLocationSpec(client.getAccountName()));
 
+        m_config = config;
         m_client = client;
-        m_credentialType = type;
-        m_normalizePaths = settings.shouldNormalizePaths();
-        m_standardTimeout = settings.getTimeout();
+        m_credentialsCanListContainers = ensureSuccessfulAuthentication();
     }
 
-    private static URI createURL(final String accountName) {
+    /**
+     * Tests whether Blob storage can be accessed with the given credentials.
+     *
+     * @return true the user could list containers, false if the service did not
+     *         reject the credentials but they don't have permission to list
+     *         containers.
+     * @throws IOException
+     *             If authentication failed completely.
+     */
+    private boolean ensureSuccessfulAuthentication() throws IOException {
         try {
-            return new URI(AzureBlobStorageFileSystemProvider.FS_TYPE, accountName, null, null);
-        } catch (URISyntaxException ex) {
-            // never happens
-            throw new IllegalArgumentException(accountName, ex);
+            // initialize lazy iterator by calling haxNext to make list containers request
+            m_client.listBlobContainers().iterator().hasNext();// NOSONAR
+            return true;
+        } catch (BlobStorageException ex) {
+            // rethrows the given exception as IOE, if error is non-recoverable
+            AzureUtils.handleAuthException(ex);
+            return false;
         }
     }
 
     /**
-     * @param accountName
-     *            The storage account name.
-     * @return the {@link FSLocationSpec} for a Azure Blob Storage file system.
+     * @return true if the provided credentials have permission to list containers,
+     *         false otherwise.
      */
-    public static DefaultFSLocationSpec createFSLocationSpec(final String accountName) {
-        return new DefaultFSLocationSpec(FSCategory.CONNECTED, //
-                String.format("%s:%s", AzureBlobStorageFileSystemProvider.FS_TYPE,
-                        accountName.toLowerCase(Locale.ENGLISH)));
+    public boolean canCredentialsListContainers() {
+        return m_credentialsCanListContainers;
     }
 
     /**
@@ -155,36 +158,24 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
      *         Storage.
      */
     public Type getCredentialType() {
-        return m_credentialType;
+        return m_config.getCredential().getType();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void prepareClose() throws IOException {
         // nothing to close
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public AzureBlobStoragePath getPath(final String first, final String... more) {
         return new AzureBlobStoragePath(this, first, more);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public String getSeparator() {
         return PATH_SEPARATOR;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Iterable<Path> getRootDirectories() {
         return Collections.singletonList(getPath(PATH_SEPARATOR));
@@ -194,7 +185,7 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
      * @return whether to normalize paths
      */
     public boolean normalizePaths() {
-        return m_normalizePaths;
+        return m_config.isNormalizePaths();
     }
 
     /**
@@ -213,7 +204,9 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
      */
     public BlobClient getBlobClientwithIncreasedTimeout(final String container, final String blob,
             final long fileSize) {
-        long newTimeout = Math.max(m_standardTimeout, m_standardTimeout * fileSize / FILE_SIZE_TIMEOUT_FACTOR);
+
+        final long timeout = m_config.getTimeout().toSeconds();
+        long newTimeout = Math.max(timeout, timeout * fileSize / FILE_SIZE_TIMEOUT_FACTOR);
 
         HttpPipeline pipeline = m_client.getHttpPipeline();
         HttpPipelinePolicy[] policies = new HttpPipelinePolicy[pipeline.getPolicyCount()];

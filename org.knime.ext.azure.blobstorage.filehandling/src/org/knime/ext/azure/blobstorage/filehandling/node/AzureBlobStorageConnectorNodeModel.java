@@ -50,7 +50,6 @@ package org.knime.ext.azure.blobstorage.filehandling.node;
 
 import java.io.File;
 import java.io.IOException;
-import java.time.Duration;
 
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -64,31 +63,21 @@ import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
 import org.knime.ext.azure.AzureUtils;
-import org.knime.ext.azure.OAuthTokenCredential;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSConnection;
-import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFileSystem;
+import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSConnectionConfig;
 import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
-import org.knime.ext.microsoft.authentication.port.MicrosoftCredential.Type;
 import org.knime.ext.microsoft.authentication.port.MicrosoftCredentialPortObject;
 import org.knime.ext.microsoft.authentication.port.MicrosoftCredentialPortObjectSpec;
-import org.knime.ext.microsoft.authentication.port.azure.storage.AzureSharedKeyCredential;
-import org.knime.ext.microsoft.authentication.port.oauth2.OAuth2Credential;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
 import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
-
-import com.azure.core.http.policy.TimeoutPolicy;
-import com.azure.storage.blob.BlobServiceClient;
-import com.azure.storage.blob.BlobServiceClientBuilder;
-import com.azure.storage.blob.models.BlobStorageException;
-import com.azure.storage.common.StorageSharedKeyCredential;
 
 /**
  * Azure Blob Storage Connector node.
  *
  * @author Alexander Bondaletov
  */
-public class AzureBlobStorageConnectorNodeModel extends NodeModel {
+class AzureBlobStorageConnectorNodeModel extends NodeModel {
 
     @SuppressWarnings("unused")
     private static final NodeLogger LOG = NodeLogger.getLogger(AzureBlobStorageConnectorNodeModel.class);
@@ -121,109 +110,58 @@ public class AzureBlobStorageConnectorNodeModel extends NodeModel {
     private FileSystemPortObjectSpec createSpec(final MicrosoftCredential credential) {
         final String storageAccount = AzureUtils.getStorageAccount(credential);
         return new FileSystemPortObjectSpec(FILE_SYSTEM_NAME, m_fsId,
-                AzureBlobStorageFileSystem.createFSLocationSpec(storageAccount));
+                AzureBlobStorageFSConnectionConfig.createFSLocationSpec(storageAccount));
     }
 
+    @SuppressWarnings("resource")
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
-        MicrosoftCredential credential = ((MicrosoftCredentialPortObject) inObjects[0]).getMicrosoftCredentials();
-        BlobServiceClient client = createServiceClient(credential, m_settings);
 
-        try {
-            // initialize lazy iterator by calling haxNext to make list containers request
-            client.listBlobContainers().iterator().hasNext();// NOSONAR
-        } catch (BlobStorageException ex) {
-            AzureUtils.handleAuthException(ex);
+        final MicrosoftCredential credential = ((MicrosoftCredentialPortObject) inObjects[0]).getMicrosoftCredentials();
+
+        m_fsConnection = new AzureBlobStorageFSConnection(m_settings.toFSConnectionConfig(credential));
+
+        if (!m_fsConnection.getFileSystem().canCredentialsListContainers()) {
             setWarningMessage(
                     "Authentication failed, or the account doesn't have enough permissions to list containers");
         }
-
-        m_fsConnection = new AzureBlobStorageFSConnection(client, credential.getType(), m_settings);
         FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
 
         return new PortObject[] { new FileSystemPortObject(createSpec(credential)) };
     }
 
-    static BlobServiceClient createServiceClient(final MicrosoftCredential credential,
-            final AzureBlobStorageConnectorSettings settings) throws IOException {
-
-        BlobServiceClientBuilder builder = new BlobServiceClientBuilder()
-                .endpoint(AzureUtils.getEndpoint(credential))
-                .addPolicy(new TimeoutPolicy(Duration.ofSeconds(settings.getTimeout())));
-        Type type = credential.getType();
-
-        switch (type) {
-        case AZURE_SHARED_KEY:
-            AzureSharedKeyCredential c = (AzureSharedKeyCredential) credential;
-            builder.credential(new StorageSharedKeyCredential(c.getAccount(), c.getSecretKey()));
-            break;
-        case AZURE_SAS_TOKEN:
-            // SAS token is a part of the endpoint
-            break;
-        case OAUTH2_ACCESS_TOKEN:
-            final OAuth2Credential oauth2Credential = (OAuth2Credential) credential;
-            builder.credential(new OAuthTokenCredential(oauth2Credential.getAccessToken()));
-            break;
-        default:
-            throw new UnsupportedOperationException("Unsupported credential type " + type);
-        }
-
-        return builder.buildClient();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void loadInternals(final File nodeInternDir, final ExecutionMonitor exec)
             throws IOException, CanceledExecutionException {
         setWarningMessage("Connection no longer available. Please re-execute the node.");
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void saveInternals(final File nodeInternDir, final ExecutionMonitor exec)
             throws IOException, CanceledExecutionException {
         // nothing to save
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
         m_settings.saveSettingsTo(settings);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_settings.validateSettings(settings);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_settings.loadSettingsFrom(settings);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void onDispose() {
         reset();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void reset() {
         if (m_fsConnection != null) {

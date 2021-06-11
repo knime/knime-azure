@@ -80,8 +80,7 @@ import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryChooser;
  *
  * @author Alexander Bondaletov
  */
-public class AzureBlobStorageConnectorNodeDialog extends NodeDialogPane {
-
+class AzureBlobStorageConnectorNodeDialog extends NodeDialogPane {
 
     private final ChangeListener m_workdirListener;
     private final AzureBlobStorageConnectorSettings m_settings = new AzureBlobStorageConnectorSettings();
@@ -161,10 +160,7 @@ public class AzureBlobStorageConnectorNodeDialog extends NodeDialogPane {
     }
 
     private FSConnection createFSConnection() throws IOException {
-        return new AzureBlobStorageFSConnection(
-                AzureBlobStorageConnectorNodeModel.createServiceClient(m_credentials, m_settings),
-                m_credentials.getType(),
-                m_settings);
+        return new AzureBlobStorageFSConnection(m_settings.toFSConnectionConfig(m_credentials));
     }
 
     @Override
@@ -178,9 +174,6 @@ public class AzureBlobStorageConnectorNodeDialog extends NodeDialogPane {
         m_workingDirChooser.addCurrentSelectionToHistory();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void loadSettingsFrom(final NodeSettingsRO settings, final PortObjectSpec[] specs)
             throws NotConfigurableException {

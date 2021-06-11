@@ -44,45 +44,97 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2020-07-14 (Alexander Bondaletov): created
+ *   2021-06-04 Moditha Hewasinghage: created
  */
-package org.knime.ext.azure.blobstorage.filehandling.node;
+package org.knime.ext.azure.blobstorage.filehandling.fs;
 
-import org.knime.core.node.NodeDialogPane;
-import org.knime.core.node.NodeFactory;
-import org.knime.core.node.NodeView;
+import java.time.Duration;
+import java.util.Locale;
+
+import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
+import org.knime.filehandling.core.connections.DefaultFSLocationSpec;
+import org.knime.filehandling.core.connections.FSCategory;
+import org.knime.filehandling.core.connections.FSLocationSpec;
+import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig;
 
 /**
- * Factory class for the {Azure Blob Storage Connector node.
+ * Azure blob storage connection configuration implementation.
  *
- * @author Alexander Bondaletov
+ * @author Moditha Hewasinghage
  */
-public class AzureBlobStorageConnectorNodeFactory extends NodeFactory<AzureBlobStorageConnectorNodeModel> {
+public class AzureBlobStorageFSConnectionConfig extends BaseFSConnectionConfig {
 
-    @Override
-    public AzureBlobStorageConnectorNodeModel createNodeModel() {
-        return new AzureBlobStorageConnectorNodeModel();
+    /**
+     * Default timeout
+     */
+    public static final int DEFAULT_TIMEOUT = 30;
+
+    private MicrosoftCredential m_credential;
+    private Duration m_timeout;
+    private boolean m_normalizePaths;
+
+    /**
+     * Constructor.
+     *
+     * @param workingDirectory
+     */
+    public AzureBlobStorageFSConnectionConfig(final String workingDirectory) {
+        super(workingDirectory, true);
     }
 
-    @Override
-    protected int getNrNodeViews() {
-        return 0;
+    /**
+     * @param accountName
+     *            The storage account name.
+     * @return the {@link FSLocationSpec} for a Azure Blob Storage file system.
+     */
+    public static DefaultFSLocationSpec createFSLocationSpec(final String accountName) {
+        return new DefaultFSLocationSpec(FSCategory.CONNECTED, //
+                String.format("%s:%s", AzureBlobStorageFSDescriptorProvider.FS_TYPE,
+                        accountName.toLowerCase(Locale.ENGLISH)));
     }
 
-    @Override
-    public NodeView<AzureBlobStorageConnectorNodeModel> createNodeView(final int viewIndex,
-            final AzureBlobStorageConnectorNodeModel nodeModel) {
-        return null;
+    /**
+     * @return the timeout
+     */
+    public Duration getTimeout() {
+        return m_timeout;
     }
 
-    @Override
-    protected boolean hasDialog() {
-        return true;
+    /**
+     * @param timeout
+     *            the timeout to set
+     */
+    public void setTimeout(final Duration timeout) {
+        m_timeout = timeout;
     }
 
-    @Override
-    protected NodeDialogPane createNodeDialogPane() {
-        return new AzureBlobStorageConnectorNodeDialog();
+    /**
+     * @return the credential
+     */
+    public MicrosoftCredential getCredential() {
+        return m_credential;
     }
 
+    /**
+     * @param credential
+     *            the credential to set
+     */
+    public void setCredential(final MicrosoftCredential credential) {
+        m_credential = credential;
+    }
+
+    /**
+     * @return the normalizePaths
+     */
+    public boolean isNormalizePaths() {
+        return m_normalizePaths;
+    }
+
+    /**
+     * @param normalizePaths
+     *            the normalizePaths to set
+     */
+    public void setNormalizePaths(final boolean normalizePaths) {
+        m_normalizePaths = normalizePaths;
+    }
 }

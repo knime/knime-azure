@@ -68,7 +68,7 @@ import com.azure.storage.blob.models.ListBlobsOptions;
  *
  * @author Alexander Bondaletov
  */
-public final class AzureBlobStorageTestInitializer
+final class AzureBlobStorageTestInitializer
         extends DefaultFSTestInitializer<AzureBlobStoragePath, AzureBlobStorageFileSystem> {
 
     private BlobServiceClient m_client;
@@ -81,9 +81,6 @@ public final class AzureBlobStorageTestInitializer
         m_client = getFileSystem().getClient();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public AzureBlobStoragePath createFileWithContent(final String content, final String... pathComponents) throws IOException {
         AzureBlobStoragePath path = makePath(pathComponents);
@@ -94,9 +91,6 @@ public final class AzureBlobStorageTestInitializer
         return path;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void beforeTestCaseInternal() throws IOException {
         final AzureBlobStoragePath scratchDir = getTestCaseScratchDir().toDirectoryPath();
@@ -104,9 +98,6 @@ public final class AzureBlobStorageTestInitializer
                 .upload(new ByteArrayInputStream(new byte[0]), 0);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void afterTestCaseInternal() throws IOException {
         final AzureBlobStoragePath scratchDir = getTestCaseScratchDir().toDirectoryPath();

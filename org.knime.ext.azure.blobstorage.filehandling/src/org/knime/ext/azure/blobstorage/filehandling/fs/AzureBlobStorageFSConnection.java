@@ -48,22 +48,21 @@
  */
 package org.knime.ext.azure.blobstorage.filehandling.fs;
 
-import java.util.Map;
+import java.io.IOException;
 
 import org.knime.core.node.util.FileSystemBrowser;
-import org.knime.ext.azure.blobstorage.filehandling.node.AzureBlobStorageConnectorSettings;
-import org.knime.ext.azure.blobstorage.filehandling.uriexporter.AzureSASURIExporterFactory;
-import org.knime.ext.azure.blobstorage.filehandling.uriexporter.WasbsURIExporterFactory;
-import org.knime.ext.microsoft.authentication.port.MicrosoftCredential.Type;
+import org.knime.ext.azure.AzureUtils;
+import org.knime.ext.azure.OAuthTokenCredential;
+import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
+import org.knime.ext.microsoft.authentication.port.azure.storage.AzureSharedKeyCredential;
+import org.knime.ext.microsoft.authentication.port.oauth2.OAuth2Credential;
 import org.knime.filehandling.core.connections.FSConnection;
-import org.knime.filehandling.core.connections.FSFileSystem;
-import org.knime.filehandling.core.connections.uriexport.URIExporterFactory;
-import org.knime.filehandling.core.connections.uriexport.URIExporterFactoryMapBuilder;
-import org.knime.filehandling.core.connections.uriexport.URIExporterID;
-import org.knime.filehandling.core.connections.uriexport.URIExporterIDs;
 import org.knime.filehandling.core.filechooser.NioFileSystemBrowser;
 
+import com.azure.core.http.policy.TimeoutPolicy;
 import com.azure.storage.blob.BlobServiceClient;
+import com.azure.storage.blob.BlobServiceClientBuilder;
+import com.azure.storage.common.StorageSharedKeyCredential;
 
 /**
  * Azure Blob Storage implementation of the {@link FSConnection} interface.
@@ -72,33 +71,50 @@ import com.azure.storage.blob.BlobServiceClient;
  */
 public class AzureBlobStorageFSConnection implements FSConnection {
 
-    private static final Map<URIExporterID, URIExporterFactory> URI_EXPORTER_FACTORIES = new URIExporterFactoryMapBuilder() //
-            .add(URIExporterIDs.DEFAULT, WasbsURIExporterFactory.getInstance()) //
-            .add(URIExporterIDs.DEFAULT_HADOOP, WasbsURIExporterFactory.getInstance()) //
-            .add(WasbsURIExporterFactory.EXPORTER_ID, WasbsURIExporterFactory.getInstance()) //
-            .add(AzureSASURIExporterFactory.EXPORTER_ID, AzureSASURIExporterFactory.getInstance()) //
-            .build();
-
     private static final long CACHE_TTL = 6000;
 
     private final AzureBlobStorageFileSystem m_filesystem;
 
     /**
-     * @param client
-     *            The {@link BlobServiceClient} instance.
-     * @param type
-     *            The type of credential used to init the {@link BlobServiceClient}
-     *            instance.
-     * @param settings
-     *            The settings.
+     * @param config
+     *            Connection configuration
+     * @throws IOException
      */
-    public AzureBlobStorageFSConnection(final BlobServiceClient client, final Type type,
-            final AzureBlobStorageConnectorSettings settings) {
-        m_filesystem = new AzureBlobStorageFileSystem(client, type, settings, CACHE_TTL);
+    public AzureBlobStorageFSConnection(final AzureBlobStorageFSConnectionConfig config) throws IOException {
+        final BlobServiceClient client = createServiceClient(config);
+        m_filesystem = new AzureBlobStorageFileSystem(config, client, CACHE_TTL);
+    }
+
+    private static BlobServiceClient createServiceClient(final AzureBlobStorageFSConnectionConfig config)
+            throws IOException {
+
+        final MicrosoftCredential credential = config.getCredential();
+
+        final BlobServiceClientBuilder builder = new BlobServiceClientBuilder() //
+                .endpoint(AzureUtils.getEndpoint(credential)) //
+                .addPolicy(new TimeoutPolicy(config.getTimeout()));
+
+        switch (credential.getType()) {
+        case AZURE_SHARED_KEY:
+            AzureSharedKeyCredential c = (AzureSharedKeyCredential) credential;
+            builder.credential(new StorageSharedKeyCredential(c.getAccount(), c.getSecretKey()));
+            break;
+        case AZURE_SAS_TOKEN:
+            // SAS token is a part of the endpoint
+            break;
+        case OAUTH2_ACCESS_TOKEN:
+            final OAuth2Credential oauth2Credential = (OAuth2Credential) credential;
+            builder.credential(new OAuthTokenCredential(oauth2Credential.getAccessToken()));
+            break;
+        default:
+            throw new UnsupportedOperationException("Unsupported credential type " + credential.getType());
+        }
+
+        return builder.buildClient();
     }
 
     @Override
-    public FSFileSystem<?> getFileSystem() {
+    public AzureBlobStorageFileSystem getFileSystem() {
         return m_filesystem;
     }
 
@@ -107,8 +123,4 @@ public class AzureBlobStorageFSConnection implements FSConnection {
         return new NioFileSystemBrowser(this);
     }
 
-    @Override
-    public Map<URIExporterID, URIExporterFactory> getURIExporterFactories() {
-        return URI_EXPORTER_FACTORIES;
-    }
 }

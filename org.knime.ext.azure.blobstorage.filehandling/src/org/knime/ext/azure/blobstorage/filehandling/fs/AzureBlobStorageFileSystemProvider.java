@@ -95,16 +95,9 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  */
 public class AzureBlobStorageFileSystemProvider
         extends BaseFileSystemProvider<AzureBlobStoragePath, AzureBlobStorageFileSystem> {
-    /**
-     * Azure Blob Storage URI scheme.
-     */
-    public static final String FS_TYPE = "microsoft-blobstorage";
 
     private static final Pattern VALID_CONTAINER_NAME_PATTERN = Pattern.compile("^(\\w|\\w-\\w)*$");
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected SeekableByteChannel newByteChannelInternal(final AzureBlobStoragePath path, final Set<? extends OpenOption> options,
             final FileAttribute<?>... attrs) throws IOException {
@@ -121,9 +114,6 @@ public class AzureBlobStorageFileSystemProvider
         return readAttributes(path, BasicFileAttributes.class).isDirectory();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @SuppressWarnings("resource")
     @Override
     protected void copyInternal(final AzureBlobStoragePath source, final AzureBlobStoragePath target, final CopyOption... options)
@@ -166,9 +156,6 @@ public class AzureBlobStorageFileSystemProvider
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @SuppressWarnings("resource")
     @Override
     protected InputStream newInputStreamInternal(final AzureBlobStoragePath path, final OpenOption... options) throws IOException {
@@ -181,9 +168,6 @@ public class AzureBlobStorageFileSystemProvider
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @SuppressWarnings("resource")
     @Override
     protected OutputStream newOutputStreamInternal(final AzureBlobStoragePath path, final OpenOption... options)
@@ -193,16 +177,11 @@ public class AzureBlobStorageFileSystemProvider
         return Channels.newOutputStream(newByteChannel(path, opts));
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected Iterator<AzureBlobStoragePath> createPathIterator(final AzureBlobStoragePath dir, final Filter<? super Path> filter)
             throws IOException {
         return AzureBlobStoragePathIteratorFactory.create(dir, filter);
     }
-
-
 
     private static void validateContainerName(final String container) throws IOException {
         if (!VALID_CONTAINER_NAME_PATTERN.matcher(container).matches()) {
@@ -226,9 +205,6 @@ public class AzureBlobStorageFileSystemProvider
                 && container.length() <= 63;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @SuppressWarnings("resource")
     @Override
     protected void createDirectoryInternal(final AzureBlobStoragePath dir, final FileAttribute<?>... attrs) throws IOException {
@@ -255,9 +231,6 @@ public class AzureBlobStorageFileSystemProvider
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected BaseFileAttributes fetchAttributesInternal(final AzureBlobStoragePath path, final Class<?> type)
             throws IOException {
@@ -393,17 +366,11 @@ public class AzureBlobStorageFileSystemProvider
                 null);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void checkAccessInternal(final AzureBlobStoragePath path, final AccessMode... modes) throws IOException {
         // nothing to do here
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @SuppressWarnings("resource")
     @Override
     protected void deleteInternal(final AzureBlobStoragePath path) throws IOException {

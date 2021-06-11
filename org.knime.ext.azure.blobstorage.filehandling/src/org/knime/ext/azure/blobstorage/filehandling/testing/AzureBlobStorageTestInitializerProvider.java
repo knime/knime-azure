@@ -49,20 +49,18 @@
 package org.knime.ext.azure.blobstorage.filehandling.testing;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Map;
 
 import org.knime.core.node.util.CheckUtils;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSConnection;
+import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSConnectionConfig;
+import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSDescriptorProvider;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFileSystem;
-import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFileSystemProvider;
-import org.knime.ext.azure.blobstorage.filehandling.node.AzureBlobStorageConnectorSettings;
-import org.knime.ext.microsoft.authentication.port.MicrosoftCredential.Type;
+import org.knime.ext.microsoft.authentication.port.azure.storage.AzureSharedKeyCredential;
 import org.knime.filehandling.core.connections.FSLocationSpec;
+import org.knime.filehandling.core.connections.meta.FSType;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializerProvider;
-
-import com.azure.storage.blob.BlobServiceClient;
-import com.azure.storage.blob.BlobServiceClientBuilder;
-import com.azure.storage.common.StorageSharedKeyCredential;
 
 /**
  * Initializer provider for ths Azure Blob Storage.
@@ -71,9 +69,6 @@ import com.azure.storage.common.StorageSharedKeyCredential;
  */
 public class AzureBlobStorageTestInitializerProvider extends DefaultFSTestInitializerProvider {
 
-    /**
-     * {@inheritDoc}
-     */
     @SuppressWarnings("resource")
     @Override
     public AzureBlobStorageTestInitializer setup(final Map<String, String> configuration) throws IOException {
@@ -82,21 +77,17 @@ public class AzureBlobStorageTestInitializerProvider extends DefaultFSTestInitia
         final String workingDir = generateRandomizedWorkingDir(configuration.get("workingDirPrefix"),
                 AzureBlobStorageFileSystem.PATH_SEPARATOR);
 
-        AzureBlobStorageConnectorSettings settings = new AzureBlobStorageConnectorSettings();
-        settings.getWorkingDirectoryModel().setStringValue(workingDir);
-        AzureBlobStorageFSConnection fsConnection = new AzureBlobStorageFSConnection(createClient(configuration),
-                Type.AZURE_SHARED_KEY,
-                settings);
-        return new AzureBlobStorageTestInitializer(fsConnection);
-    }
+        AzureBlobStorageFSConnectionConfig config = new AzureBlobStorageFSConnectionConfig(workingDir);
+        config.setCredential(new AzureSharedKeyCredential(getParameter(configuration, "account"), null) {
+            @Override
+            public String getSecretKey() {
+                return getParameter(configuration, "key");
+            }
+        });
+        config.setNormalizePaths(true);
+        config.setTimeout(Duration.ofSeconds(AzureBlobStorageFSConnectionConfig.DEFAULT_TIMEOUT));
 
-    private static BlobServiceClient createClient(final Map<String, String> config) {
-        String urlFormat = "https://%s.blob.core.windows.net";
-        String account = config.get("account");
-        String key = config.get("key");
-
-        return new BlobServiceClientBuilder().endpoint(String.format(urlFormat, account))
-                .credential(new StorageSharedKeyCredential(account, key)).buildClient();
+        return new AzureBlobStorageTestInitializer(new AzureBlobStorageFSConnection(config));
     }
 
     private static void validateConfiguration(final Map<String, String> configuration) {
@@ -105,21 +96,15 @@ public class AzureBlobStorageTestInitializerProvider extends DefaultFSTestInitia
         CheckUtils.checkArgumentNotNull(configuration.get("workingDirPrefix"), "workingDirPrefix must be specified.");
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public String getFSType() {
-        return AzureBlobStorageFileSystemProvider.FS_TYPE;
+    public FSType getFSType() {
+        return AzureBlobStorageFSDescriptorProvider.FS_TYPE;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public FSLocationSpec createFSLocationSpec(final Map<String, String> configuration) {
         validateConfiguration(configuration);
-        return AzureBlobStorageFileSystem.createFSLocationSpec(configuration.get("account"));
+        return AzureBlobStorageFSConnectionConfig.createFSLocationSpec(configuration.get("account"));
     }
 
 }

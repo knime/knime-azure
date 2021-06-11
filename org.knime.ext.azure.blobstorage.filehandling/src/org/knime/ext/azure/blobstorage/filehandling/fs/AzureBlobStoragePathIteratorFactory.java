@@ -71,7 +71,7 @@ import com.azure.storage.blob.models.ListBlobsOptions;
  *
  * @author Alexander Bondaletov
  */
-public final class AzureBlobStoragePathIteratorFactory {
+final class AzureBlobStoragePathIteratorFactory {
 
     private AzureBlobStoragePathIteratorFactory() {
     }

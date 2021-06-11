@@ -64,7 +64,7 @@ import com.azure.storage.blob.models.BlobStorageException;
  *
  * @author Alexander Bondaletov
  */
-public class AzureBlobStorageSeekableByteChannel extends TempFileSeekableByteChannel<AzureBlobStoragePath> {
+class AzureBlobStorageSeekableByteChannel extends TempFileSeekableByteChannel<AzureBlobStoragePath> {
 
     /**
      * Creates new instance.
@@ -80,17 +80,11 @@ public class AzureBlobStorageSeekableByteChannel extends TempFileSeekableByteCha
         super(file, options);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void copyFromRemote(final AzureBlobStoragePath remoteFile, final Path tempFile) throws IOException {
         Files.copy(remoteFile, tempFile);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @SuppressWarnings("resource")
     @Override
     public void copyToRemote(final AzureBlobStoragePath remoteFile, final Path tempFile) throws IOException {

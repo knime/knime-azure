@@ -44,45 +44,48 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2020-07-14 (Alexander Bondaletov): created
+ *   2021-06-04 (modithahewasinghage): created
  */
-package org.knime.ext.azure.blobstorage.filehandling.node;
+package org.knime.ext.azure.blobstorage.filehandling.fs;
 
-import org.knime.core.node.NodeDialogPane;
-import org.knime.core.node.NodeFactory;
-import org.knime.core.node.NodeView;
+import org.knime.ext.azure.blobstorage.filehandling.testing.AzureBlobStorageTestInitializerProvider;
+import org.knime.ext.azure.blobstorage.filehandling.uriexporter.AzureSASURIExporterFactory;
+import org.knime.ext.azure.blobstorage.filehandling.uriexporter.WasbsURIExporterFactory;
+import org.knime.filehandling.core.connections.meta.FSDescriptorProvider;
+import org.knime.filehandling.core.connections.meta.FSType;
+import org.knime.filehandling.core.connections.meta.FSTypeRegistry;
+import org.knime.filehandling.core.connections.meta.base.BaseFSDescriptor;
+import org.knime.filehandling.core.connections.meta.base.BaseFSDescriptorProvider;
+import org.knime.filehandling.core.connections.uriexport.URIExporterIDs;
 
 /**
- * Factory class for the {Azure Blob Storage Connector node.
+ * {@link FSDescriptorProvider} implementation for the Azure blob storage file
+ * system.
  *
- * @author Alexander Bondaletov
+ * @author modithahewasinghage
  */
-public class AzureBlobStorageConnectorNodeFactory extends NodeFactory<AzureBlobStorageConnectorNodeModel> {
+public class AzureBlobStorageFSDescriptorProvider extends BaseFSDescriptorProvider {
 
-    @Override
-    public AzureBlobStorageConnectorNodeModel createNodeModel() {
-        return new AzureBlobStorageConnectorNodeModel();
+    /**
+     * Azure Blob Storage FS Type.
+     */
+    public static final FSType FS_TYPE = FSTypeRegistry.getOrCreateFSType("microsoft-blobstorage",
+            "Azure Blob Storage");
+
+    /**
+     * Constructor.
+     */
+    public AzureBlobStorageFSDescriptorProvider() {
+        super(FS_TYPE, //
+                new BaseFSDescriptor.Builder() //
+                        .withConnectionFactory(AzureBlobStorageFSConnection::new) //
+                        .withURIExporterFactory(URIExporterIDs.DEFAULT, WasbsURIExporterFactory.getInstance()) //
+                        .withURIExporterFactory(URIExporterIDs.DEFAULT_HADOOP, WasbsURIExporterFactory.getInstance()) //
+                        .withURIExporterFactory(WasbsURIExporterFactory.EXPORTER_ID,
+                                WasbsURIExporterFactory.getInstance()) //
+                        .withURIExporterFactory(AzureSASURIExporterFactory.EXPORTER_ID,
+                                AzureSASURIExporterFactory.getInstance()) //
+                        .withTestInitializerProvider(new AzureBlobStorageTestInitializerProvider())//
+                        .build());
     }
-
-    @Override
-    protected int getNrNodeViews() {
-        return 0;
-    }
-
-    @Override
-    public NodeView<AzureBlobStorageConnectorNodeModel> createNodeView(final int viewIndex,
-            final AzureBlobStorageConnectorNodeModel nodeModel) {
-        return null;
-    }
-
-    @Override
-    protected boolean hasDialog() {
-        return true;
-    }
-
-    @Override
-    protected NodeDialogPane createNodeDialogPane() {
-        return new AzureBlobStorageConnectorNodeDialog();
-    }
-
 }
