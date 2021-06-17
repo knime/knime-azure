@@ -90,7 +90,7 @@ final class AzureSASURIExporter extends BaseURIExporter<SignedUrlConfig> {
 
     @Override
     public URI toUri(final FSPath path) throws URISyntaxException {
-        final AzureBlobStoragePath azurePath = (AzureBlobStoragePath) path.toAbsolutePath();
+        final AzureBlobStoragePath azurePath = (AzureBlobStoragePath) path.toAbsolutePath().normalize();
         try {
             return getSasUrl(azurePath, getConfig().getValidityDuration());
         } catch (IOException ex) {
