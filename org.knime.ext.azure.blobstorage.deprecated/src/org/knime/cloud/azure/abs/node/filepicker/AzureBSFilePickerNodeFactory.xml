@@ -12,17 +12,18 @@
     
     <fullDescription>
         <intro>
-        	<p>
-        		<i>This is a legacy file handling node and will be replaced in the foreseeable future.
-        		For further information about the new file handling framework see the </i>
-        		<a href="https://docs.knime.com/latest/analytics_platform_file_handling_guide/index.html"><i>File Handling Guide.
-        		</i></a><br/>
-			</p>
 	        This node reads the Azure Blob Store connection and generates a pre-signed URL that references a blob. 
 	        The URL is only valid for a specific period of time. Upon expiry, 
 	        the URL will no longer remain active and an attempt to access the URL will generate an error. 
 	        Azure Blob Store objects do not have to have their permissions set to public in order to access them. 
 	        Using the generated pre-signed URL, any KNIME reader can be utilized to directly read the blob without having to fetch the blob locally first.
+            <p>
+                <i>This is a legacy file handling node and has been replaced by the</i> <a href="https://kni.me/n/YMvcvDu5EC56OIFg">
+                <i>Path to URI</i></a> node.
+                <i>For further information about the new file handling framework see the </i>
+                <a href="https://docs.knime.com/latest/analytics_platform_file_handling_guide/index.html"><i>File Handling Guide.
+                </i></a><br/>
+            </p>
         </intro>
         
         <option name="Remote File">
