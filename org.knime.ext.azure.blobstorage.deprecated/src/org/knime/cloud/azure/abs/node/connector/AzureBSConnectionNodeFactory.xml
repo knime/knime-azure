@@ -13,14 +13,6 @@
     
     <fullDescription>
         <intro>
-			<p>
-				<i>This legacy file handling node has been replaced by the
-				</i><a href="https://kni.me/n/1iu8u7meRrzU-iPg"><i>Azure Blob Storage Connector</i></a><i>
-				and will become deprecated in the foreseeable future. For further information about the 
-				new file handling framework see the
-				</i><a href="https://docs.knime.com/latest/analytics_platform_file_handling_guide/index.html"><i>File Handling Guide.
-				</i></a><br/>
-			</p>
         	<p>
         		This node configures the connection information that will be used to connect to the Azure Blob Store (AzureBS). Using this 
         		connection, the other KNIME remote file handling nodes can be used to create directory, list, delete, 
@@ -38,6 +30,14 @@
         		from a list. The storage account is not needed. For instance, to delete the above mentioned object <i>iris.data</i>,
         		it is necessary to encode the path to <i>azurebs://knime-bucket/data/iris.data</i> in the list.        		
         	</p>
+			<p>
+				<i>This legacy file handling node has been replaced by the
+				</i><a href="https://kni.me/n/1iu8u7meRrzU-iPg"><i>Azure Blob Storage Connector</i></a><i>
+				and will become deprecated in the foreseeable future. For further information about the 
+				new file handling framework see the
+				</i><a href="https://docs.knime.com/latest/analytics_platform_file_handling_guide/index.html"><i>File Handling Guide.
+				</i></a><br/>
+			</p>
         </intro>
         
         <option name="Workflow Credentials">
