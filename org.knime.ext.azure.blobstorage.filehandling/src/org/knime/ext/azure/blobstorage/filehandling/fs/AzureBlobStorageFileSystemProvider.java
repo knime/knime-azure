@@ -71,6 +71,7 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.knime.core.node.NodeLogger;
 import org.knime.ext.azure.AzureUtils;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
@@ -79,7 +80,6 @@ import com.azure.core.util.polling.SyncPoller;
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobServiceClient;
-import com.azure.storage.blob.models.BlobContainerProperties;
 import com.azure.storage.blob.models.BlobCopyInfo;
 import com.azure.storage.blob.models.BlobProperties;
 import com.azure.storage.blob.models.BlobStorageException;
@@ -335,13 +335,26 @@ public class AzureBlobStorageFileSystemProvider
     }
 
     @SuppressWarnings("resource")
-    private static BaseFileAttributes createContainerAttributes(final AzureBlobStoragePath path) {
+    private static BaseFileAttributes createContainerAttributes(final AzureBlobStoragePath path)
+            throws NoSuchFileException {
         final AzureBlobStorageFileSystem fs = path.getFileSystem();
-        final BlobContainerProperties containerProperties = fs.getClient() //
-                .getBlobContainerClient(path.getBucketName()) //
-                .getProperties();
+        var containerClient = fs.getClient().getBlobContainerClient(path.getBucketName());
+        var creationAndModificationTime = FileTime.fromMillis(0);
 
-        final FileTime creationAndModificationTime = FileTime.from(containerProperties.getLastModified().toInstant());
+        try {
+            creationAndModificationTime = FileTime.from(containerClient.getProperties().getLastModified().toInstant());
+        } catch (BlobStorageException e) {
+            if (e.getStatusCode() == HttpResponseStatus.FORBIDDEN.code()) {
+                boolean exist = containerClient.listBlobs(new ListBlobsOptions().setMaxResultsPerPage(1), null)
+                        .iterator().hasNext();
+
+                if (!exist) {
+                    throw new NoSuchFileException(path.toString());
+                }
+            } else {
+                throw e;
+            }
+        }
 
         return new BaseFileAttributes(false, //
                 path, //
