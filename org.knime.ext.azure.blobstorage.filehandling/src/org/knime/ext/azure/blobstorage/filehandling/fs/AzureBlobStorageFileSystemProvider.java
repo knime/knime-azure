@@ -71,7 +71,6 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import org.knime.core.node.NodeLogger;
 import org.knime.ext.azure.AzureUtils;
 import org.knime.filehandling.core.connections.base.BaseFileSystemProvider;
 import org.knime.filehandling.core.connections.base.attributes.BaseFileAttributes;
@@ -86,8 +85,6 @@ import com.azure.storage.blob.models.BlobStorageException;
 import com.azure.storage.blob.models.BlobType;
 import com.azure.storage.blob.models.ListBlobsOptions;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
-
 /**
  * File system provider for the {@link AzureBlobStorageFileSystem}.
  *
@@ -97,6 +94,9 @@ public class AzureBlobStorageFileSystemProvider
         extends BaseFileSystemProvider<AzureBlobStoragePath, AzureBlobStorageFileSystem> {
 
     private static final Pattern VALID_CONTAINER_NAME_PATTERN = Pattern.compile("^(\\w|\\w-\\w)*$");
+    private static final int HTTP_NOT_FOUND = 404;
+    private static final int HTTP_FORBIDDEN = 403;
+
 
     @Override
     protected SeekableByteChannel newByteChannelInternal(final AzureBlobStoragePath path, final Set<? extends OpenOption> options,
@@ -309,7 +309,7 @@ public class AzureBlobStorageFileSystemProvider
             return path.getFileSystem().getClient().getBlobContainerClient(path.getBucketName())
                     .getBlobClient(path.getBlobName()).getProperties();
         } catch (BlobStorageException ex) {
-            if (ex.getStatusCode() == HttpResponseStatus.NOT_FOUND.code()) {
+            if (ex.getStatusCode() == HTTP_NOT_FOUND) {
                 return null;
             } else {
                 throw ex;
@@ -344,7 +344,7 @@ public class AzureBlobStorageFileSystemProvider
         try {
             creationAndModificationTime = FileTime.from(containerClient.getProperties().getLastModified().toInstant());
         } catch (BlobStorageException e) {
-            if (e.getStatusCode() == HttpResponseStatus.FORBIDDEN.code()) {
+            if (e.getStatusCode() == HTTP_FORBIDDEN) {
                 boolean exist = containerClient.listBlobs(new ListBlobsOptions().setMaxResultsPerPage(1), null)
                         .iterator().hasNext();
 
@@ -435,7 +435,7 @@ public class AzureBlobStorageFileSystemProvider
             contClient.getBlobClient(path.getBlobName()).delete();
             return true;
         } catch (BlobStorageException ex) {
-            if (ex.getStatusCode() != HttpResponseStatus.NOT_FOUND.code()) {
+            if (ex.getStatusCode() != HTTP_NOT_FOUND) {
                 throw AzureUtils.toIOE(ex, path.toString());
             } else {
                 return false;
