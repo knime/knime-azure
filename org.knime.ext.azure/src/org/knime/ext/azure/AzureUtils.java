@@ -87,7 +87,7 @@ public final class AzureUtils {
             Pattern.compile(
                     "The MAC signature found in the HTTP request .* is not the same as any computed signature."), //
             Pattern.compile("Signature fields not well formed"), //
-            Pattern.compile("Signature did not match."), //
+            Pattern.compile("<Error>.*Signature did not match.*</Error>"), //
             Pattern.compile(".* is mandatory. Cannot be empty") };
 
     /**
