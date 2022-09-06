@@ -50,14 +50,13 @@ package org.knime.ext.azure.blobstorage.filehandling.fs;
 
 import java.io.IOException;
 
-import org.knime.core.node.util.FileSystemBrowser;
 import org.knime.ext.azure.AzureUtils;
 import org.knime.ext.azure.OAuthTokenCredential;
 import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
 import org.knime.ext.microsoft.authentication.port.azure.storage.AzureSharedKeyCredential;
 import org.knime.ext.microsoft.authentication.port.oauth2.OAuth2Credential;
 import org.knime.filehandling.core.connections.FSConnection;
-import org.knime.filehandling.core.filechooser.NioFileSystemBrowser;
+import org.knime.filehandling.core.connections.base.BaseFSConnection;
 
 import com.azure.core.http.policy.TimeoutPolicy;
 import com.azure.storage.blob.BlobServiceClient;
@@ -69,7 +68,7 @@ import com.azure.storage.common.StorageSharedKeyCredential;
  *
  * @author Alexander Bondaletov
  */
-public class AzureBlobStorageFSConnection implements FSConnection {
+public class AzureBlobStorageFSConnection extends BaseFSConnection {
 
     private static final long CACHE_TTL = 6000;
 
@@ -117,10 +116,4 @@ public class AzureBlobStorageFSConnection implements FSConnection {
     public AzureBlobStorageFileSystem getFileSystem() {
         return m_filesystem;
     }
-
-    @Override
-    public FileSystemBrowser getFileSystemBrowser() {
-        return new NioFileSystemBrowser(this);
-    }
-
 }

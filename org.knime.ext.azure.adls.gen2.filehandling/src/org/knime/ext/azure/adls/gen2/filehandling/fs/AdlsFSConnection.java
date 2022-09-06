@@ -50,14 +50,13 @@ package org.knime.ext.azure.adls.gen2.filehandling.fs;
 
 import java.io.IOException;
 
-import org.knime.core.node.util.FileSystemBrowser;
 import org.knime.ext.azure.AzureUtils;
 import org.knime.ext.azure.OAuthTokenCredential;
 import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
 import org.knime.ext.microsoft.authentication.port.azure.storage.AzureSharedKeyCredential;
 import org.knime.ext.microsoft.authentication.port.oauth2.OAuth2Credential;
 import org.knime.filehandling.core.connections.FSConnection;
-import org.knime.filehandling.core.filechooser.NioFileSystemBrowser;
+import org.knime.filehandling.core.connections.base.BaseFSConnection;
 
 import com.azure.core.http.policy.TimeoutPolicy;
 import com.azure.storage.common.StorageSharedKeyCredential;
@@ -69,7 +68,7 @@ import com.azure.storage.file.datalake.DataLakeServiceClientBuilder;
  *
  * @author Alexander Bondaletov
  */
-public class AdlsFSConnection implements FSConnection {
+public class AdlsFSConnection extends BaseFSConnection {
 
     private static final long CACHE_TTL = 6000;
 
@@ -118,10 +117,4 @@ public class AdlsFSConnection implements FSConnection {
     public AdlsFileSystem getFileSystem() {
         return m_filesystem;
     }
-
-    @Override
-    public FileSystemBrowser getFileSystemBrowser() {
-        return new NioFileSystemBrowser(this);
-    }
-
 }
