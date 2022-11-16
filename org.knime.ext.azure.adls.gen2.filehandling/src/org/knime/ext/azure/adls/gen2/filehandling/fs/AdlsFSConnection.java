@@ -59,6 +59,7 @@ import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.base.BaseFSConnection;
 
 import com.azure.core.http.policy.TimeoutPolicy;
+import com.azure.core.util.HttpClientOptions;
 import com.azure.storage.common.StorageSharedKeyCredential;
 import com.azure.storage.file.datalake.DataLakeServiceClient;
 import com.azure.storage.file.datalake.DataLakeServiceClientBuilder;
@@ -109,7 +110,11 @@ public class AdlsFSConnection extends BaseFSConnection {
         default:
             throw new UnsupportedOperationException("Unsupported credential type " + credential.getType());
         }
-
+        if (AzureUtils.isProxyActive()) {
+            final var clientOptions = new HttpClientOptions();
+            clientOptions.setProxyOptions(AzureUtils.loadSystemProxyOptions());
+            builder.clientOptions(clientOptions);
+        }
         return builder.buildClient();
     }
 
