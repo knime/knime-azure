@@ -55,6 +55,7 @@ import java.net.URL;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -65,6 +66,8 @@ import org.knime.ext.microsoft.authentication.port.azure.storage.AzureSharedKeyC
 import org.knime.ext.microsoft.authentication.port.oauth2.OAuth2Credential;
 
 import com.azure.core.exception.HttpResponseException;
+import com.azure.core.http.ProxyOptions;
+import com.azure.core.util.ConfigurationBuilder;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -89,6 +92,10 @@ public final class AzureUtils {
             Pattern.compile("Signature fields not well formed"), //
             Pattern.compile("<Error>.*Signature did not match.*</Error>"), //
             Pattern.compile(".* is mandatory. Cannot be empty") };
+
+    private static final String HTTPS = "https";
+    private static final String HTTP = "http";
+    private static final String JAVA_PROXY_HOST = "proxyHost";
 
     /**
      * Extracts human readable error message from the {@link HttpResponseException}.
@@ -252,6 +259,35 @@ public final class AzureUtils {
         default:
             throw new UnsupportedOperationException("Unsupported credential type " + credential.getType());
         }
+    }
+
+    /**
+     * Check if proxy is active.
+     *
+     * @return true if proxy is active otherwise false
+     */
+    public static boolean isProxyActive() {
+        final var httpsHost = loadSystemProperty(HTTPS + "." + JAVA_PROXY_HOST);
+        final var httpHost = loadSystemProperty(HTTP + "." + JAVA_PROXY_HOST);
+        return (httpsHost != null && !httpsHost.isEmpty()) || (httpHost != null && !httpHost.isEmpty());
+    }
+
+    /**
+     * Retrieve proxy options from system properties
+     *
+     * @return proxy options {@link ProxyOptions}
+     */
+    public static ProxyOptions loadSystemProxyOptions() {
+        // create empty configurations
+        final var emptyConfig = new ConfigurationBuilder(s -> Map.of(), s -> Map.of(), s -> Map.of()).build();
+        // because of an empty configuration,
+        // proxy configurations are loaded from system properties not from static
+        // immutable {@link Configuration#getGlobalConfiguration()}
+        return ProxyOptions.fromConfiguration(emptyConfig, true);
+    }
+
+    private static String loadSystemProperty(final String name) {
+        return System.getProperty(name);
     }
 
     /**
