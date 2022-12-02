@@ -73,9 +73,12 @@ public class AdlsFSConnectionConfig extends BaseFSConnectionConfig {
      * Constructor.
      *
      * @param workingDirectory
+     * @param relativizationBehavior
+     *            The browser relativization behavior.
      */
-    public AdlsFSConnectionConfig(final String workingDirectory) {
-        super(workingDirectory, true);
+    public AdlsFSConnectionConfig(final String workingDirectory,
+            final BrowserRelativizationBehavior relativizationBehavior) {
+        super(workingDirectory, true, relativizationBehavior);
     }
 
     /**

@@ -59,6 +59,7 @@ import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSConnectionConfig;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFileSystem;
 import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
+import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig.BrowserRelativizationBehavior;
 
 /**
  * Settings for the Azure Blob Storage Connector node.
@@ -70,10 +71,12 @@ class AzureBlobStorageConnectorSettings {
     private static final String KEY_WORKING_DIRECTORY = "workingDirectory";
     private static final String KEY_NORMALIZE_PATHS = "normalizePaths";
     private static final String KEY_TIMEOUT = "timeout";
+    private static final String KEY_BROWSER_PATH_RELATIVE = "browserPathRelativize";
 
     private final SettingsModelString m_workingDirectory;
     private final SettingsModelBoolean m_normalizePaths;
     private final SettingsModelIntegerBounded m_timeout;
+    private final SettingsModelBoolean m_browserPathRelative;
 
     /**
      * Creates new instance.
@@ -83,6 +86,7 @@ class AzureBlobStorageConnectorSettings {
         m_normalizePaths = new SettingsModelBoolean(KEY_NORMALIZE_PATHS, true);
         m_timeout = new SettingsModelIntegerBounded(KEY_TIMEOUT, AzureBlobStorageFSConnectionConfig.DEFAULT_TIMEOUT, 0,
                 Integer.MAX_VALUE);
+        m_browserPathRelative = new SettingsModelBoolean(KEY_BROWSER_PATH_RELATIVE, false);
     }
 
     /**
@@ -95,6 +99,7 @@ class AzureBlobStorageConnectorSettings {
         m_workingDirectory.saveSettingsTo(settings);
         m_normalizePaths.saveSettingsTo(settings);
         m_timeout.saveSettingsTo(settings);
+        m_browserPathRelative.saveSettingsTo(settings);
     }
 
     /**
@@ -108,6 +113,9 @@ class AzureBlobStorageConnectorSettings {
         m_workingDirectory.validateSettings(settings);
         m_normalizePaths.validateSettings(settings);
         m_timeout.validateSettings(settings);
+        if (settings.containsKey(KEY_BROWSER_PATH_RELATIVE)) {
+            m_browserPathRelative.validateSettings(settings);
+        }
 
         AzureBlobStorageConnectorSettings temp = new AzureBlobStorageConnectorSettings();
         temp.loadSettingsFrom(settings);
@@ -137,6 +145,12 @@ class AzureBlobStorageConnectorSettings {
         m_workingDirectory.loadSettingsFrom(settings);
         m_normalizePaths.loadSettingsFrom(settings);
         m_timeout.loadSettingsFrom(settings);
+
+        if (settings.containsKey(KEY_BROWSER_PATH_RELATIVE)) {
+            m_browserPathRelative.loadSettingsFrom(settings);
+        } else {
+            m_browserPathRelative.setBooleanValue(false);
+        }
     }
 
     /**
@@ -182,12 +196,41 @@ class AzureBlobStorageConnectorSettings {
     }
 
     /**
+     * @return the browserPathRelative model
+     */
+    public SettingsModelBoolean getBrowserPathRelativeModel() {
+        return m_browserPathRelative;
+    }
+
+    /**
+     * @return the browser relativization behavior
+     */
+    public BrowserRelativizationBehavior getBrowserRelativizationBehavior() {
+        if (m_browserPathRelative.getBooleanValue()) {
+            return BrowserRelativizationBehavior.RELATIVE;
+        } else {
+            return BrowserRelativizationBehavior.ABSOLUTE;
+        }
+    }
+
+    /**
      * @param credential
      *            The {@link MicrosoftCredential} to use when connecting.
      * @return The FSConnectionConfig for Azure blob store
      */
     public AzureBlobStorageFSConnectionConfig toFSConnectionConfig(final MicrosoftCredential credential) {
-        final AzureBlobStorageFSConnectionConfig config = new AzureBlobStorageFSConnectionConfig(getWorkingDirectory());
+        return toFSConnectionConfig(credential, getBrowserRelativizationBehavior());
+    }
+
+    public AzureBlobStorageFSConnectionConfig toFSConnectionConfigForWorkdirChooser(
+            final MicrosoftCredential credential) {
+        return toFSConnectionConfig(credential, BrowserRelativizationBehavior.ABSOLUTE);
+    }
+
+    private AzureBlobStorageFSConnectionConfig toFSConnectionConfig(final MicrosoftCredential credential,
+            final BrowserRelativizationBehavior relativizationBehavior) {
+        final AzureBlobStorageFSConnectionConfig config = new AzureBlobStorageFSConnectionConfig(getWorkingDirectory(),
+                relativizationBehavior);
         config.setCredential(credential);
         config.setNormalizePaths(shouldNormalizePaths());
         config.setTimeout(getTimeout());

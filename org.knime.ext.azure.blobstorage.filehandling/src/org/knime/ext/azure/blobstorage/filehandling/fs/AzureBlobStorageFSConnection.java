@@ -81,6 +81,7 @@ public class AzureBlobStorageFSConnection extends BaseFSConnection {
      * @throws IOException
      */
     public AzureBlobStorageFSConnection(final AzureBlobStorageFSConnectionConfig config) throws IOException {
+        super(config);
         final BlobServiceClient client = createServiceClient(config);
         m_filesystem = new AzureBlobStorageFileSystem(config, client, CACHE_TTL);
     }

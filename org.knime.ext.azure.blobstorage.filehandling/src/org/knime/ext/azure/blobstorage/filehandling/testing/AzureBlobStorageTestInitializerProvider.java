@@ -60,6 +60,7 @@ import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFileSyste
 import org.knime.ext.microsoft.authentication.port.azure.storage.AzureSharedKeyCredential;
 import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.connections.meta.FSType;
+import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig.BrowserRelativizationBehavior;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializerProvider;
 
 /**
@@ -77,7 +78,8 @@ public class AzureBlobStorageTestInitializerProvider extends DefaultFSTestInitia
         final String workingDir = generateRandomizedWorkingDir(configuration.get("workingDirPrefix"),
                 AzureBlobStorageFileSystem.PATH_SEPARATOR);
 
-        AzureBlobStorageFSConnectionConfig config = new AzureBlobStorageFSConnectionConfig(workingDir);
+        AzureBlobStorageFSConnectionConfig config = new AzureBlobStorageFSConnectionConfig(workingDir,
+                BrowserRelativizationBehavior.ABSOLUTE);
         config.setCredential(new AzureSharedKeyCredential(getParameter(configuration, "account"), null) {
             @Override
             public String getSecretKey() {

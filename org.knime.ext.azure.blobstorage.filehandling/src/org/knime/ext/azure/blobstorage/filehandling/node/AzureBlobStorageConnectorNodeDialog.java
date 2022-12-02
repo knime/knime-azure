@@ -74,6 +74,7 @@ import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
 import org.knime.ext.microsoft.authentication.port.MicrosoftCredentialPortObjectSpec;
 import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryChooser;
+import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryRelativizationPanel;
 
 /**
  * Azure Blob Storage Connector node dialog.
@@ -97,7 +98,7 @@ class AzureBlobStorageConnectorNodeDialog extends NodeDialogPane {
                 .setStringValue(m_workingDirChooser.getSelectedWorkingDirectory());
 
         addTab("Settings", createFilesystemSettingsPanel());
-        addTab("Advanced", createTimeoutsPanel());
+        addTab("Advanced", createAdvancedPanel());
     }
 
     private JComponent createFilesystemSettingsPanel() {
@@ -128,6 +129,30 @@ class AzureBlobStorageConnectorNodeDialog extends NodeDialogPane {
         return panel;
     }
 
+    private JComponent createAdvancedPanel() {
+        var panel = new JPanel(new GridBagLayout());
+        var c = new GridBagConstraints();
+        c.anchor = GridBagConstraints.WEST;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 1;
+        c.gridx = 0;
+        c.gridy = 0;
+        panel.add(createTimeoutsPanel(), c);
+
+        c.gridy += 1;
+        panel.add(new WorkingDirectoryRelativizationPanel(m_settings.getBrowserPathRelativeModel()), c);
+
+        c.fill = GridBagConstraints.BOTH;
+        c.gridx = 0;
+        c.gridy++;
+        c.gridwidth = 2;
+        c.weightx = 1;
+        c.weighty = 1;
+        panel.add(Box.createVerticalGlue(), c);
+
+        return panel;
+    }
+
     private JComponent createTimeoutsPanel() {
         DialogComponentNumber timeout = new DialogComponentNumber(m_settings.getTimeoutModel(), "", 1);
         timeout.getComponentPanel().setLayout(new FlowLayout(FlowLayout.LEFT));
@@ -140,27 +165,20 @@ class AzureBlobStorageConnectorNodeDialog extends NodeDialogPane {
         c.weighty = 0;
         c.gridx = 0;
         c.gridy = 0;
-        panel.add(new JLabel("Service calls timeout (seconds): "), c);
+        c.insets = new Insets(0, 5, 0, 0);
+        panel.add(new JLabel("Service calls timeout (seconds):"), c);
 
         c.weightx = 1;
         c.gridx = 1;
         c.gridy = 0;
         panel.add(timeout.getComponentPanel(), c);
 
-        c.fill = GridBagConstraints.BOTH;
-        c.gridx = 0;
-        c.gridy++;
-        c.gridwidth = 2;
-        c.weightx = 1;
-        c.weighty = 1;
-        panel.add(Box.createVerticalGlue(), c);
-
         panel.setBorder(BorderFactory.createTitledBorder("Connection settings"));
         return panel;
     }
 
     private FSConnection createFSConnection() throws IOException {
-        return new AzureBlobStorageFSConnection(m_settings.toFSConnectionConfig(m_credentials));
+        return new AzureBlobStorageFSConnection(m_settings.toFSConnectionConfigForWorkdirChooser(m_credentials));
     }
 
     @Override

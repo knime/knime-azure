@@ -53,11 +53,13 @@ import java.time.Duration;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
+import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFSConnectionConfig;
 import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFileSystem;
 import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
+import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig.BrowserRelativizationBehavior;
 
 /**
  * Settings for Adls connector node.
@@ -67,9 +69,11 @@ import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
 final class AdlsConnectorSettings {
     private static final String KEY_WORKING_DIRECTORY = "workingDirectory";
     private static final String KEY_TIMEOUT = "timeout";
+    private static final String KEY_BROWSER_PATH_RELATIVE = "browserPathRelativize";
 
     private final SettingsModelString m_workingDirectory;
     private final SettingsModelIntegerBounded m_timeout;
+    private final SettingsModelBoolean m_browserPathRelative;
 
     /**
      * Creates new instance.
@@ -77,6 +81,7 @@ final class AdlsConnectorSettings {
     public AdlsConnectorSettings() {
         m_workingDirectory = new SettingsModelString(KEY_WORKING_DIRECTORY, AdlsFileSystem.PATH_SEPARATOR);
         m_timeout = new SettingsModelIntegerBounded(KEY_TIMEOUT, AdlsFSConnectionConfig.DEFAULT_TIMEOUT, 0, Integer.MAX_VALUE);
+        m_browserPathRelative = new SettingsModelBoolean(KEY_BROWSER_PATH_RELATIVE, false);
     }
 
     /**
@@ -88,6 +93,7 @@ final class AdlsConnectorSettings {
     public void saveSettingsTo(final NodeSettingsWO settings) {
         m_workingDirectory.saveSettingsTo(settings);
         m_timeout.saveSettingsTo(settings);
+        m_browserPathRelative.saveSettingsTo(settings);
     }
 
     /**
@@ -101,7 +107,11 @@ final class AdlsConnectorSettings {
         m_workingDirectory.validateSettings(settings);
         m_timeout.validateSettings(settings);
 
-        AdlsConnectorSettings temp = new AdlsConnectorSettings();
+        if (settings.containsKey(KEY_BROWSER_PATH_RELATIVE)) {
+            m_browserPathRelative.validateSettings(settings);
+        }
+
+        var temp = new AdlsConnectorSettings();
         temp.loadSettingsFrom(settings);
         temp.validate();
     }
@@ -128,6 +138,12 @@ final class AdlsConnectorSettings {
     public void loadSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
         m_workingDirectory.loadSettingsFrom(settings);
         m_timeout.loadSettingsFrom(settings);
+
+        if (settings.containsKey(KEY_BROWSER_PATH_RELATIVE)) {
+            m_browserPathRelative.loadSettingsFrom(settings);
+        } else {
+            m_browserPathRelative.setBooleanValue(false);
+        }
     }
 
     /**
@@ -159,13 +175,40 @@ final class AdlsConnectorSettings {
     }
 
     /**
+     * @return the browserPathRelative model
+     */
+    public SettingsModelBoolean getBrowserPathRelativeModel() {
+        return m_browserPathRelative;
+    }
+
+    /**
+     * @return the browser relativization behavior
+     */
+    public BrowserRelativizationBehavior getBrowserRelativizationBehavior() {
+        if (m_browserPathRelative.getBooleanValue()) {
+            return BrowserRelativizationBehavior.RELATIVE;
+        } else {
+            return BrowserRelativizationBehavior.ABSOLUTE;
+        }
+    }
+
+    /**
      *
      * @param credential
      *            The {@link MicrosoftCredential} to use.
      * @return The FSConnectionConfig for Azure data lake
      */
     public AdlsFSConnectionConfig toFSConnectionConfig(final MicrosoftCredential credential) {
-        var config = new AdlsFSConnectionConfig(getWorkingDirectory());
+        return toFSConnectionConfig(credential, getBrowserRelativizationBehavior());
+    }
+
+    public AdlsFSConnectionConfig toFSConnectionConfigForWorkdirChooser(final MicrosoftCredential credential) {
+        return toFSConnectionConfig(credential, BrowserRelativizationBehavior.ABSOLUTE);
+    }
+
+    private AdlsFSConnectionConfig toFSConnectionConfig(final MicrosoftCredential credential,
+            final BrowserRelativizationBehavior relativizationBehavior) {
+        var config = new AdlsFSConnectionConfig(getWorkingDirectory(), relativizationBehavior);
         config.setCredential(credential);
         config.setTimeout(getTimeout());
         return config;

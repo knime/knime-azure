@@ -82,6 +82,7 @@ public class AdlsFSConnection extends BaseFSConnection {
      *
      */
     public AdlsFSConnection(final AdlsFSConnectionConfig config) throws IOException {
+        super(config);
         final DataLakeServiceClient client = createClient(config);
         m_filesystem = new AdlsFileSystem(config, client, CACHE_TTL);
     }

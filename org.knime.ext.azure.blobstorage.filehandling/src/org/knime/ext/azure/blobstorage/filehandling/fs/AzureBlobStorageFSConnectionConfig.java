@@ -77,9 +77,12 @@ public class AzureBlobStorageFSConnectionConfig extends BaseFSConnectionConfig {
      * Constructor.
      *
      * @param workingDirectory
+     * @param relativizationBehavior
+     *            The browser relativization behavior.
      */
-    public AzureBlobStorageFSConnectionConfig(final String workingDirectory) {
-        super(workingDirectory, true);
+    public AzureBlobStorageFSConnectionConfig(final String workingDirectory,
+            final BrowserRelativizationBehavior relativizationBehavior) {
+        super(workingDirectory, true, relativizationBehavior);
     }
 
     /**

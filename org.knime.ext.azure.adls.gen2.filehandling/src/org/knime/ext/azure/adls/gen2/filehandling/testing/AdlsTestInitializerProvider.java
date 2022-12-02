@@ -59,6 +59,7 @@ import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFileSystem;
 import org.knime.ext.microsoft.authentication.port.azure.storage.AzureSharedKeyCredential;
 import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.connections.meta.FSType;
+import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig.BrowserRelativizationBehavior;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializerProvider;
 
 /**
@@ -78,7 +79,8 @@ public class AdlsTestInitializerProvider extends DefaultFSTestInitializerProvide
         String workDir = generateRandomizedWorkingDir(getParameter(configuration, WORKDIR_PREFIX),
                 AdlsFileSystem.PATH_SEPARATOR);
 
-        final AdlsFSConnectionConfig config = new AdlsFSConnectionConfig(workDir);
+        final var config = new AdlsFSConnectionConfig(workDir,
+                BrowserRelativizationBehavior.ABSOLUTE);
         config.setCredential(new AzureSharedKeyCredential(getParameter(configuration, ACCOUNT), "ignore") {
             @Override
             public String getSecretKey() {
