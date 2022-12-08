@@ -1,20 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11"/>
+	<classpathentry exported="true" kind="lib" path="libs/azure-core-1.31.0.jar" sourcepath="libs/azure-core-1.31.0-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/azure-core-http-netty-1.12.4.jar" sourcepath="libs/azure-core-http-netty-1.12.4-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/azure-storage-blob-12.19.0.jar" sourcepath="libs/azure-storage-blob-12.19.0-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/azure-storage-common-12.18.0.jar" sourcepath="libs/azure-storage-common-12.18.0-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/azure-storage-file-datalake-12.12.0.jar" sourcepath="libs/azure-storage-file-datalake-12.12.0-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/azure-storage-internal-avro-12.4.1.jar" sourcepath="libs/azure-storage-internal-avro-12.4.1-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/jackson-annotations-2.13.3.jar" sourcepath="libs/jackson-annotations-2.13.3-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/jackson-core-2.13.3.jar" sourcepath="libs/jackson-core-2.13.3-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/jackson-databind-2.13.3.jar" sourcepath="libs/jackson-databind-2.13.3-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/jackson-dataformat-xml-2.13.3.jar" sourcepath="libs/jackson-dataformat-xml-2.13.3-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/jackson-datatype-jsr310-2.13.3.jar" sourcepath="libs/jackson-datatype-jsr310-2.13.3-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/netty-buffer-4.1.79.Final.jar" sourcepath="libs/netty-buffer-4.1.79.Final-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/netty-codec-4.1.79.Final.jar" sourcepath="libs/netty-codec-4.1.79.Final-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/netty-codec-dns-4.1.79.Final.jar" sourcepath="libs/netty-codec-dns-4.1.79.Final-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/netty-codec-http2-4.1.79.Final.jar" sourcepath="libs/netty-codec-http2-4.1.79.Final-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/netty-codec-http-4.1.79.Final.jar" sourcepath="libs/netty-codec-http-4.1.79.Final-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/netty-codec-socks-4.1.79.Final.jar" sourcepath="libs/netty-codec-socks-4.1.79.Final-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/netty-common-4.1.79.Final.jar" sourcepath="libs/netty-common-4.1.79.Final-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/netty-handler-4.1.79.Final.jar" sourcepath="libs/netty-handler-4.1.79.Final-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/netty-handler-proxy-4.1.79.Final.jar" sourcepath="libs/netty-handler-proxy-4.1.79.Final-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/netty-resolver-4.1.79.Final.jar" sourcepath="libs/netty-resolver-4.1.79.Final-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/netty-resolver-dns-4.1.79.Final.jar" sourcepath="libs/netty-resolver-dns-4.1.79.Final-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/netty-resolver-dns-classes-macos-4.1.79.Final.jar" sourcepath="libs/netty-resolver-dns-classes-macos-4.1.79.Final-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/netty-resolver-dns-native-macos-4.1.79.Final-osx-x86_64.jar" sourcepath="libs/netty-resolver-dns-native-macos-4.1.79.Final-osx-x86_64-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/netty-tcnative-boringssl-static-2.0.53.Final.jar" sourcepath="libs/netty-tcnative-boringssl-static-2.0.53.Final-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/netty-tcnative-boringssl-static-2.0.53.Final-linux-aarch_64.jar" sourcepath="libs/netty-tcnative-boringssl-static-2.0.53.Final-linux-aarch_64-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/netty-tcnative-boringssl-static-2.0.53.Final-linux-x86_64.jar" sourcepath="libs/netty-tcnative-boringssl-static-2.0.53.Final-linux-x86_64-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/netty-tcnative-boringssl-static-2.0.53.Final-osx-aarch_64.jar" sourcepath="libs/netty-tcnative-boringssl-static-2.0.53.Final-osx-aarch_64-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/netty-tcnative-boringssl-static-2.0.53.Final-osx-x86_64.jar" sourcepath="libs/netty-tcnative-boringssl-static-2.0.53.Final-osx-x86_64-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/netty-tcnative-boringssl-static-2.0.53.Final-windows-x86_64.jar" sourcepath="libs/netty-tcnative-boringssl-static-2.0.53.Final-windows-x86_64-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/netty-tcnative-classes-2.0.53.Final.jar" sourcepath="libs/netty-tcnative-classes-2.0.53.Final-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/netty-transport-4.1.79.Final.jar" sourcepath="libs/netty-transport-4.1.79.Final-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/netty-transport-classes-epoll-4.1.79.Final.jar" sourcepath="libs/netty-transport-classes-epoll-4.1.79.Final-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/netty-transport-classes-kqueue-4.1.79.Final.jar" sourcepath="libs/netty-transport-classes-kqueue-4.1.79.Final-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/netty-transport-native-epoll-4.1.79.Final-linux-x86_64.jar" sourcepath="libs/netty-transport-native-epoll-4.1.79.Final-linux-x86_64-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/netty-transport-native-kqueue-4.1.79.Final-osx-x86_64.jar" sourcepath="libs/netty-transport-native-kqueue-4.1.79.Final-osx-x86_64-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/netty-transport-native-unix-common-4.1.79.Final.jar" sourcepath="libs/netty-transport-native-unix-common-4.1.79.Final-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/reactive-streams-1.0.4.jar" sourcepath="libs/reactive-streams-1.0.4-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/reactor-core-3.4.21.jar" sourcepath="libs/reactor-core-3.4.21-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/reactor-netty-core-1.0.21.jar" sourcepath="libs/reactor-netty-core-1.0.21-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/reactor-netty-http-1.0.21.jar" sourcepath="libs/reactor-netty-http-1.0.21-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/stax2-api-4.2.1.jar" sourcepath="libs/stax2-api-4.2.1-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/woodstox-core-6.2.7.jar" sourcepath="libs/woodstox-core-6.2.7-sources.jar"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry exported="true" kind="lib" path="libs/azure-core-1.10.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/azure-core-http-netty-1.6.3.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/azure-storage-blob-12.9.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/azure-storage-common-12.9.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/azure-storage-file-datalake-12.3.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/azure-storage-internal-avro-12.0.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/jackson-annotations-2.11.2.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/jackson-core-2.11.2.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/jackson-databind-2.11.2.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/jackson-dataformat-xml-2.11.2.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/jackson-datatype-jsr310-2.11.2.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/jackson-module-jaxb-annotations-2.11.2.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/woodstox-core-6.2.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
