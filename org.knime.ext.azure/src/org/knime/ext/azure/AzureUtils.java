@@ -49,6 +49,7 @@
 package org.knime.ext.azure;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -68,8 +69,6 @@ import org.knime.ext.microsoft.authentication.port.oauth2.OAuth2Credential;
 import com.azure.core.exception.HttpResponseException;
 import com.azure.core.http.ProxyOptions;
 import com.azure.core.util.ConfigurationBuilder;
-
-import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
  * Utility class for Azure Blob Storage and Datalake Storage
@@ -132,12 +131,12 @@ public final class AzureUtils {
     public static IOException toIOE(final HttpResponseException ex, final String file, final String other) {
         String message = parseErrorMessage(ex);
 
-        if (ex.getResponse().getStatusCode() == HttpResponseStatus.NOT_FOUND.code()) {
+        if (ex.getResponse().getStatusCode() == HttpURLConnection.HTTP_NOT_FOUND) {
             NoSuchFileException nsfe = new NoSuchFileException(file, other, message);
             nsfe.initCause(ex);
             return nsfe;
         }
-        if (ex.getResponse().getStatusCode() == HttpResponseStatus.FORBIDDEN.code()) {
+        if (ex.getResponse().getStatusCode() == HttpURLConnection.HTTP_FORBIDDEN) {
             AccessDeniedException ade = new AccessDeniedException(file, other, "Access denied");
             ade.initCause(ex);
             return ade;
@@ -177,7 +176,7 @@ public final class AzureUtils {
      */
     @SuppressWarnings("resource")
     public static void handleAuthException(final HttpResponseException ex) throws IOException {
-        if (ex.getResponse().getStatusCode() == HttpResponseStatus.FORBIDDEN.code()) {
+        if (ex.getResponse().getStatusCode() == HttpURLConnection.HTTP_FORBIDDEN) {
             if (Arrays.stream(INVALID_CREDENTIAL_MESSAGES).anyMatch(p -> p.matcher(ex.getMessage()).find())) {
                 throw new IOException(
                         "Authentication failure. Please check your credentials in the Microsoft Authentication node.",
