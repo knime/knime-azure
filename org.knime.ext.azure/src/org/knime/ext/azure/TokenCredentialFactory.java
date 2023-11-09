@@ -48,40 +48,46 @@
  */
 package org.knime.ext.azure;
 
+import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 
-import org.knime.ext.microsoft.authentication.port.oauth2.OAuth2AccessToken;
-import org.knime.ext.microsoft.authentication.port.oauth2.OAuth2Credential;
+import org.knime.credentials.base.oauth.api.JWTCredential;
 
 import com.azure.core.credential.AccessToken;
 import com.azure.core.credential.TokenCredential;
-import com.azure.core.credential.TokenRequestContext;
 
 import reactor.core.publisher.Mono;
 
 /**
- * {@link TokenCredential} implementation that acquires access token from
- * {@link OAuth2Credential}.
+ * Factory that wraps a {@link JWTCredential} into an Azure
+ * {@link TokenCredential}.
  *
  * @author Alexander Bondaletov
  */
-public class OAuthTokenCredential implements TokenCredential {
+public final class TokenCredentialFactory {
 
-    private AccessToken m_token;
+    private TokenCredentialFactory() {
+    }
 
     /**
+     * Wraps the given {@link JWTCredential} into Azure's {@link TokenCredential}.
+     *
      * @param credential
-     *            The credential.
+     *            The {@link JWTCredential} to wrap.
+     * @return a new {@link TokenCredential} that wraps the given
+     *         {@link JWTCredential}
      */
-    public OAuthTokenCredential(final OAuth2AccessToken credential) {
-        m_token = new AccessToken(credential.getToken(),
-                OffsetDateTime.ofInstant(credential.getAccessTokenExpiresAt(), ZoneId.systemDefault()));
+    public static TokenCredential create(final JWTCredential credential) {
+        final var accessTokenMono = Mono.fromCallable(() -> toMsalAccessToken(credential));
+        return ignored -> accessTokenMono;
     }
 
-    @Override
-    public Mono<AccessToken> getToken(final TokenRequestContext arg0) {
-        return Mono.just(m_token);
-    }
+    private static AccessToken toMsalAccessToken(final JWTCredential credential) throws IOException {
+        final var accessToken = credential.getAccessToken(); // potentially throws IOE when token cannot be refreshed
+        final var expiration = credential.getExpiresAfter()
+                .map(instant -> OffsetDateTime.ofInstant(instant, ZoneId.of("UTC"))).orElseThrow();
 
+        return new AccessToken(accessToken, expiration);
+    }
 }

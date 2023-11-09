@@ -61,12 +61,12 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
+import org.knime.credentials.base.Credential;
+import org.knime.credentials.base.CredentialPortObject;
+import org.knime.credentials.base.CredentialPortObjectSpec;
 import org.knime.ext.azure.AzureUtils;
 import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFSConnection;
 import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFileSystem;
-import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
-import org.knime.ext.microsoft.authentication.port.MicrosoftCredentialPortObject;
-import org.knime.ext.microsoft.authentication.port.MicrosoftCredentialPortObjectSpec;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
 import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
@@ -88,22 +88,19 @@ final class AdlsConnectorNodeModel extends NodeModel {
      * Creates new instance.
      */
     protected AdlsConnectorNodeModel() {
-        super(new PortType[] { MicrosoftCredentialPortObject.TYPE }, new PortType[] { FileSystemPortObject.TYPE });
+        super(new PortType[] { CredentialPortObject.TYPE }, new PortType[] { FileSystemPortObject.TYPE });
     }
 
     @Override
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
-        MicrosoftCredential credential = ((MicrosoftCredentialPortObjectSpec) inSpecs[0]).getMicrosoftCredential();
-        if (credential == null) {
-            throw new InvalidSettingsException("Not authenticated");
-        }
-
         m_fsId = FSConnectionRegistry.getInstance().getKey();
 
-        return new PortObjectSpec[] { createSpec(credential) };
+        var credential = ((CredentialPortObjectSpec) inSpecs[0]).getCredential(Credential.class);
+        var spec = credential.map(this::createSpec).orElse(null);
+        return new PortObjectSpec[] { spec };
     }
 
-    private FileSystemPortObjectSpec createSpec(final MicrosoftCredential credential) {
+    private FileSystemPortObjectSpec createSpec(final Credential credential) {
         String storageAccount = AzureUtils.getStorageAccount(credential);
         return new FileSystemPortObjectSpec(FILE_SYSTEM_NAME, m_fsId,
                 AdlsFileSystem.createFSLocationSpec(storageAccount));
@@ -112,8 +109,10 @@ final class AdlsConnectorNodeModel extends NodeModel {
     @SuppressWarnings("resource")
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
+        var credential = ((CredentialPortObject) inObjects[0]).getCredential(Credential.class)
+                .orElseThrow(() -> new InvalidSettingsException(
+                        "Credential is not available. Please re-execute authenticator node."));
 
-        final MicrosoftCredential credential = ((MicrosoftCredentialPortObject) inObjects[0]).getMicrosoftCredentials();
         m_fsConnection = new AdlsFSConnection(m_settings.toFSConnectionConfig(credential));
 
         if (!m_fsConnection.getFileSystem().canCredentialsListContainers()) {

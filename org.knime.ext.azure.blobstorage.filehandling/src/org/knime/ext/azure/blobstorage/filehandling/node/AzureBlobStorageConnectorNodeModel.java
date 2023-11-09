@@ -62,12 +62,12 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.port.PortObject;
 import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.node.port.PortType;
+import org.knime.credentials.base.Credential;
+import org.knime.credentials.base.CredentialPortObject;
+import org.knime.credentials.base.CredentialPortObjectSpec;
 import org.knime.ext.azure.AzureUtils;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSConnection;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSConnectionConfig;
-import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
-import org.knime.ext.microsoft.authentication.port.MicrosoftCredentialPortObject;
-import org.knime.ext.microsoft.authentication.port.MicrosoftCredentialPortObjectSpec;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
 import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
@@ -93,21 +93,19 @@ class AzureBlobStorageConnectorNodeModel extends NodeModel {
      * Creates new instance.
      */
     protected AzureBlobStorageConnectorNodeModel() {
-        super(new PortType[] { MicrosoftCredentialPortObject.TYPE }, new PortType[] { FileSystemPortObject.TYPE });
+        super(new PortType[] { CredentialPortObject.TYPE }, new PortType[] { FileSystemPortObject.TYPE });
     }
 
     @Override
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
-        MicrosoftCredential credential = ((MicrosoftCredentialPortObjectSpec) inSpecs[0]).getMicrosoftCredential();
-        if (credential == null) {
-            throw new InvalidSettingsException("Not authenticated");
-        }
-
         m_fsId = FSConnectionRegistry.getInstance().getKey();
-        return new PortObjectSpec[] { createSpec(credential) };
+
+        var credential = ((CredentialPortObjectSpec) inSpecs[0]).getCredential(Credential.class);
+        var spec = credential.map(this::createSpec).orElse(null);
+        return new PortObjectSpec[] { spec };
     }
 
-    private FileSystemPortObjectSpec createSpec(final MicrosoftCredential credential) {
+    private FileSystemPortObjectSpec createSpec(final Credential credential) {
         final String storageAccount = AzureUtils.getStorageAccount(credential);
         return new FileSystemPortObjectSpec(FILE_SYSTEM_NAME, m_fsId,
                 AzureBlobStorageFSConnectionConfig.createFSLocationSpec(storageAccount));
@@ -117,7 +115,9 @@ class AzureBlobStorageConnectorNodeModel extends NodeModel {
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
 
-        final MicrosoftCredential credential = ((MicrosoftCredentialPortObject) inObjects[0]).getMicrosoftCredentials();
+        var credential = ((CredentialPortObject) inObjects[0]).getCredential(Credential.class)
+                .orElseThrow(() -> new InvalidSettingsException(
+                        "Credential is not available. Please re-execute authenticator node."));
 
         m_fsConnection = new AzureBlobStorageFSConnection(m_settings.toFSConnectionConfig(credential));
 

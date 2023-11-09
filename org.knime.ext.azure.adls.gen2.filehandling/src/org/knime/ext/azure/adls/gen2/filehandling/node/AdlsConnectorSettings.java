@@ -55,9 +55,9 @@ import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.credentials.base.Credential;
 import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFSConnectionConfig;
 import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFileSystem;
-import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
 
 /**
  * Settings for Adls connector node.
@@ -161,10 +161,10 @@ final class AdlsConnectorSettings {
     /**
      *
      * @param credential
-     *            The {@link MicrosoftCredential} to use.
+     *            The {@link Credential} to use.
      * @return The FSConnectionConfig for Azure data lake
      */
-    public AdlsFSConnectionConfig toFSConnectionConfig(final MicrosoftCredential credential) {
+    public AdlsFSConnectionConfig toFSConnectionConfig(final Credential credential) {
         var config = new AdlsFSConnectionConfig(getWorkingDirectory());
         config.setCredential(credential);
         config.setTimeout(getTimeout());

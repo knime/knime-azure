@@ -56,9 +56,9 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelBoolean;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
+import org.knime.credentials.base.Credential;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSConnectionConfig;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFileSystem;
-import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
 
 /**
  * Settings for the Azure Blob Storage Connector node.
@@ -183,10 +183,10 @@ class AzureBlobStorageConnectorSettings {
 
     /**
      * @param credential
-     *            The {@link MicrosoftCredential} to use when connecting.
+     *            The {@link Credential} to use when connecting.
      * @return The FSConnectionConfig for Azure blob store
      */
-    public AzureBlobStorageFSConnectionConfig toFSConnectionConfig(final MicrosoftCredential credential) {
+    public AzureBlobStorageFSConnectionConfig toFSConnectionConfig(final Credential credential) {
         final AzureBlobStorageFSConnectionConfig config = new AzureBlobStorageFSConnectionConfig(getWorkingDirectory());
         config.setCredential(credential);
         config.setNormalizePaths(shouldNormalizePaths());

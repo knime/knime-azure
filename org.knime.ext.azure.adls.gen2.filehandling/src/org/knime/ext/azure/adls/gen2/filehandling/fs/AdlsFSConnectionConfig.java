@@ -50,7 +50,7 @@ package org.knime.ext.azure.adls.gen2.filehandling.fs;
 
 import java.time.Duration;
 
-import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
+import org.knime.credentials.base.Credential;
 import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig;
 
 /**
@@ -65,7 +65,7 @@ public class AdlsFSConnectionConfig extends BaseFSConnectionConfig {
      */
     public static final int DEFAULT_TIMEOUT = 30;
 
-    private MicrosoftCredential m_credential;
+    private Credential m_credential;
 
     private Duration m_timeout;
 
@@ -79,17 +79,17 @@ public class AdlsFSConnectionConfig extends BaseFSConnectionConfig {
     }
 
     /**
-     * @return the {@link MicrosoftCredential}
+     * @return the {@link Credential}
      */
-    public MicrosoftCredential getCredential() {
+    public Credential getCredential() {
         return m_credential;
     }
 
     /**
      * @param credential
-     *            the {@link MicrosoftCredential} to set
+     *            the {@link Credential} to set
      */
-    public void setCredential(final MicrosoftCredential credential) {
+    public void setCredential(final Credential credential) {
         m_credential = credential;
     }
 

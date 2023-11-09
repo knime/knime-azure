@@ -50,11 +50,11 @@ package org.knime.ext.azure.blobstorage.filehandling.fs;
 
 import java.io.IOException;
 
+import org.knime.credentials.base.oauth.api.JWTCredential;
 import org.knime.ext.azure.AzureUtils;
-import org.knime.ext.azure.OAuthTokenCredential;
-import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
-import org.knime.ext.microsoft.authentication.port.azure.storage.AzureSharedKeyCredential;
-import org.knime.ext.microsoft.authentication.port.oauth2.OAuth2Credential;
+import org.knime.ext.azure.TokenCredentialFactory;
+import org.knime.ext.microsoft.authentication.credential.AzureStorageSasUrlCredential;
+import org.knime.ext.microsoft.authentication.credential.AzureStorageSharedKeyCredential;
 import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.base.BaseFSConnection;
 
@@ -85,30 +85,26 @@ public class AzureBlobStorageFSConnection extends BaseFSConnection {
         m_filesystem = new AzureBlobStorageFileSystem(config, client, CACHE_TTL);
     }
 
-    private static BlobServiceClient createServiceClient(final AzureBlobStorageFSConnectionConfig config)
-            throws IOException {
+    private static BlobServiceClient createServiceClient(final AzureBlobStorageFSConnectionConfig config) {
 
-        final MicrosoftCredential credential = config.getCredential();
+        final var credential = config.getCredential();
 
         final BlobServiceClientBuilder builder = new BlobServiceClientBuilder() //
                 .endpoint(AzureUtils.getEndpoint(credential)) //
                 .addPolicy(new TimeoutPolicy(config.getTimeout()));
 
-        switch (credential.getType()) {
-        case AZURE_SHARED_KEY:
-            AzureSharedKeyCredential c = (AzureSharedKeyCredential) credential;
-            builder.credential(new StorageSharedKeyCredential(c.getAccount(), c.getSecretKey()));
-            break;
-        case AZURE_SAS_TOKEN:
-            // SAS token is a part of the endpoint
-            break;
-        case OAUTH2_ACCESS_TOKEN:
-            final OAuth2Credential oauth2Credential = (OAuth2Credential) credential;
-            builder.credential(new OAuthTokenCredential(oauth2Credential.getAccessToken()));
-            break;
-        default:
+        if (credential instanceof AzureStorageSharedKeyCredential sharedKeyCred) {
+            builder.credential(new StorageSharedKeyCredential(//
+                    sharedKeyCred.getStorageAccount(), //
+                    sharedKeyCred.getAccessKey()));
+        } else if (credential instanceof AzureStorageSasUrlCredential) {
+            // Do nothing. SAS token is a part of the endpoint
+        } else if (credential instanceof JWTCredential jwtCredential) {
+            builder.credential(TokenCredentialFactory.create(jwtCredential));
+        } else {
             throw new UnsupportedOperationException("Unsupported credential type " + credential.getType());
         }
+
         if (AzureUtils.isProxyActive()) {
             final var clientOptions = new HttpClientOptions();
             clientOptions.setProxyOptions(AzureUtils.loadSystemProxyOptions());

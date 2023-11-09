@@ -56,7 +56,7 @@ import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFSConnection;
 import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFSConnectionConfig;
 import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFSDescriptorProvider;
 import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFileSystem;
-import org.knime.ext.microsoft.authentication.port.azure.storage.AzureSharedKeyCredential;
+import org.knime.ext.microsoft.authentication.credential.AzureStorageSharedKeyCredential;
 import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.connections.meta.FSType;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializerProvider;
@@ -79,12 +79,9 @@ public class AdlsTestInitializerProvider extends DefaultFSTestInitializerProvide
                 AdlsFileSystem.PATH_SEPARATOR);
 
         final AdlsFSConnectionConfig config = new AdlsFSConnectionConfig(workDir);
-        config.setCredential(new AzureSharedKeyCredential(getParameter(configuration, ACCOUNT), "ignore") {
-            @Override
-            public String getSecretKey() {
-                return getParameter(configuration, KEY);
-            }
-        });
+        var credential = new AzureStorageSharedKeyCredential(getParameter(configuration, ACCOUNT),
+                getParameter(configuration, KEY));
+        config.setCredential(credential);
         config.setTimeout(Duration.ofSeconds(AdlsFSConnectionConfig.DEFAULT_TIMEOUT));
 
         return new AdlsTestInitializer(new AdlsFSConnection(config));

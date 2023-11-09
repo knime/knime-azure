@@ -57,7 +57,7 @@ import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSConnect
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSConnectionConfig;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSDescriptorProvider;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFileSystem;
-import org.knime.ext.microsoft.authentication.port.azure.storage.AzureSharedKeyCredential;
+import org.knime.ext.microsoft.authentication.credential.AzureStorageSharedKeyCredential;
 import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.connections.meta.FSType;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializerProvider;
@@ -78,12 +78,9 @@ public class AzureBlobStorageTestInitializerProvider extends DefaultFSTestInitia
                 AzureBlobStorageFileSystem.PATH_SEPARATOR);
 
         AzureBlobStorageFSConnectionConfig config = new AzureBlobStorageFSConnectionConfig(workingDir);
-        config.setCredential(new AzureSharedKeyCredential(getParameter(configuration, "account"), null) {
-            @Override
-            public String getSecretKey() {
-                return getParameter(configuration, "key");
-            }
-        });
+        var credential = new AzureStorageSharedKeyCredential(getParameter(configuration, "account"),
+                getParameter(configuration, "key"));
+        config.setCredential(credential);
         config.setNormalizePaths(true);
         config.setTimeout(Duration.ofSeconds(AzureBlobStorageFSConnectionConfig.DEFAULT_TIMEOUT));
 

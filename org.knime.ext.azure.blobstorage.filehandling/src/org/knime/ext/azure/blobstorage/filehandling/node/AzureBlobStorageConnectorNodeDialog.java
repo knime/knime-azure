@@ -69,9 +69,9 @@ import org.knime.core.node.NotConfigurableException;
 import org.knime.core.node.defaultnodesettings.DialogComponentBoolean;
 import org.knime.core.node.defaultnodesettings.DialogComponentNumber;
 import org.knime.core.node.port.PortObjectSpec;
+import org.knime.credentials.base.Credential;
+import org.knime.credentials.base.CredentialPortObjectSpec;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSConnection;
-import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
-import org.knime.ext.microsoft.authentication.port.MicrosoftCredentialPortObjectSpec;
 import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.base.ui.WorkingDirectoryChooser;
 
@@ -87,7 +87,7 @@ class AzureBlobStorageConnectorNodeDialog extends NodeDialogPane {
     private final WorkingDirectoryChooser m_workingDirChooser = new WorkingDirectoryChooser(
             "azure-blob-storage.workingDir", this::createFSConnection);
 
-    private MicrosoftCredential m_credentials;
+    private Credential m_credentials;
 
     /**
      * Creates new instance
@@ -182,7 +182,8 @@ class AzureBlobStorageConnectorNodeDialog extends NodeDialogPane {
         } catch (InvalidSettingsException ex) { // NOSONAR can be ignored
         }
 
-        m_credentials = ((MicrosoftCredentialPortObjectSpec) specs[0]).getMicrosoftCredential();
+        m_credentials = ((CredentialPortObjectSpec) specs[0]).getCredential(Credential.class)
+                .orElseThrow(() -> new NotConfigurableException("Authentication required"));
 
         settingsLoaded();
     }

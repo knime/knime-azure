@@ -54,8 +54,8 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collections;
 
+import org.knime.credentials.base.CredentialType;
 import org.knime.ext.azure.AzureUtils;
-import org.knime.ext.microsoft.authentication.port.MicrosoftCredential.Type;
 import org.knime.filehandling.core.connections.base.BaseFileSystem;
 
 import com.azure.core.http.HttpPipeline;
@@ -157,7 +157,7 @@ public class AzureBlobStorageFileSystem extends BaseFileSystem<AzureBlobStorageP
      * @return the type of credential used to authenticate against Azure Blob
      *         Storage.
      */
-    public Type getCredentialType() {
+    public CredentialType getCredentialType() {
         return m_config.getCredential().getType();
     }
 

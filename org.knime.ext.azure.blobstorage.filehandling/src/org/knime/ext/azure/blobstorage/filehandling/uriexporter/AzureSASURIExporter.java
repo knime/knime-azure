@@ -57,10 +57,13 @@ import java.time.Duration;
 import java.time.OffsetDateTime;
 
 import org.knime.cloud.core.filehandling.signedurl.SignedUrlConfig;
+import org.knime.credentials.base.oauth.api.AccessTokenCredential;
+import org.knime.credentials.base.oauth.api.JWTCredential;
 import org.knime.ext.azure.AzureUtils;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFileSystem;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStoragePath;
-import org.knime.ext.microsoft.authentication.port.MicrosoftCredential.Type;
+import org.knime.ext.microsoft.authentication.credential.AzureStorageSasUrlCredential;
+import org.knime.ext.microsoft.authentication.credential.AzureStorageSharedKeyCredential;
 import org.knime.filehandling.core.connections.FSPath;
 import org.knime.filehandling.core.connections.uriexport.URIExporter;
 import org.knime.filehandling.core.connections.uriexport.base.BaseURIExporter;
@@ -114,7 +117,7 @@ final class AzureSASURIExporter extends BaseURIExporter<SignedUrlConfig> {
     public static URI getSasUrl(final AzureBlobStoragePath path, final Duration validityDuration) throws IOException {
         final AzureBlobStorageFileSystem fs = path.getFileSystem();
 
-        if (fs.getCredentialType() == Type.AZURE_SAS_TOKEN) {
+        if (fs.getCredentialType() == AzureStorageSasUrlCredential.TYPE) {
             throw new AccessDeniedException("Generating SAS URLs is not supported, when the Azure "
                     + "Blob Storage connection itself is authenticated by a SAS URL.");
         }
@@ -131,9 +134,10 @@ final class AzureSASURIExporter extends BaseURIExporter<SignedUrlConfig> {
                     .setStartTime(start);
 
             final String generatedSASParams;
-            if (fs.getCredentialType() == Type.AZURE_SHARED_KEY) {
+            if (fs.getCredentialType() == AzureStorageSharedKeyCredential.TYPE) {
                 generatedSASParams = blobClient.generateSas(signatureValues);
-            } else if (fs.getCredentialType() == Type.OAUTH2_ACCESS_TOKEN) {
+            } else if (fs.getCredentialType() == JWTCredential.TYPE
+                    || fs.getCredentialType() == AccessTokenCredential.TYPE) {
                 final UserDelegationKey key = fs.getClient().getUserDelegationKey(start, end);
                 generatedSASParams = blobClient.generateUserDelegationSas(signatureValues, key);
             } else {

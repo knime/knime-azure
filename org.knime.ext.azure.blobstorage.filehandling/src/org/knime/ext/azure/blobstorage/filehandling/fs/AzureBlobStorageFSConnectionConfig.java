@@ -51,7 +51,7 @@ package org.knime.ext.azure.blobstorage.filehandling.fs;
 import java.time.Duration;
 import java.util.Locale;
 
-import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
+import org.knime.credentials.base.Credential;
 import org.knime.filehandling.core.connections.DefaultFSLocationSpec;
 import org.knime.filehandling.core.connections.FSCategory;
 import org.knime.filehandling.core.connections.FSLocationSpec;
@@ -69,7 +69,7 @@ public class AzureBlobStorageFSConnectionConfig extends BaseFSConnectionConfig {
      */
     public static final int DEFAULT_TIMEOUT = 30;
 
-    private MicrosoftCredential m_credential;
+    private Credential m_credential;
     private Duration m_timeout;
     private boolean m_normalizePaths;
 
@@ -111,7 +111,7 @@ public class AzureBlobStorageFSConnectionConfig extends BaseFSConnectionConfig {
     /**
      * @return the credential
      */
-    public MicrosoftCredential getCredential() {
+    public Credential getCredential() {
         return m_credential;
     }
 
@@ -119,7 +119,7 @@ public class AzureBlobStorageFSConnectionConfig extends BaseFSConnectionConfig {
      * @param credential
      *            the credential to set
      */
-    public void setCredential(final MicrosoftCredential credential) {
+    public void setCredential(final Credential credential) {
         m_credential = credential;
     }
 

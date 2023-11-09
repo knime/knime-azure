@@ -18,14 +18,7 @@
             or to perform other file system operations (browse/list files, copy, move, ...).
             </p>
             
-            <p>This node requires the <i>Microsoft Authentication</i> to perform authentication. The following authentication modes are supported:
-            <ul>
-            <li>Interactive Authentication</li>
-            <li>Username/password Authentication</li>
-            <li>Shared key authentication (Azure Storage only)</li>
-            <li>Shared access signature (SAS) authentication (Azure Storage only)</li>
-            </ul>
-            </p>
+            <p>This node requires the <i>Microsoft Authenticator</i> to perform authentication.</p>
             
             <p><b>Path syntax:</b> Paths for Azure Blob Storage are specified with a UNIX-like syntax, <tt>/mycontainer/myfolder/myfile</tt>. An absolute
             for Azure Blob Storage consists of:
@@ -64,8 +57,9 @@
     </fullDescription>
     
     <ports>
-        <inPort index="0" name="Microsoft Connection">
-    		Microsoft Connection that provides user authentication.
+        <inPort index="0" name="Credential">
+    		Attach the Microsoft Authenticator node to perform authentication and provide
+    		a credential.
     	</inPort>
         <outPort index="0" name="Azure Blob Storage File System Connection">
             Azure Blob Storage File System Connection

@@ -56,15 +56,17 @@ import java.net.URL;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.knime.core.node.NodeLogger;
-import org.knime.ext.microsoft.authentication.port.MicrosoftCredential;
-import org.knime.ext.microsoft.authentication.port.azure.storage.AzureSasTokenCredential;
-import org.knime.ext.microsoft.authentication.port.azure.storage.AzureSharedKeyCredential;
-import org.knime.ext.microsoft.authentication.port.oauth2.OAuth2Credential;
+import org.knime.credentials.base.Credential;
+import org.knime.credentials.base.oauth.api.AccessTokenCredential;
+import org.knime.credentials.base.oauth.api.JWTCredential;
+import org.knime.ext.microsoft.authentication.credential.AzureStorageSasUrlCredential;
+import org.knime.ext.microsoft.authentication.credential.AzureStorageSharedKeyCredential;
 
 import com.azure.core.exception.HttpResponseException;
 import com.azure.core.http.ProxyOptions;
@@ -194,28 +196,17 @@ public final class AzureUtils {
     }
 
     /**
-     * Retrieves the storage account from provided {@link MicrosoftCredential}.
+     * Retrieves the storage account from provided {@link Credential}.
      *
      * @param credential
      *            The credential.
      * @return The storage account.
      */
-    public static String getStorageAccount(final MicrosoftCredential credential) {
-        switch (credential.getType()) {
-        case AZURE_SHARED_KEY:
-            final AzureSharedKeyCredential sharedKeyCredential = (AzureSharedKeyCredential) credential;
-            return sharedKeyCredential.getAccount();
-        case AZURE_SAS_TOKEN:
-            try {
-                return extractStorageAccount(((AzureSasTokenCredential) credential).getSasUrl());
-            } catch (IOException e) {
-                throw new IllegalArgumentException(e);
-            }
-        case OAUTH2_ACCESS_TOKEN:
-            final OAuth2Credential oauth2Credential = (OAuth2Credential) credential;
-            return extractStorageAccount(extractEndpoint(oauth2Credential));
-        default:
-            throw new UnsupportedOperationException("Unsupported credential type " + credential.getType());
+    public static String getStorageAccount(final Credential credential) {
+        if (credential instanceof AzureStorageSharedKeyCredential) {
+            return ((AzureStorageSharedKeyCredential) credential).getStorageAccount();
+        } else {
+            return extractStorageAccount(getEndpoint(credential));
         }
     }
 
@@ -225,12 +216,32 @@ public final class AzureUtils {
         return hostnameParts[0];
     }
 
-    private static String extractEndpoint(final OAuth2Credential credential) {
+    /**
+     * Retrieves the endpoint URL from the provided {@link Credential}.
+     *
+     * @param credential
+     *            The credential.
+     * @return The endpoint URL.
+     */
+    public static String getEndpoint(final Credential credential) {
+        if (credential instanceof AzureStorageSharedKeyCredential) {
+            return ((AzureStorageSharedKeyCredential) credential).getEndpoint();
+        } else if (credential instanceof AzureStorageSasUrlCredential) {
+            return ((AzureStorageSasUrlCredential) credential).getSasUrl().toString();
+        } else if (credential instanceof AccessTokenCredential) {
+            return extractEndpoint((AccessTokenCredential) credential);
+        } else if (credential instanceof JWTCredential) {
+            return extractEndpoint((JWTCredential) credential);
+        }
+        throw new UnsupportedOperationException("Unsupported credential type " + credential.getType());
+    }
+
+    private static String extractEndpoint(final AccessTokenCredential credential) {
         final String scope = credential.getScopes().stream() //
                 .filter(BLOB_STORAGE_SCOPE_PATTERN.asPredicate()) //
                 .findFirst() //
-                .orElseThrow(() -> new IllegalStateException(
-                        "Credentials do not provide access to Azure Blob Storage. Please request the appropriate access in the Microsoft Authentication node."));
+                .orElseThrow(() -> new IllegalStateException("Credentials do not provide access to Azure Blob Storage. "
+                        + "Please request the appropriate access in the Microsoft Authentication node."));
 
         try {
             return "https://" + new URL(scope).getHost();
@@ -239,25 +250,10 @@ public final class AzureUtils {
         }
     }
 
-    /**
-     * Retrieves the endpoint URL from the provided {@link MicrosoftCredential}.
-     *
-     * @param credential
-     *            The credential.
-     * @return The endpoint URL.
-     * @throws IOException
-     */
-    public static String getEndpoint(final MicrosoftCredential credential) throws IOException {
-        switch (credential.getType()) {
-        case AZURE_SHARED_KEY:
-            return ((AzureSharedKeyCredential) credential).getEndpoint();
-        case AZURE_SAS_TOKEN:
-            return ((AzureSasTokenCredential) credential).getSasUrl();
-        case OAUTH2_ACCESS_TOKEN:
-            return extractEndpoint((OAuth2Credential) credential);
-        default:
-            throw new UnsupportedOperationException("Unsupported credential type " + credential.getType());
-        }
+    @SuppressWarnings("unchecked")
+    private static String extractEndpoint(final JWTCredential credential) {
+        List<String> aud = (List<String>) credential.getClaim("aud");
+        return aud.get(0);
     }
 
     /**
