@@ -19,7 +19,7 @@
          point="org.knime.core.PortType">
       <portType
             hidden="false"
-            name="AzureConnection"
+            name="Azure Connection"
             objectClass="org.knime.cloud.azure.abs.util.AzureConnectionInformationPortObject"
             objectSerializer="org.knime.cloud.azure.abs.util.AzureConnectionInformationPortObject$Serializer"
             specClass="org.knime.base.filehandling.remote.connectioninformation.port.CloudConnectionInformationPortObjectSpec"
