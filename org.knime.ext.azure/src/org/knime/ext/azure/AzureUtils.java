@@ -204,7 +204,7 @@ public final class AzureUtils {
      */
     public static String getStorageAccount(final Credential credential) {
         if (credential instanceof AzureStorageSharedKeyCredential) {
-            return ((AzureStorageSharedKeyCredential) credential).getStorageAccount();
+            return ((AzureStorageSharedKeyCredential) credential).getStorageAccountName();
         } else {
             return extractStorageAccount(getEndpoint(credential));
         }

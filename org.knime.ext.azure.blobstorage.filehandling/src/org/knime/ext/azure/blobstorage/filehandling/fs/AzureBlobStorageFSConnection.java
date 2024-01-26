@@ -95,8 +95,8 @@ public class AzureBlobStorageFSConnection extends BaseFSConnection {
 
         if (credential instanceof AzureStorageSharedKeyCredential sharedKeyCred) {
             builder.credential(new StorageSharedKeyCredential(//
-                    sharedKeyCred.getStorageAccount(), //
-                    sharedKeyCred.getAccessKey()));
+                    sharedKeyCred.getStorageAccountName(), //
+                    sharedKeyCred.getSharedKey()));
         } else if (credential instanceof AzureStorageSasUrlCredential) {
             // Do nothing. SAS token is a part of the endpoint
         } else if (credential instanceof JWTCredential jwtCredential) {
