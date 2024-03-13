@@ -29,7 +29,9 @@ Bundle-ClassPath: .,
  libs/jackson-datatype-jsr310-2.13.5.jar,
  libs/reactive-streams-1.0.4.jar,
  libs/reactor-core-3.4.34.jar,
- libs/azure-json-1.1.0.jar
+ libs/azure-json-1.1.0.jar,
+ libs/kotlin-stdlib-1.9.10.jar,
+ libs/kotlin-stdlib-common-1.9.10.jar
 Bundle-Activator: org.knime.ext.azure.AzurePlugin
 Export-Package: com.azure.core.credential;uses:="reactor.core.publisher",
  com.azure.core.exception,
