@@ -1,4 +1,6 @@
-# ![Image](https://www.knime.com/files/knime_logo_github_40x40_4layers.png) KNIMEÂ® Azure Integration
+# ![Image](https://www.knime.com/files/knime_logo_github_40x40_4layers.png) KNIME® Azure Integration
+
+This repository is maintained by the [KNIME Team Quokkas](mailto:scrum-bd-esi@knime.com).
 
 This repository contains:
 
