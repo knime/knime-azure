@@ -52,26 +52,22 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.knime.base.filehandling.remote.files.ConnectionMonitor;
 import org.knime.cloud.core.file.CloudRemoteFile;
 import org.knime.cloud.core.util.port.CloudConnectionInformation;
-import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.util.CheckUtils;
 
-import com.microsoft.azure.storage.StorageException;
-import com.microsoft.azure.storage.blob.BlobOutputStream;
-import com.microsoft.azure.storage.blob.CloudBlob;
-import com.microsoft.azure.storage.blob.CloudBlobClient;
-import com.microsoft.azure.storage.blob.CloudBlobContainer;
-import com.microsoft.azure.storage.blob.CloudBlobDirectory;
-import com.microsoft.azure.storage.blob.CloudBlockBlob;
-import com.microsoft.azure.storage.blob.ListBlobItem;
+import com.azure.core.http.rest.PagedIterable;
+import com.azure.storage.blob.BlobClient;
+import com.azure.storage.blob.BlobServiceClient;
+import com.azure.storage.blob.models.BlobContainerItem;
+import com.azure.storage.blob.models.BlobItem;
 
 /**
  * Implementation of {@link CloudRemoteFile} for Azure Blob Store
@@ -84,37 +80,35 @@ public class AzureBSRemoteFile extends CloudRemoteFile<AzureBSConnection> {
 	 * @param uri
 	 * @param connectionInformation
 	 * @param connectionMonitor
-	 * @throws Exception
 	 */
 	public AzureBSRemoteFile(final URI uri, final CloudConnectionInformation connectionInformation,
-			final ConnectionMonitor<AzureBSConnection> connectionMonitor) throws Exception {
-		this(uri, connectionInformation, connectionMonitor, null);
+			final ConnectionMonitor<AzureBSConnection> connectionMonitor) {
+		this(uri, connectionInformation, connectionMonitor, null, null);
 	}
 
 	/**
 	 * @param uri
 	 * @param connectionInformation
 	 * @param connectionMonitor
+	 * @param containerName
 	 * @param blob
-	 * @throws Exception
 	 */
 	public AzureBSRemoteFile(final URI uri, final CloudConnectionInformation connectionInformation,
-			final ConnectionMonitor<AzureBSConnection> connectionMonitor, final CloudBlob blob) throws Exception {
+			final ConnectionMonitor<AzureBSConnection> connectionMonitor, final String containerName, final BlobItem blob) {
 		super(uri, connectionInformation, connectionMonitor);
-		CheckUtils.checkArgumentNotNull(connectionInformation, "Connection Information mus not be null");
+		CheckUtils.checkArgumentNotNull(connectionInformation, "Connection Information must not be null");
 		if (blob != null) {
-			try {
-				m_containerName = blob.getContainer().getName();
-			} catch (StorageException | URISyntaxException e) {
-				throw new InvalidSettingsException("Somethings is wrong with the given blob");
-			}
+			m_containerName = containerName;
 			m_blobName = blob.getName();
-			m_lastModified = blob.getProperties().getLastModified().getTime();
-			m_size = blob.getProperties().getLength();
+
+			if (!blob.isPrefix().booleanValue()) { // directory
+				m_lastModified = blob.getProperties().getLastModified().toEpochSecond();
+				m_size = blob.getProperties().getContentLength();
+			}
 		}
 	}
 
-	private CloudBlobClient getClient() throws Exception {
+	private BlobServiceClient getClient() throws Exception {
 		return getOpenedConnection().getClient();
 	}
 
@@ -131,7 +125,7 @@ public class AzureBSRemoteFile extends CloudRemoteFile<AzureBSConnection> {
 	 */
 	@Override
 	protected boolean doesContainerExist(final String containerName) throws Exception {
-		return getClient().getContainerReference(containerName).exists();
+		return getClient().getBlobContainerClient(containerName).exists();
 	}
 
 	/**
@@ -139,15 +133,13 @@ public class AzureBSRemoteFile extends CloudRemoteFile<AzureBSConnection> {
 	 */
 	@Override
 	protected boolean doestBlobExist(final String containerName, final String blobName) throws Exception {
-		return getClient().getContainerReference(containerName).getBlockBlobReference(blobName).exists();
+		return getClient().getBlobContainerClient(containerName).getBlobClient(blobName).exists();
 	}
 
 	@Override
 	protected AzureBSRemoteFile[] listRootFiles() throws Exception {
-		final Iterable<CloudBlobContainer> containers = getClient().listContainers();
-		final Iterator<CloudBlobContainer> iterator = containers.iterator();
-		final List<CloudBlobContainer> containerList = new ArrayList<>();
-		iterator.forEachRemaining(containerList::add);
+		final PagedIterable<BlobContainerItem> containers = getClient().listBlobContainers();
+		final List<BlobContainerItem> containerList = containers.stream().collect(Collectors.toList());
 		final AzureBSRemoteFile[] files = new AzureBSRemoteFile[containerList.size()];
 		for (int i = 0; i < files.length; i++) {
 			final URI uri = new URI(getURI().getScheme(), getURI().getUserInfo(), getURI().getHost(),
@@ -163,26 +155,18 @@ public class AzureBSRemoteFile extends CloudRemoteFile<AzureBSConnection> {
 	protected AzureBSRemoteFile[] listDirectoryFiles() throws Exception {
 		final String containerName = getContainerName();
 		final String prefix = getBlobName();
-		final Iterable<ListBlobItem> blobs = getClient().getContainerReference(containerName).listBlobs(prefix, false);
-		final Iterator<ListBlobItem> iterator = blobs.iterator();
+		final PagedIterable<BlobItem> blobs = getClient().getBlobContainerClient(containerName).listBlobsByHierarchy(prefix);
+		final Iterator<BlobItem> iterator = blobs.iterator();
 
 		final List<AzureBSRemoteFile> fileList = new ArrayList<AzureBSRemoteFile>();
 		while (iterator.hasNext()) {
-			final ListBlobItem listBlobItem = iterator.next();
-			if (listBlobItem instanceof CloudBlob) {
-				final CloudBlob blob = (CloudBlob) listBlobItem;
-				if (!blob.getName().equals(prefix)) {
-					final URI uri = new URI(getURI().getScheme(), getURI().getUserInfo(), getURI().getHost(),
-							getURI().getPort(), createContainerPath(containerName) + blob.getName(),
-							getURI().getQuery(), getURI().getFragment());
-					fileList.add(new AzureBSRemoteFile(uri,(CloudConnectionInformation) getConnectionInformation(), getConnectionMonitor(), blob));
-				}
-			} else if (listBlobItem instanceof CloudBlobDirectory) {
-				final CloudBlobDirectory blobDir = (CloudBlobDirectory) listBlobItem;
+			final BlobItem blob = iterator.next();
+			if (!blob.getName().equals(prefix)) {
 				final URI uri = new URI(getURI().getScheme(), getURI().getUserInfo(), getURI().getHost(),
-						getURI().getPort(), createContainerPath(containerName) + blobDir.getPrefix(),
+						getURI().getPort(), createContainerPath(containerName) + blob.getName(),
 						getURI().getQuery(), getURI().getFragment());
-				fileList.add(new AzureBSRemoteFile(uri,(CloudConnectionInformation) getConnectionInformation(), getConnectionMonitor()));
+				fileList.add(new AzureBSRemoteFile(uri, (CloudConnectionInformation)getConnectionInformation(),
+							getConnectionMonitor(), containerName, blob));
 			}
 		}
 		final AzureBSRemoteFile[] files = fileList.toArray(new AzureBSRemoteFile[fileList.size()]);
@@ -194,7 +178,8 @@ public class AzureBSRemoteFile extends CloudRemoteFile<AzureBSConnection> {
 	 */
 	@Override
 	protected long getBlobSize() throws Exception {
-		return getClient().getContainerReference(getContainerName()).getBlobReferenceFromServer(getBlobName()).getProperties().getLength();
+		return getClient().getBlobContainerClient(getContainerName()).getBlobClient(getBlobName()).getProperties()
+			.getBlobSize();
 	}
 
 	/**
@@ -202,7 +187,8 @@ public class AzureBSRemoteFile extends CloudRemoteFile<AzureBSConnection> {
 	 */
 	@Override
 	protected long getLastModified() throws Exception {
-		return getClient().getContainerReference(getContainerName()).getBlobReferenceFromServer(getBlobName()).getProperties().getLastModified().getTime();
+		return getClient().getBlobContainerClient(getContainerName()).getBlobClient(getBlobName()).getProperties()
+			.getLastModified().toEpochSecond();
 	}
 
 	/**
@@ -210,7 +196,7 @@ public class AzureBSRemoteFile extends CloudRemoteFile<AzureBSConnection> {
 	 */
 	@Override
 	protected boolean deleteContainer() throws Exception {
-		return getClient().getContainerReference(getContainerName()).deleteIfExists();
+		return getClient().getBlobContainerClient(getContainerName()).deleteIfExists();
 	}
 
 	/**
@@ -219,13 +205,12 @@ public class AzureBSRemoteFile extends CloudRemoteFile<AzureBSConnection> {
 	@Override
 	protected boolean deleteDirectory() throws Exception {
 		boolean result = exists();
-		final CloudBlobDirectory directoryReference = getClient().getContainerReference(getContainerName()).getDirectoryReference(getBlobName());
-		final Iterable<ListBlobItem> listBlobs = directoryReference.listBlobs();
-		final Iterator<ListBlobItem> iterator = listBlobs.iterator();
+		final var container = getClient().getBlobContainerClient(getContainerName());
+		final PagedIterable<BlobItem> blobs = container.listBlobsByHierarchy(getBlobName());
+		final Iterator<BlobItem> iterator = blobs.iterator();
 		while (iterator.hasNext()) {
-			final ListBlobItem next = iterator.next();
-			final CloudBlob blob = (CloudBlob) next;
-			result = blob.deleteIfExists();
+			final BlobItem next = iterator.next();
+			result = container.getBlobClient(next.getName()).deleteIfExists();
 		}
 		return result;
 	}
@@ -235,7 +220,7 @@ public class AzureBSRemoteFile extends CloudRemoteFile<AzureBSConnection> {
 	 */
 	@Override
 	protected boolean deleteBlob() throws Exception {
-		return getClient().getContainerReference(getContainerName()).getBlockBlobReference(getBlobName()).deleteIfExists();
+		return getClient().getBlobContainerClient(getContainerName()).getBlobClient(getBlobName()).deleteIfExists();
 	}
 
 	/**
@@ -243,7 +228,7 @@ public class AzureBSRemoteFile extends CloudRemoteFile<AzureBSConnection> {
 	 */
 	@Override
 	protected boolean createContainer() throws Exception {
-		return getClient().getContainerReference(getContainerName()).createIfNotExists();
+		return getClient().getBlobContainerClient(getContainerName()).createIfNotExists();
 	}
 
 	/**
@@ -251,7 +236,7 @@ public class AzureBSRemoteFile extends CloudRemoteFile<AzureBSConnection> {
 	 */
 	@Override
 	protected boolean createDirectory(final String dirName) throws Exception {
-		final CloudBlockBlob dir = getClient().getContainerReference(getContainerName()).getBlockBlobReference(dirName);
+		final BlobClient dir = getClient().getBlobContainerClient(getContainerName()).getBlobClient(dirName);
 		final InputStream emptyContent = new ByteArrayInputStream(new byte[0]);
 
 		dir.upload(emptyContent, 0l);
@@ -264,8 +249,8 @@ public class AzureBSRemoteFile extends CloudRemoteFile<AzureBSConnection> {
 	@Override
 	public InputStream openInputStream() throws Exception {
         return getClient() //
-            .getContainerReference(getContainerName()) //
-            .getBlobReferenceFromServer(getBlobName()) //
+            .getBlobContainerClient(getContainerName()) //
+            .getBlobClient(getBlobName()) //
             .openInputStream();
 	}
 
@@ -274,8 +259,10 @@ public class AzureBSRemoteFile extends CloudRemoteFile<AzureBSConnection> {
 	 */
 	@Override
 	public OutputStream openOutputStream() throws Exception {
-		final BlobOutputStream blobOutputStream = getClient().getContainerReference(getContainerName()).getBlockBlobReference(getBlobName()).openOutputStream();
-		return blobOutputStream;
+		return getClient().getBlobContainerClient(getContainerName()) //
+			.getBlobClient(getBlobName()) //
+			.getBlockBlobClient() //
+			.getBlobOutputStream();
 	}
 
     @Override

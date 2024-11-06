@@ -49,7 +49,8 @@
 package org.knime.cloud.azure.abs.node.filepicker;
 
 import java.net.URI;
-import java.util.Date;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 import org.knime.base.filehandling.NodeUtils;
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
@@ -61,9 +62,10 @@ import org.knime.cloud.azure.abs.filehandler.AzureBSRemoteFile;
 import org.knime.cloud.core.node.filepicker.AbstractFilePickerNodeModel;
 import org.knime.core.node.NodeLogger;
 
-import com.microsoft.azure.storage.blob.CloudBlob;
-import com.microsoft.azure.storage.blob.CloudBlobClient;
-import com.microsoft.azure.storage.blob.SharedAccessBlobPolicy;
+import com.azure.storage.blob.BlobClient;
+import com.azure.storage.blob.BlobServiceClient;
+import com.azure.storage.blob.sas.BlobSasPermission;
+import com.azure.storage.blob.sas.BlobServiceSasSignatureValues;
 
 /**
  *	Node model for the Azure Blob Store Connection
@@ -98,24 +100,23 @@ public class AzureBSFilePickerNodeModel extends AbstractFilePickerNodeModel {
 				(AzureBSRemoteFile) RemoteFileFactory.createRemoteFile(uri, connectionInformation, monitor);
 		remoteFile.open();
 
-		final CloudBlobClient client = remoteFile.getConnection().getClient();
+		final BlobServiceClient client = remoteFile.getConnection().getClient();
 		final String containerName = remoteFile.getContainerName();
 		final String blobName = remoteFile.getBlobName();
 
-		final Date expirationTime = getExpirationTime();
+		final OffsetDateTime expirationTime = getExpirationTime().toInstant().atOffset(ZoneOffset.UTC);
 
 		LOGGER.debug("Generate Presigned URL with expiration time: " + expirationTime);
 
 		// create sas url here
 
-		final CloudBlob blockBlobReference = client.getContainerReference(containerName).getBlobReferenceFromServer(blobName);
-		final SharedAccessBlobPolicy sasConstraints = new SharedAccessBlobPolicy();
-		sasConstraints.setSharedAccessExpiryTime(expirationTime);
-		sasConstraints.setPermissionsFromString("r"); // complete permissions: racwdl
+		final BlobClient blob = client.getBlobContainerClient(containerName).getBlobClient(blobName);
+		final BlobSasPermission permission = new BlobSasPermission().setReadPermission(true);
+		final BlobServiceSasSignatureValues signatureValues =
+			new BlobServiceSasSignatureValues(expirationTime, permission).setStartTime(OffsetDateTime.now());
 
-		final String sasToken = blockBlobReference.generateSharedAccessSignature(sasConstraints, null);
-		final String sasUri = blockBlobReference.getUri() + "?" + sasToken;
-		return sasUri;
+		final String sasToken = blob.generateSas(signatureValues);
+		return blob.getBlobUrl() + "?" + sasToken;
 	}
 
 	/**

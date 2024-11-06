@@ -48,18 +48,19 @@
  */
 package org.knime.cloud.azure.abs.filehandler;
 
-import java.net.UnknownHostException;
+import java.time.Duration;
 
 import org.knime.base.filehandling.remote.files.Connection;
 import org.knime.cloud.core.util.port.CloudConnectionInformation;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.util.KnimeEncryption;
+import org.knime.ext.azure.AzureUtils;
 
-import com.microsoft.azure.storage.CloudStorageAccount;
-import com.microsoft.azure.storage.StorageCredentialsAccountAndKey;
-import com.microsoft.azure.storage.StorageException;
-import com.microsoft.azure.storage.blob.CloudBlobClient;
+import com.azure.core.util.HttpClientOptions;
+import com.azure.storage.blob.BlobServiceClient;
+import com.azure.storage.blob.BlobServiceClientBuilder;
+import com.azure.storage.common.StorageSharedKeyCredential;
 
 /**
  *
@@ -70,11 +71,12 @@ public class AzureBSConnection extends Connection {
 	public static final String PREFIX = "abs";
 	public static final String HOST = "blob.core.windows.net";
 	public static final int PORT = -1;
+	private static final String ENDPOINT_FORMAT = "https://%s.blob.core.windows.net";
 	private static final NodeLogger LOGGER = NodeLogger.getLogger(AzureBSConnection.class);
 
 	private final CloudConnectionInformation m_connectionInformation;
 
-	private CloudBlobClient m_client;
+	private BlobServiceClient m_client;
 
 	/**
 	 * Constructor.
@@ -93,20 +95,25 @@ public class AzureBSConnection extends Connection {
 			final String accessKey = KnimeEncryption.decrypt(m_connectionInformation.getPassword());
 
 			LOGGER.info("Create a new CloudBlobClient with connection timeout " + m_connectionInformation.getTimeout() + " milliseconds");
-			final StorageCredentialsAccountAndKey storageCredentials = new StorageCredentialsAccountAndKey(storageAccount, accessKey);
-			final CloudStorageAccount cloudStorageAccount = new CloudStorageAccount(storageCredentials, true);
-			m_client = cloudStorageAccount.createCloudBlobClient();
-			m_client.getDefaultRequestOptions().setTimeoutIntervalInMs(m_connectionInformation.getTimeout());
+
+			final var clientOptions = new HttpClientOptions() //
+				.setConnectTimeout(Duration.ofMillis(m_connectionInformation.getTimeout())) //
+				.setReadTimeout(Duration.ofMillis(m_connectionInformation.getTimeout()));
+
+			if (AzureUtils.isProxyActive()) {
+				clientOptions.setProxyOptions(AzureUtils.loadSystemProxyOptions());
+			}
+
+			m_client = new BlobServiceClientBuilder() //
+				.endpoint(String.format(ENDPOINT_FORMAT, storageAccount)) //
+				.credential(new StorageSharedKeyCredential(storageAccount, accessKey)) //
+				.clientOptions(clientOptions) //
+				.buildClient();
 
 			try {
-				m_client.downloadServiceProperties();
-			} catch (final StorageException e) {
-				if (e.getCause() instanceof UnknownHostException) {
-					throw new InvalidSettingsException("Unable to connect. Check credentials.");
-				} else {
-					throw new InvalidSettingsException(e.getErrorCode() + ". Check credentials");
-				}
-
+				m_client.getProperties();
+			} catch (final Exception e) { // NOSONAR
+				throw new InvalidSettingsException("Unable to connect. Check credentials.", e);
 			}
 		}
 	}
@@ -123,11 +130,11 @@ public class AzureBSConnection extends Connection {
 	}
 
 	/**
-	 * Returns the {@link CloudBlobClient} for this connection
+	 * Returns the {@link BlobServiceClient} for this connection
 	 *
-	 * @return the {@link CloudBlobClient} for this connection
+	 * @return the {@link BlobServiceClient} for this connection
 	 */
-	public CloudBlobClient getClient() {
+	public BlobServiceClient getClient() {
 		return m_client;
 	}
 
