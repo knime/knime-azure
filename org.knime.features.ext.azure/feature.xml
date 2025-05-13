@@ -726,36 +726,29 @@ interoperation with KNIME.  The owner of a Node may freely choose the
 license terms applicable to such Node, including when such Node is
 propagated with or for interoperation with KNIME.
    </license>
-   
+
    <requires>
       <import feature="org.knime.features.cloud.core.deprecated"/>
    </requires>
-   
+
    <plugin
          id="org.knime.ext.azure.blobstorage.deprecated"
-         download-size="0"
-         install-size="0"
          version="0.0.0"/>
 
    <plugin
          id="org.knime.ext.azure"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
+         version="0.0.0"/>
 
    <plugin
          id="org.knime.ext.azure.blobstorage.filehandling"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
+         version="0.0.0"/>
 
    <plugin
          id="org.knime.ext.azure.adls.gen2.filehandling"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
+         version="0.0.0"/>
+
+   <plugin
+         id="org.knime.ext.azure.fabric"
+         version="0.0.0"/>
 
 </feature>
