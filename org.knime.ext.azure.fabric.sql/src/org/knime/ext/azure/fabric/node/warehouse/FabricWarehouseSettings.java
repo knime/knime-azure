@@ -69,7 +69,6 @@ import org.knime.core.webui.node.dialog.defaultdialog.widget.choices.StringChoic
 import org.knime.core.webui.node.dialog.defaultdialog.widget.handler.WidgetHandlerException;
 import org.knime.ext.azure.fabric.FabricConnection;
 import org.knime.ext.azure.fabric.port.FabricWorkspacePortObjectSpec;
-import org.knime.ext.azure.fabric.rest.FabricRESTClient;
 import org.knime.ext.azure.fabric.rest.sql.Warehouse;
 import org.knime.ext.azure.fabric.rest.sql.WarehouseAPI;
 import org.knime.ext.azure.fabric.rest.sql.Warehouses;
@@ -126,9 +125,7 @@ public class FabricWarehouseSettings implements DefaultNodeSettings {
                 if (inSpecs[0] instanceof FabricWorkspacePortObjectSpec) {
                     final FabricWorkspacePortObjectSpec spec = (FabricWorkspacePortObjectSpec) inSpecs[0];
                     final FabricConnection connection = spec.getFabricConnection();
-
-                    final WarehouseAPI client = FabricRESTClient //
-                            .fromFabricConnection(WarehouseAPI.class, connection);
+                    final WarehouseAPI client = connection.getAPI(WarehouseAPI.class);
 
                     final List<Warehouse> warehouses = getAllWarehouses(client, connection.getWorkspaceId());
                     return warehouses.stream() //
