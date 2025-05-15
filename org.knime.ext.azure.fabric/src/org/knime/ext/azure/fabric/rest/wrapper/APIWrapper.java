@@ -46,7 +46,7 @@
  * History
  *   2024-05-15 (Sascha Wolke, KNIME GmbH, Berlin, Germany): created
  */
-package org.knime.ext.azure.fabric.rest;
+package org.knime.ext.azure.fabric.rest.wrapper;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -54,6 +54,9 @@ import java.time.Duration;
 
 import org.knime.core.node.NodeLogger;
 import org.knime.core.util.ThreadLocalHTTPAuthenticator;
+import org.knime.ext.azure.fabric.rest.FabricRESTClient;
+import org.knime.ext.azure.fabric.rest.FabricRateLimitClientErrorException;
+import org.knime.ext.azure.fabric.rest.FabricRateLimitException;
 
 /**
  * Base API wrapper class that prevents authentication popups.
@@ -171,7 +174,7 @@ public class APIWrapper<T> {
     /**
      * @return the wrapped api
      */
-    T getWrappedAPI() {
+    public T getWrappedAPI() {
         return m_api;
     }
 

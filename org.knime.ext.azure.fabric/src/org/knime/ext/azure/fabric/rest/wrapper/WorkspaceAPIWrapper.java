@@ -42,37 +42,41 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ---------------------------------------------------------------------
+ *
+ * History
+ *   2024-05-15 (Sascha Wolke, KNIME GmbH, Berlin, Germany): created
  */
-package org.knime.ext.azure.fabric.rest.sql;
+package org.knime.ext.azure.fabric.rest.wrapper;
 
 import java.io.IOException;
 
-import org.knime.ext.azure.fabric.rest.APIWrapper;
+import org.knime.ext.azure.fabric.rest.workspace.WorkspaceAPI;
+import org.knime.ext.azure.fabric.rest.workspace.Workspaces;
 
 /**
- * Wrapper class for {@link WarehouseAPI} that suppresses authentication popup.
+ * Wrapper class for {@link WorkspaceAPI} that suppresses authentication popups
+ * and handles rate limits.
  *
  * @author Tobias Koetter, KNIME GmbH, Konstanz, Germany
  */
-public class WarehouseAPIWrapper extends APIWrapper<WarehouseAPI> implements WarehouseAPI {
+public class WorkspaceAPIWrapper extends APIWrapper<WorkspaceAPI> implements WorkspaceAPI {
 
     /**
      * Default constructor.
      *
-     * @param api the API to wrap
+     * @param api the api to wrap
      */
-    public WarehouseAPIWrapper(final WarehouseAPI api) {
-        super(api, "warehouse");
+    public WorkspaceAPIWrapper(final WorkspaceAPI api) {
+        super(api, "workspaces");
     }
 
     @Override
-    public Warehouses listWarehouses(final String workspaceId) throws IOException {
-        return invoke(() -> m_api.listWarehouses(workspaceId));
+    public Workspaces listWorkspaces() throws IOException {
+        return invoke(m_api::listWorkspaces);
     }
 
     @Override
-    public Warehouses listWarehouses(final String workspaceId, final String continuationToken) throws IOException {
-        return invoke(() -> m_api.listWarehouses(workspaceId, continuationToken));
+    public Workspaces listWorkspaces(final String continuationToken) throws IOException {
+        return invoke(() -> m_api.listWorkspaces(continuationToken));
     }
-
 }

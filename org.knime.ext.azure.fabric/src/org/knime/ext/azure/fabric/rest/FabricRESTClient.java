@@ -74,9 +74,10 @@ import org.knime.credentials.base.oauth.api.AccessTokenAccessor;
 import org.knime.ext.azure.fabric.FabricConnection;
 import org.knime.ext.azure.fabric.port.FabricWorkspacePortObjectSpec;
 import org.knime.ext.azure.fabric.rest.sql.WarehouseAPI;
-import org.knime.ext.azure.fabric.rest.sql.WarehouseAPIWrapper;
 import org.knime.ext.azure.fabric.rest.workspace.WorkspaceAPI;
-import org.knime.ext.azure.fabric.rest.workspace.WorkspaceAPIWrapper;
+import org.knime.ext.azure.fabric.rest.wrapper.APIWrapper;
+import org.knime.ext.azure.fabric.rest.wrapper.WarehouseAPIWrapper;
+import org.knime.ext.azure.fabric.rest.wrapper.WorkspaceAPIWrapper;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.Version;
 

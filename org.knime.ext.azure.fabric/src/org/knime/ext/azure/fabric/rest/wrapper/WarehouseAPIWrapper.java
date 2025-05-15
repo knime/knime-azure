@@ -42,40 +42,38 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ---------------------------------------------------------------------
- *
- * History
- *   2024-05-15 (Sascha Wolke, KNIME GmbH, Berlin, Germany): created
  */
-package org.knime.ext.azure.fabric.rest.workspace;
+package org.knime.ext.azure.fabric.rest.wrapper;
 
 import java.io.IOException;
 
-import org.knime.ext.azure.fabric.rest.APIWrapper;
+import org.knime.ext.azure.fabric.rest.sql.WarehouseAPI;
+import org.knime.ext.azure.fabric.rest.sql.Warehouses;
 
 /**
- * Wrapper class for {@link WorkspaceAPI} that suppresses authentication popups
- * and handles rate limits.
+ * Wrapper class for {@link WarehouseAPI} that suppresses authentication popup.
  *
  * @author Tobias Koetter, KNIME GmbH, Konstanz, Germany
  */
-public class WorkspaceAPIWrapper extends APIWrapper<WorkspaceAPI> implements WorkspaceAPI {
+public class WarehouseAPIWrapper extends APIWrapper<WarehouseAPI> implements WarehouseAPI {
 
     /**
      * Default constructor.
      *
-     * @param api the api to wrap
+     * @param api the API to wrap
      */
-    public WorkspaceAPIWrapper(final WorkspaceAPI api) {
-        super(api, "workspaces");
+    public WarehouseAPIWrapper(final WarehouseAPI api) {
+        super(api, "warehouse");
     }
 
     @Override
-    public Workspaces listWorkspaces() throws IOException {
-        return invoke(m_api::listWorkspaces);
+    public Warehouses listWarehouses(final String workspaceId) throws IOException {
+        return invoke(() -> m_api.listWarehouses(workspaceId));
     }
 
     @Override
-    public Workspaces listWorkspaces(final String continuationToken) throws IOException {
-        return invoke(() -> m_api.listWorkspaces(continuationToken));
+    public Warehouses listWarehouses(final String workspaceId, final String continuationToken) throws IOException {
+        return invoke(() -> m_api.listWarehouses(workspaceId, continuationToken));
     }
+
 }
