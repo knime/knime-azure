@@ -751,4 +751,8 @@ propagated with or for interoperation with KNIME.
          id="org.knime.ext.azure.fabric"
          version="0.0.0"/>
 
+   <plugin
+         id="org.knime.ext.azure.fabric.sql"
+         version="0.0.0"/>
+
 </feature>
