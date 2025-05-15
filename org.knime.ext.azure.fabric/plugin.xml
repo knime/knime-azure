@@ -10,5 +10,17 @@
             hidden="false">
       </node>
    </extension>
+   <extension
+         point="org.knime.core.PortType">
+      <portType
+            color="#0FCDA4"
+            hidden="false"
+            name="Microsoft Fabric"
+            objectClass="org.knime.ext.azure.fabric.port.FabricWorkspacePortObject"
+            objectSerializer="org.knime.ext.azure.fabric.port.FabricWorkspacePortObject$Serializer"
+            specClass="org.knime.ext.azure.fabric.port.FabricWorkspacePortObjectSpec"
+            specSerializer="org.knime.ext.azure.fabric.port.FabricWorkspacePortObjectSpec$Serializer">
+      </portType>
+   </extension>
 
 </plugin>

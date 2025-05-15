@@ -111,7 +111,7 @@ public final class FabricWorkspacePortObject extends AbstractSimplePortObject {
     }
 
     @Override
-    public PortObjectSpec getSpec() {
+    public FabricWorkspacePortObjectSpec getSpec() {
         return m_spec;
     }
 

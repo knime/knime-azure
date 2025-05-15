@@ -44,103 +44,61 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2025-05-13 (Tobias): created
+ *   Nov 25, 2019 (Sascha Wolke, KNIME GmbH): created
  */
-package org.knime.ext.azure.fabric;
+package org.knime.ext.azure.fabric.rest;
 
+import java.io.IOException;
 import java.time.Duration;
-import java.util.Objects;
-
-import org.knime.credentials.base.CredentialPortObjectSpec;
-import org.knime.credentials.base.CredentialRef;
+import java.util.Optional;
 
 /**
+ * Exception that describes a rate limit error, extending {@code IOException}.
  *
- * @author Tobias Koetter, KNIME GmbH, Konstanz, Germany
+ * @author Sascha Wolke, KNIME GmbH
  */
-public class FabricConnection {
-
-    private final CredentialRef m_credential;
-    private final String m_workspaceId;
-    private final Duration m_connectionTimeout;
-    private final Duration m_readTimeout;
+public class FabricRateLimitException extends IOException {
+    private static final long serialVersionUID = 1L;
 
     /**
-     * @param credential
-     *            {@link CredentialPortObjectSpec} with the credentials for Fabric
-     * @param workspaceId
-     *            the unique Fabric workspace id
-     * @param connectionTimeout
-     *            connection timeout
-     * @param readTimeout
-     *            read timeout
+     * Optional time from {@code retry-after} response header if present.
+     */
+    private final Duration m_retryAfter;
+
+    /**
+     * Constructor with default error message.
      *
+     * @param retryAfter retry after response header, containing the seconds to wait or {@code null} if not present
      */
-    public FabricConnection(final CredentialRef credential,
-            final String workspaceId, final Duration connectionTimeout, final Duration readTimeout) {
-        m_credential = credential;
-        m_workspaceId = workspaceId;
-        m_connectionTimeout = connectionTimeout;
-        m_readTimeout = readTimeout;
+    public FabricRateLimitException(final String retryAfter) {
+        this(retryAfter, "Maximum number of requests per seconds has been exceeded, please try again later.");
     }
 
     /**
-     * Returns the Fabric workspace id.
+     * Constructor with error message from API response.
      *
-     * @return the workspaceID
+     * @param retryAfter retry after response header, containing the seconds to wait or {@code null} if not present
+     * @param message error message from API response
      */
-    public String getWorkspaceId() {
-        return m_workspaceId;
+    public FabricRateLimitException(final String retryAfter, final String message) {
+        super(message);
+        m_retryAfter = parseRetryAfter(retryAfter).orElse(null);
     }
 
     /**
-     * @return the readTimeout
+     * @return the optional time to wait from {@code retry-after} response header if present
      */
-    public Duration getReadTimeout() {
-        return m_readTimeout;
+    public Optional<Duration> getRetryAfter() {
+        return Optional.ofNullable(m_retryAfter);
     }
 
-    /**
-     * @return the connectionTimeout
-     */
-    public Duration getConnectionTimeout() {
-        return m_connectionTimeout;
-    }
-
-    /**
-     * @return the {@link CredentialRef}
-     */
-    public CredentialRef getCredential() {
-        return m_credential;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(m_workspaceId, m_credential, m_connectionTimeout, m_readTimeout);
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
+    private static Optional<Duration> parseRetryAfter(final String retryAfter) {
+        try {
+            final int seconds = Integer.parseInt(retryAfter);
+            return Optional.of(Duration.ofSeconds(seconds));
+        } catch (final NumberFormatException ex) { // NOSONAR
+            return Optional.empty();
         }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        FabricConnection other = (FabricConnection) obj;
-        return Objects.equals(m_workspaceId, other.m_workspaceId)
-                && Objects.equals(m_credential, other.m_credential)
-                && m_connectionTimeout == other.m_connectionTimeout && m_readTimeout == other.m_readTimeout;
-    }
-
-    @Override
-    public String toString() {
-        return "Fabric Connection [workspace=" + m_workspaceId + ", credential available=" + m_credential.isPresent()
-                + ", connectionTimeout=" + m_connectionTimeout
-                + ", readTimeout=" + m_readTimeout + "]";
     }
 
 }

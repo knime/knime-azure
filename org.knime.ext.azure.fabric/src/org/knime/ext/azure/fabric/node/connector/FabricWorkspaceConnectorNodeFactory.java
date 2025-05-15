@@ -70,33 +70,34 @@ import org.knime.ext.azure.fabric.port.FabricWorkspacePortObject;
 import org.xml.sax.SAXException;
 
 /**
- * The Databricks Workspace Connector node factory.
+ * The Microsoft Fabric Workspace Connector node factory.
  *
  * @author Tobias Koetter, KNIME GmbH, Konstanz, Germany
  */
 @SuppressWarnings("restriction")
 public class FabricWorkspaceConnectorNodeFactory extends ConfigurableNodeFactory<FabricWorkspaceConnectorNodeModel>
-    implements NodeDialogFactory {
+        implements NodeDialogFactory {
 
     private static final String CREDENTIAL_INPUT_NAME = "Microsoft Credential (OAuth2 access token)";
 
-    private static final String CREDENTIAL_OUTPUT_NAME = "Microsoft Fabric Workspace Connection";
-
-    private static final String FULL_DESCRIPTION =
-            "The Microsoft Fabric Workspace Connector node allows to connect to a Microsoft Fabric workspace.";
+    private static final String WORKSPACE_OUTPUT_NAME = "Microsoft Fabric Workspace Connection";
 
     static final WebUINodeConfiguration CONFIG = WebUINodeConfiguration.builder()//
             .name("Microsoft Fabric Workspace Connector")//
             .icon("./icon.png")//
-        .shortDescription("Databricks Workspace Connector node.")//
-        .fullDescription(FULL_DESCRIPTION) //
-        .modelSettingsClass(FabricWorkspaceSettings.class)//
+            .shortDescription("Microsoft Fabric Workspace Connector node.")//
+            .fullDescription("""
+                    The Microsoft Fabric Workspace Connector node allows to connect to a \
+                    <a href='https://www.microsoft.com/microsoft-fabric'>Microsoft Fabric</a> workspace. \
+                    the query.
+                    """) //
+            .modelSettingsClass(FabricWorkspaceSettings.class)//
             .addInputPort(CREDENTIAL_INPUT_NAME, CredentialPortObject.TYPE, "Microsoft/Azure credential (access token)")//
-            .addOutputPort(CREDENTIAL_OUTPUT_NAME, FabricWorkspacePortObject.TYPE,
+            .addOutputPort(WORKSPACE_OUTPUT_NAME, FabricWorkspacePortObject.TYPE,
                     "Microsoft Fabric Workspace connection")//
-        .nodeType(NodeType.Source)//
+            .nodeType(NodeType.Source)//
             .sinceVersion(5, 5, 0)//
-        .build();
+            .build();
 
     @Override
     protected NodeDescription createNodeDescription() throws SAXException, IOException, XmlException {
@@ -112,7 +113,7 @@ public class FabricWorkspaceConnectorNodeFactory extends ConfigurableNodeFactory
     protected Optional<PortsConfigurationBuilder> createPortsConfigBuilder() {
         final PortsConfigurationBuilder b = new PortsConfigurationBuilder();
         b.addFixedInputPortGroup(CREDENTIAL_INPUT_NAME, CredentialPortObject.TYPE);
-        b.addFixedOutputPortGroup(CREDENTIAL_OUTPUT_NAME, FabricWorkspacePortObject.TYPE);
+        b.addFixedOutputPortGroup(WORKSPACE_OUTPUT_NAME, FabricWorkspacePortObject.TYPE);
         return Optional.of(b);
     }
 
@@ -134,7 +135,7 @@ public class FabricWorkspaceConnectorNodeFactory extends ConfigurableNodeFactory
 
     @Override
     public NodeView<FabricWorkspaceConnectorNodeModel> createNodeView(final int viewIndex,
-        final FabricWorkspaceConnectorNodeModel nodeModel) {
+            final FabricWorkspaceConnectorNodeModel nodeModel) {
         return null;
     }
 

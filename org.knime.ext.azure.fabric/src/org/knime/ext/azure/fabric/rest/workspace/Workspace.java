@@ -44,103 +44,42 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   2025-05-13 (Tobias): created
+ *   2024-05-14 (Sascha Wolke, KNIME GmbH, Berlin, Germany): created
  */
-package org.knime.ext.azure.fabric;
+package org.knime.ext.azure.fabric.rest.workspace;
 
-import java.time.Duration;
-import java.util.Objects;
-
-import org.knime.credentials.base.CredentialPortObjectSpec;
-import org.knime.credentials.base.CredentialRef;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
+ * Metadata about a Fabric workspace as defined <a href=
+ * "https://learn.microsoft.com/en-us/rest/api/fabric/core/workspaces/list-workspaces?tabs=HTTP#workspace">here.</a>
  *
  * @author Tobias Koetter, KNIME GmbH, Konstanz, Germany
  */
-public class FabricConnection {
-
-    private final CredentialRef m_credential;
-    private final String m_workspaceId;
-    private final Duration m_connectionTimeout;
-    private final Duration m_readTimeout;
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class Workspace {
+    /**
+     * The ID of the capacity the workspace is assigned to.
+     */
+    public String capacityId;
 
     /**
-     * @param credential
-     *            {@link CredentialPortObjectSpec} with the credentials for Fabric
-     * @param workspaceId
-     *            the unique Fabric workspace id
-     * @param connectionTimeout
-     *            connection timeout
-     * @param readTimeout
-     *            read timeout
-     *
+     * The workspace description.
      */
-    public FabricConnection(final CredentialRef credential,
-            final String workspaceId, final Duration connectionTimeout, final Duration readTimeout) {
-        m_credential = credential;
-        m_workspaceId = workspaceId;
-        m_connectionTimeout = connectionTimeout;
-        m_readTimeout = readTimeout;
-    }
+    public String description;
 
     /**
-     * Returns the Fabric workspace id.
-     *
-     * @return the workspaceID
+     * The workspace display name.
      */
-    public String getWorkspaceId() {
-        return m_workspaceId;
-    }
+    public String displayName;
 
     /**
-     * @return the readTimeout
+     * The workspace ID.
      */
-    public Duration getReadTimeout() {
-        return m_readTimeout;
-    }
+    public String id;
 
     /**
-     * @return the connectionTimeout
+     * The workspace type.
      */
-    public Duration getConnectionTimeout() {
-        return m_connectionTimeout;
-    }
-
-    /**
-     * @return the {@link CredentialRef}
-     */
-    public CredentialRef getCredential() {
-        return m_credential;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(m_workspaceId, m_credential, m_connectionTimeout, m_readTimeout);
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        FabricConnection other = (FabricConnection) obj;
-        return Objects.equals(m_workspaceId, other.m_workspaceId)
-                && Objects.equals(m_credential, other.m_credential)
-                && m_connectionTimeout == other.m_connectionTimeout && m_readTimeout == other.m_readTimeout;
-    }
-
-    @Override
-    public String toString() {
-        return "Fabric Connection [workspace=" + m_workspaceId + ", credential available=" + m_credential.isPresent()
-                + ", connectionTimeout=" + m_connectionTimeout
-                + ", readTimeout=" + m_readTimeout + "]";
-    }
-
+    public WorkspaceType type;
 }

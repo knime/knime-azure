@@ -50,6 +50,7 @@ package org.knime.ext.azure.fabric.node.connector;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 
 import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
@@ -96,8 +97,8 @@ final class FabricWorkspaceConnectorNodeModel extends WebUINodeModel<FabricWorks
 
     private static FabricWorkspacePortObjectSpec creatFabricSpec(final FabricWorkspaceSettings settings,
             final CredentialPortObjectSpec credSpec) {
-        return new FabricWorkspacePortObjectSpec(new FabricConnection(credSpec, settings.m_workspace,
-                settings.m_connectionTimeout, settings.m_readTimeout));
+        return new FabricWorkspacePortObjectSpec(new FabricConnection(credSpec.toRef(), settings.m_workspaceId,
+                Duration.ofSeconds(settings.m_connectionTimeout), Duration.ofSeconds(settings.m_readTimeout)));
     }
 
 
@@ -112,6 +113,6 @@ final class FabricWorkspaceConnectorNodeModel extends WebUINodeModel<FabricWorks
     @Override
     protected void loadInternals(final File nodeInternDir, final ExecutionMonitor exec)
         throws IOException, CanceledExecutionException {
-        setWarningMessage("Credential not available anymore. Please re-execute this node.");
+        setWarningMessage("Credential not available anymore. Please re-execute the preceding authenticator node.");
     }
 }
