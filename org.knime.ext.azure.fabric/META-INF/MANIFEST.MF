@@ -13,24 +13,23 @@ Export-Package: org.knime.ext.azure.fabric;uses:="org.knime.credentials.base",
    jakarta.ws.rs",
  org.knime.ext.azure.fabric.rest.sql;uses:="org.knime.ext.azure.fabric.rest.workspace,org.knime.ext.azure.fabric.rest"
 Bundle-Vendor: KNIME AG, Zurich, Switzerland
-Require-Bundle: org.knime.workbench.repository;bundle-version="[5.5.0,6.0.0)",
- org.knime.core;bundle-version="[5.5.0,6.0.0)",
+Require-Bundle: org.knime.core;bundle-version="[5.5.0,6.0.0)",
  org.knime.core.ui;bundle-version="[5.5.0,6.0.0)",
- org.eclipse.ui.workbench,
+ org.knime.workbench.repository;bundle-version="[5.5.0,6.0.0)",
  org.knime.credentials.base;bundle-version="[5.5.0,6.0.0)",
+ org.knime.credentials.base.oauth;bundle-version="[5.5.0,6.0.0)",
+ org.eclipse.ui.workbench;bundle-version="[3.131.100,4.0.0)",
  org.apache.commons.lang3;bundle-version="3.14.0",
- org.apache.cxf.cxf-rt-rs-client,
- org.apache.cxf.cxf-rt-transports-http,
- org.apache.cxf.cxf-core,
- org.apache.cxf.cxf-rt-transports-http-hc,
- com.fasterxml.jackson.core.jackson-core;bundle-version="2.16.1",
- com.fasterxml.jackson.core.jackson-annotations,
+ org.apache.cxf.cxf-rt-rs-client;bundle-version="[4.0.4,5.0.0)",
+ org.apache.cxf.cxf-rt-transports-http;bundle-version="[4.0.4,5.0.0)",
+ org.apache.cxf.cxf-core;bundle-version="[4.0.4,5.0.0)",
+ org.apache.cxf.cxf-rt-transports-http-hc;bundle-version="[4.0.4,5.0.0)",
+ com.fasterxml.jackson.core.jackson-core;bundle-version="[2.16.1,3.0.0)",
+ com.fasterxml.jackson.core.jackson-annotations;bundle-version="[2.16.1,3.0.0)",
  com.fasterxml.jackson.core.jackson-databind;bundle-version="[2.16.1,3.0.0)",
  com.fasterxml.jackson.jakarta.rs.jackson-jakarta-rs-base;bundle-version="[2.13.2,3.0.0)",
- com.fasterxml.jackson.jakarta.rs.jackson-jakarta-rs-json-provider,
- jakarta.ws.rs-api,
- org.knime.credentials.base.oauth;bundle-version="5.5.0",
- org.knime.database.nodes
+ com.fasterxml.jackson.jakarta.rs.jackson-jakarta-rs-json-provider;bundle-version="[2.13.2,3.0.0)",
+ jakarta.ws.rs-api;bundle-version="[3.1.0,4.0.0)"
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .
 Automatic-Module-Name: org.knime.ext.azure.fabric
