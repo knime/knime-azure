@@ -45,7 +45,7 @@
  */
 package org.knime.ext.azure.fabric.rest.sql;
 
-import org.knime.ext.azure.fabric.rest.PaginationType;
+import org.knime.ext.azure.fabric.rest.general.PaginationType;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
