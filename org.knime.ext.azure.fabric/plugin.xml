@@ -9,12 +9,6 @@
             factory-class="org.knime.ext.azure.fabric.node.connector.FabricWorkspaceConnectorNodeFactory"
             hidden="false">
       </node>
-      <node
-            category-path="/db/connector"
-            deprecated="false"
-            factory-class="org.knime.ext.azure.fabric.node.warehouse.FabricWarehouseConnectorNodeFactory"
-            hidden="false">
-      </node>
    </extension>
    <extension
          point="org.knime.core.PortType">

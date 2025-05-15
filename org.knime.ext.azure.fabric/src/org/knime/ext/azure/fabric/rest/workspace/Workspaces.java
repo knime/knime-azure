@@ -48,6 +48,8 @@
  */
 package org.knime.ext.azure.fabric.rest.workspace;
 
+import org.knime.ext.azure.fabric.rest.PaginationType;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
