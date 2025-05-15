@@ -46,7 +46,7 @@
  * History
  *   2025-05-14 (Tobias): created
  */
-package org.knime.ext.azure.fabric.rest;
+package org.knime.ext.azure.fabric.rest.general;
 
 /**
  * Class for responses that might be returned via multiple pages. For details

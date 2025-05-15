@@ -53,6 +53,8 @@ import java.util.Objects;
 
 import org.knime.credentials.base.CredentialPortObjectSpec;
 import org.knime.credentials.base.CredentialRef;
+import org.knime.credentials.base.NoSuchCredentialException;
+import org.knime.ext.azure.fabric.rest.FabricRESTClient;
 
 /**
  *
@@ -94,6 +96,32 @@ public class FabricConnection {
     }
 
     /**
+     * @return the {@link CredentialRef}
+     */
+    public CredentialRef getCredential() {
+        return m_credential;
+    }
+
+    /**
+     * Creates a service proxy for given Microsoft Fabric REST API interface for
+     * this Fabric workspace.
+     *
+     * Note that errors in this client are handled with
+     * {@code ClientErrorException}.
+     *
+     * @param <T>
+     *
+     * @param proxy
+     *            Interface to create proxy for
+     * @return client implementation for given proxy interface
+     * @throws NoSuchCredentialException
+     *             if the input credential is invalid
+     */
+    public <T> T getAPI(final Class<T> proxy) throws NoSuchCredentialException {
+        return FabricRESTClient.fromFabricConnection(proxy, this);
+    }
+
+    /**
      * @return the readTimeout
      */
     public Duration getReadTimeout() {
@@ -105,13 +133,6 @@ public class FabricConnection {
      */
     public Duration getConnectionTimeout() {
         return m_connectionTimeout;
-    }
-
-    /**
-     * @return the {@link CredentialRef}
-     */
-    public CredentialRef getCredential() {
-        return m_credential;
     }
 
     @Override

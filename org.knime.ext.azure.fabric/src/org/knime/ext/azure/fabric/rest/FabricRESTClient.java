@@ -276,13 +276,11 @@ public class FabricRESTClient {
      * @param connection
      *            {@link FabricConnection} to use
      * @return client implementation for given proxy interface
-     * @throws InvalidSettingsException
-     *             if the input port is invalid
      * @throws NoSuchCredentialException
      *             if the input credential is invalid
      */
     public static <T> T fromFabricConnection(final Class<T> proxy, final FabricConnection connection)
-            throws InvalidSettingsException, NoSuchCredentialException {
+            throws NoSuchCredentialException {
 
         final AccessTokenAccessor tokenAccessor = connection.getCredential().toAccessor(AccessTokenAccessor.class);
 
