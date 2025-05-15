@@ -119,7 +119,8 @@ public class FabricWarehouseSettings implements DefaultNodeSettings {
             try {
                 final PortObjectSpec[] inSpecs = context.getPortObjectSpecs();
                 if (inSpecs.length == 0) {
-                    throw new InvalidSettingsException("Missing input connection, Microsoft Authenticator required.");
+                    throw new InvalidSettingsException(
+                            "Missing input connection, Microsoft Fabric Workspace Connector required.");
                 }
 
                 if (inSpecs[0] instanceof FabricWorkspacePortObjectSpec) {
