@@ -46,7 +46,7 @@
  * History
  *   May 16, 2024 (Bjoern Lohrmann, KNIME GmbH): created
  */
-package org.knime.ext.azure.fabric.node.warehouse;
+package org.knime.ext.azure.fabric.warehouse.node.connector;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -65,6 +65,7 @@ import org.knime.core.webui.node.dialog.SettingsType;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeDialog;
 import org.knime.core.webui.node.impl.WebUINodeConfiguration;
 import org.knime.core.webui.node.impl.WebUINodeFactory;
+import org.knime.credentials.base.CredentialPortObject;
 import org.knime.database.port.DBSessionPortObject;
 import org.knime.ext.azure.fabric.port.FabricWorkspacePortObject;
 import org.xml.sax.SAXException;
@@ -93,6 +94,7 @@ public class FabricWarehouseConnectorNodeFactory extends ConfigurableNodeFactory
         .modelSettingsClass(FabricWarehouseSettings.class)//
             .addInputPort(WORKSPACE_INPUT_NAME, FabricWorkspacePortObject.TYPE,
                     "Microsoft Fabric Workspace connection")//
+            .addInputPort("Credentials", CredentialPortObject.TYPE, "Credential connection")//
             .addOutputPort(DB_OUTPUT_NAME, DBSessionPortObject.TYPE,
                     "Microsoft Fabric Warehouse Connection")//
         .nodeType(NodeType.Source)//
@@ -113,6 +115,7 @@ public class FabricWarehouseConnectorNodeFactory extends ConfigurableNodeFactory
     protected Optional<PortsConfigurationBuilder> createPortsConfigBuilder() {
         final PortsConfigurationBuilder b = new PortsConfigurationBuilder();
         b.addFixedInputPortGroup(WORKSPACE_INPUT_NAME, FabricWorkspacePortObject.TYPE);
+        b.addFixedInputPortGroup("Credentials", CredentialPortObject.TYPE);
         b.addFixedOutputPortGroup(DB_OUTPUT_NAME, DBSessionPortObject.TYPE);
         return Optional.of(b);
     }

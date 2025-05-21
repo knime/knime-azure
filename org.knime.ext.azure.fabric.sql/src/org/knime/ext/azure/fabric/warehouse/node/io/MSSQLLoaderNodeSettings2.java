@@ -43,43 +43,61 @@
  *  when such Node is propagated with or for interoperation with KNIME.
  * ---------------------------------------------------------------------
  */
-package org.knime.ext.azure.fabric.rest.wrapper;
+package org.knime.ext.azure.fabric.warehouse.node.io;
 
-import java.io.IOException;
+import static java.util.Objects.requireNonNull;
 
-import org.knime.ext.azure.fabric.rest.sql.Warehouse;
-import org.knime.ext.azure.fabric.rest.sql.WarehouseAPI;
-import org.knime.ext.azure.fabric.rest.sql.Warehouses;
+import org.knime.database.node.component.dbrowser.SettingsModelDBMetadata;
+import org.knime.database.node.io.load.DBLoaderNode2.ModelDelegate;
 
 /**
- * Wrapper class for {@link WarehouseAPI} that suppresses authentication popup.
+ * Node model settings for {@link MSSQLLoaderNode}.
  *
  * @author Tobias Koetter, KNIME GmbH, Konstanz, Germany
  */
-public class WarehouseAPIWrapper extends APIWrapper<WarehouseAPI> implements WarehouseAPI {
+public class MSSQLLoaderNodeSettings2 {
+
+    private final ModelDelegate m_modelDelegate;
+
+    private final SettingsModelDBMetadata m_tableNameModel;
+
+    private final SettingsModelMSSQLLoader m_loaderModel;
 
     /**
-     * Default constructor.
+     * Constructs an {@link MSSQLLoaderNodeSettings2} object.
      *
-     * @param api the API to wrap
+     * @param modelDelegate the delegate of the node model to create settings for.
      */
-    public WarehouseAPIWrapper(final WarehouseAPI api) {
-        super(api, "warehouse");
+    public MSSQLLoaderNodeSettings2(final ModelDelegate modelDelegate) {
+        m_modelDelegate = requireNonNull(modelDelegate, "modelDelegate");
+        m_tableNameModel = new SettingsModelDBMetadata("tableName");
+        m_loaderModel = new SettingsModelMSSQLLoader("mssqlLoader");
     }
 
-    @Override
-    public Warehouses listWarehouses(final String workspaceId) throws IOException {
-        return invoke(() -> m_api.listWarehouses(workspaceId));
+    /**
+     * Gets the delegate of the node model the settings have been created for.
+     *
+     * @return a {@link ModelDelegate} object.
+     */
+    public ModelDelegate getModelDelegate() {
+        return m_modelDelegate;
     }
 
-    @Override
-    public Warehouses listWarehouses(final String workspaceId, final String continuationToken) throws IOException {
-        return invoke(() -> m_api.listWarehouses(workspaceId, continuationToken));
+    /**
+     * Gets the database table name settings model.
+     *
+     * @return a {@link SettingsModelDBMetadata} object.
+     */
+    public SettingsModelDBMetadata getTableNameModel() {
+        return m_tableNameModel;
     }
 
-    @Override
-    public Warehouse getWarehouse(final String workspaceId, final String warehouseId) throws IOException {
-        return invoke(() -> m_api.getWarehouse(workspaceId, warehouseId));
+    /**
+     * Returns the {@link SettingsModelMSSQLLoader}.
+     *
+     * @return the {@link SettingsModelMSSQLLoader}
+     */
+    public SettingsModelMSSQLLoader getLoaderModel() {
+        return m_loaderModel;
     }
-
 }

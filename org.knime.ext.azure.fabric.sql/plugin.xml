@@ -6,9 +6,37 @@
       <node
             category-path="/db/connector"
             deprecated="false"
-            factory-class="org.knime.ext.azure.fabric.node.warehouse.FabricWarehouseConnectorNodeFactory"
+            factory-class="org.knime.ext.azure.fabric.warehouse.node.connector.FabricWarehouseConnectorNodeFactory"
             hidden="false">
       </node>
+   </extension>
+   
+   <!-- Database Types -->
+   <extension point="org.knime.database.DBType">
+      <DBType id="fabricwarehouse" name="Microsoft Fabric Warehouse" urlTemplateValidator="org.knime.database.node.connector.server.ServerUrlTemplateValidator">
+          <UrlTemplateExamples>
+             <UrlTemplateExample title="Fabric Warehouse" template="jdbc:sqlserver://&lt;host&gt;:&lt;port&gt;;databaseName=[database]"/>
+          </UrlTemplateExamples>
+      </DBType>
+   </extension>
+   
+   <!-- Dialects -->
+   <extension point="org.knime.database.SQLDialect">
+      <SQLDialect dbTypes="fabricwarehouse" factory="org.knime.ext.azure.fabric.warehouse.dialect.FabricWarhouseSQLDialect$Factory"/>
+   </extension>
+   
+   <!-- Agents -->
+   <extension point="org.knime.database.Agent">
+      <!-- Farbic Warehouse -->
+      <Agent
+            dbTypes="fabricwarehouse"
+            factory="org.knime.ext.azure.fabric.warehouse.agent.FabricWarehouseLoader"
+            interface="org.knime.database.agent.loader.DBLoader"/>
+   </extension>
+   
+   <!-- Loader node implementations -->
+   <extension point="org.knime.database.nodes.LoaderNode2">
+      <LoaderNode2 dbTypes="fabricwarehouse" class="org.knime.ext.azure.fabric.warehouse.node.io.MSSQLLoaderNode2"/>
    </extension>
 
 </plugin>

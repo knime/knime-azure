@@ -53,10 +53,12 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 
 /**
- * REST API definition to access SQL Warehouses.
+ * REST API definition to access Fabric Warehouses.
  *
- * @see <a href="https://docs.databricks.com/api/workspace/warehouses">SQL Warehouses API</a>
- * @author Sascha Wolke, KNIME GmbH
+ * @see <a href=
+ *      "https://learn.microsoft.com/en-us/rest/api/fabric/warehouse/items/get-warehouse">Fabric
+ *      Warehouses API</a>
+ * @author Tobias Koetter, KNIME GmbH, Konstanz, Germany
  */
 @Path("v1/workspaces")
 public interface WarehouseAPI {
@@ -83,4 +85,19 @@ public interface WarehouseAPI {
     @Path("{workspaceId}/warehouses")
     Warehouses listWarehouses(@PathParam("workspaceId") String workspaceId,
             @QueryParam("continuationToken") String continuationToken) throws IOException;
+
+    /**
+     * @param workspaceId
+     *            the unique Fabric workspace id the warehouse belongs to
+     * @param warehouseId
+     *            the unique warehouse id to get all detail for
+     * @param continuationToken
+     *            for pagination
+     * @return list of warehouses
+     * @throws IOException
+     */
+    @GET
+    @Path("{workspaceId}/warehouses/{warehouseId}")
+    Warehouse getWarehouse(@PathParam("workspaceId") String workspaceId, @PathParam("warehouseId") String warehouseId)
+            throws IOException;
 }

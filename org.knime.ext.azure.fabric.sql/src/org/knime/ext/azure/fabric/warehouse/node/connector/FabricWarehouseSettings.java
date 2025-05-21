@@ -46,7 +46,7 @@
  * History
  *   May 16, 2024 (Bjoern Lohrmann, KNIME GmbH): created
  */
-package org.knime.ext.azure.fabric.node.warehouse;
+package org.knime.ext.azure.fabric.warehouse.node.connector;
 
 import java.io.IOException;
 import java.util.Arrays;

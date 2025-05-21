@@ -43,43 +43,38 @@
  *  when such Node is propagated with or for interoperation with KNIME.
  * ---------------------------------------------------------------------
  */
-package org.knime.ext.azure.fabric.rest.wrapper;
+package org.knime.ext.azure.fabric.warehouse.agent;
 
-import java.io.IOException;
+import static java.util.Objects.requireNonNull;
 
-import org.knime.ext.azure.fabric.rest.sql.Warehouse;
-import org.knime.ext.azure.fabric.rest.sql.WarehouseAPI;
-import org.knime.ext.azure.fabric.rest.sql.Warehouses;
+import org.knime.core.node.ExecutionMonitor;
+import org.knime.database.agent.loader.DBLoader;
+import org.knime.database.session.DBSession;
+import org.knime.database.session.DBSessionReference;
 
 /**
- * Wrapper class for {@link WarehouseAPI} that suppresses authentication popup.
+ * MSSQL data loader.
  *
  * @author Tobias Koetter, KNIME GmbH, Konstanz, Germany
  */
-public class WarehouseAPIWrapper extends APIWrapper<WarehouseAPI> implements WarehouseAPI {
+public class FabricWarehouseLoader implements DBLoader {
+
+    private final DBSessionReference m_sessionReference;
 
     /**
-     * Default constructor.
+     * Constructs a {@link FabricWarehouseLoader} object.
      *
-     * @param api the API to wrap
+     * @param sessionReference the reference to the agent's session.
      */
-    public WarehouseAPIWrapper(final WarehouseAPI api) {
-        super(api, "warehouse");
+    public FabricWarehouseLoader(final DBSessionReference sessionReference) {
+        m_sessionReference = requireNonNull(sessionReference, "sessionReference");
     }
 
     @Override
-    public Warehouses listWarehouses(final String workspaceId) throws IOException {
-        return invoke(() -> m_api.listWarehouses(workspaceId));
+    public void load(final ExecutionMonitor executionMonitor, final Object parameters) throws Exception {
+        final DBSession dbSession = m_sessionReference.get();
+
     }
 
-    @Override
-    public Warehouses listWarehouses(final String workspaceId, final String continuationToken) throws IOException {
-        return invoke(() -> m_api.listWarehouses(workspaceId, continuationToken));
-    }
-
-    @Override
-    public Warehouse getWarehouse(final String workspaceId, final String warehouseId) throws IOException {
-        return invoke(() -> m_api.getWarehouse(workspaceId, warehouseId));
-    }
 
 }

@@ -79,4 +79,9 @@ public class Warehouse {
      */
     public String id;
 
+    /**
+     * The warehouse properties.
+     */
+    public WarehouseProperties properties;
+
 }

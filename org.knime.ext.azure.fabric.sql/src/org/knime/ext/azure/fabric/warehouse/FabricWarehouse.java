@@ -44,60 +44,26 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   May 16, 2024 (Bjoern Lohrmann, KNIME GmbH): created
+ *   2025-05-21 (Tobias): created
  */
-package org.knime.ext.azure.fabric.node.warehouse;
+package org.knime.ext.azure.fabric.warehouse;
 
-import org.knime.core.node.ExecutionContext;
-import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.context.ports.PortsConfiguration;
-import org.knime.core.node.port.PortObject;
-import org.knime.core.node.port.PortObjectSpec;
-import org.knime.core.webui.node.impl.WebUINodeModel;
-import org.knime.ext.azure.fabric.port.FabricWorkspacePortObject;
-import org.knime.ext.azure.fabric.port.FabricWorkspacePortObjectSpec;
+import org.knime.database.DBType;
+import org.knime.database.DBTypeRegistry;
 
 /**
- * The Databricks Workspace Connector node model.
+ * Database-specific convenience constants and methods.
  *
  * @author Tobias Koetter, KNIME GmbH, Konstanz, Germany
  */
-@SuppressWarnings("restriction")
-final class FabricWarehouseConnectorNodeModel extends WebUINodeModel<FabricWarehouseSettings> {
-
-
+public class FabricWarehouse {
     /**
-     * @param portsConfig The node configuration.
+     * The {@link DBType} object corresponding to the database.
      */
-    protected FabricWarehouseConnectorNodeModel(final PortsConfiguration portsConfig) {
-        super(portsConfig.getInputPorts(), portsConfig.getOutputPorts(), FabricWarehouseSettings.class);
-    }
+    public static final DBType DB_TYPE = DBTypeRegistry.getInstance().getRegisteredDBType("fabricwarehouse").get();
 
-    @Override
-    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs,
-            final FabricWarehouseSettings settings)
-        throws InvalidSettingsException {
-
-        settings.validate(inSpecs);
-
-        final FabricWorkspacePortObjectSpec credSpec = (FabricWorkspacePortObjectSpec) inSpecs[0];
-
-        return new PortObjectSpec[]{//
-                creatFabricSpec(settings, credSpec) };
-    }
-
-    private static FabricWorkspacePortObjectSpec creatFabricSpec(final FabricWarehouseSettings settings,
-            final FabricWorkspacePortObjectSpec credSpec) {
-        return null;
-    }
-
-
-    @Override
-    protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec,
-        final FabricWarehouseSettings settings) throws Exception {
-        final var credPort = (FabricWorkspacePortObject) inObjects[0];
-        return new PortObject[] {
-                new FabricWorkspacePortObject(creatFabricSpec(settings, credPort.getSpec())) };
+    private FabricWarehouse() {
+        throw new UnsupportedOperationException();
     }
 
 }
