@@ -2,6 +2,15 @@
 <?eclipse version="3.0"?>
 <plugin>
    <extension
+         point="org.knime.workbench.repository.nodes">
+      <node
+            category-path="/io/connectors"
+            deprecated="false"
+            factory-class="org.knime.ext.azure.fabric.node.connector.FabricWorkspaceConnectorNodeFactory"
+            hidden="false">
+      </node>
+   </extension>
+   <extension
          point="org.knime.core.PortType">
       <portType
             color="#0FCDA4"
