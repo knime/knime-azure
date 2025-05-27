@@ -164,6 +164,7 @@ public class FabricWorkspaceSettings implements DefaultNodeSettings {
         @Override
         public List<StringChoice> computeState(final DefaultNodeSettingsContext context) {
             try {
+
                 final var client = FabricRESTClient.fromCredentialPort(//
                         WorkspaceAPI.class, //
                         context.getPortObjectSpecs(), //

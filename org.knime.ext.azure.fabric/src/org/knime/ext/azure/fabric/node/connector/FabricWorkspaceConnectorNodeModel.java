@@ -62,6 +62,7 @@ import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.webui.node.impl.WebUINodeModel;
 import org.knime.credentials.base.CredentialPortObject;
 import org.knime.credentials.base.CredentialPortObjectSpec;
+import org.knime.credentials.base.CredentialRef;
 import org.knime.ext.azure.fabric.port.FabricConnection;
 import org.knime.ext.azure.fabric.port.FabricWorkspacePortObject;
 import org.knime.ext.azure.fabric.port.FabricWorkspacePortObjectSpec;
@@ -90,15 +91,23 @@ final class FabricWorkspaceConnectorNodeModel extends WebUINodeModel<FabricWorks
         settings.validate(inSpecs);
 
         final var credSpec = (CredentialPortObjectSpec) inSpecs[0];
+        final CredentialRef credRef;
+        if (credSpec != null) {
+            FabricCredentialUtil.validateCredentialOnConfigure(credSpec);
+            credRef = credSpec.toRef();
+        } else {
+            credRef = new CredentialRef();
+        }
 
-        return new PortObjectSpec[]{//
-                creatFabricSpec(settings, credSpec) };
+        return new PortObjectSpec[] { //
+                createFabricSpec(settings, credRef) };
     }
 
-    private static FabricWorkspacePortObjectSpec creatFabricSpec(final FabricWorkspaceSettings settings,
-            final CredentialPortObjectSpec credSpec) {
+    private static FabricWorkspacePortObjectSpec createFabricSpec(final FabricWorkspaceSettings settings,
+            final CredentialRef credRef) {
+
         return new FabricWorkspacePortObjectSpec(new FabricConnection(//
-                credSpec.toRef(), //
+                credRef, //
                 settings.m_workspaceId, //
                 Duration.ofSeconds(settings.m_connectionTimeout), //
                 Duration.ofSeconds(settings.m_readTimeout)));
@@ -108,9 +117,15 @@ final class FabricWorkspaceConnectorNodeModel extends WebUINodeModel<FabricWorks
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec,
         final FabricWorkspaceSettings settings) throws Exception {
-        final var credPort = (CredentialPortObject) inObjects[0];
+
+        final var credRef = ((CredentialPortObject) inObjects[0]).getSpec().toRef();
+
+        // as a side effect this will also validate the presence of a credential and
+        // fetch a Fabric-scoped access token if necessary
+        FabricCredentialUtil.toAccessTokenAccessor(credRef);
+
         return new PortObject[] {
-                new FabricWorkspacePortObject(creatFabricSpec(settings, credPort.getSpec())) };
+                new FabricWorkspacePortObject(createFabricSpec(settings, credRef)) };
     }
 
     @Override

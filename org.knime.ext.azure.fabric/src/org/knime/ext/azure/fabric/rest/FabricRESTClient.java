@@ -71,6 +71,7 @@ import org.knime.core.node.port.PortObjectSpec;
 import org.knime.credentials.base.CredentialPortObjectSpec;
 import org.knime.credentials.base.NoSuchCredentialException;
 import org.knime.credentials.base.oauth.api.AccessTokenAccessor;
+import org.knime.ext.azure.fabric.node.connector.FabricCredentialUtil;
 import org.knime.ext.azure.fabric.port.FabricConnection;
 import org.knime.ext.azure.fabric.port.FabricWorkspacePortObjectSpec;
 import org.knime.ext.azure.fabric.rest.sql.WarehouseAPI;
@@ -208,21 +209,22 @@ public final class FabricRESTClient {
      * @throws InvalidSettingsException
      *             if the input port is invalid
      * @throws NoSuchCredentialException
-     *             if the input credential is invalid
+     *             if the ingoing credential cannot be found anymore.
+     * @throws IOException
+     *             if there is an issue retrieving the actual Fabric-scoped access
+     *             token
      */
     public static <T> T fromCredentialPort(final Class<T> proxy, final PortObjectSpec[] inSpecs,
             final Duration readTimeout, final Duration connectionTimeout)
-            throws InvalidSettingsException, NoSuchCredentialException {
+            throws InvalidSettingsException, NoSuchCredentialException, IOException {
 
         if (inSpecs.length == 0) {
             throw new InvalidSettingsException("Missing input connection, Microsoft Authenticator required.");
         }
 
-        if (inSpecs[0] instanceof CredentialPortObjectSpec) {
-            final CredentialPortObjectSpec spec = (CredentialPortObjectSpec) inSpecs[0];
-            final AccessTokenAccessor tokenAccessor = spec.toAccessor(AccessTokenAccessor.class);
+        if (inSpecs[0] instanceof CredentialPortObjectSpec credSpec) {
+            final var tokenAccessor = FabricCredentialUtil.toAccessTokenAccessor(credSpec.toRef());
             return create(tokenAccessor, proxy, readTimeout, connectionTimeout);
-
         }
 
         throw new InvalidSettingsException("Invalid input connection, Microsoft Authenticator required.");
