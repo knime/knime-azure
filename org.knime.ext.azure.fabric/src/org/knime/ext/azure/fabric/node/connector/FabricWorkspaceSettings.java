@@ -105,7 +105,7 @@ public class FabricWorkspaceSettings implements DefaultNodeSettings {
                 Used by this and downstream nodes connecting to Microsoft Fabric.
                     """, //
         advanced = true)
-    @NumberInputWidget(validation = IsNonNegativeValidation.class)
+    @NumberInputWidget(minValidation = IsNonNegativeValidation.class)
     @Layout(ConnectionTimeoutsSection.class)
     int m_connectionTimeout = 30;
 
@@ -116,7 +116,7 @@ public class FabricWorkspaceSettings implements DefaultNodeSettings {
                     to Microsoft Fabric.
                     """, //
         advanced = true)
-    @NumberInputWidget(validation = IsNonNegativeValidation.class)
+    @NumberInputWidget(minValidation = IsNonNegativeValidation.class)
     @Layout(ConnectionTimeoutsSection.class)
     int m_readTimeout = 30;
 
