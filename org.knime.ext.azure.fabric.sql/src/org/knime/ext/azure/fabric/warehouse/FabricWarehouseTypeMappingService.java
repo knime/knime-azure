@@ -43,42 +43,64 @@
  *  when such Node is propagated with or for interoperation with KNIME.
  * ---------------------------------------------------------------------
  */
-package org.knime.ext.azure.fabric.rest.wrapper;
 
-import java.io.IOException;
+package org.knime.ext.azure.fabric.warehouse;
 
-import org.knime.ext.azure.fabric.rest.sql.Warehouse;
-import org.knime.ext.azure.fabric.rest.sql.WarehouseAPI;
-import org.knime.ext.azure.fabric.rest.sql.Warehouses;
+import java.io.InputStream;
+import java.sql.JDBCType;
+import java.sql.SQLType;
+import java.util.Map;
+
+import org.apache.commons.lang3.tuple.Triple;
+import org.knime.core.data.DataType;
+import org.knime.core.data.blob.BinaryObjectDataCell;
+import org.knime.core.data.time.zoneddatetime.ZonedDateTimeCellFactory;
+import org.knime.database.datatype.mapping.AbstractDBDataTypeMappingService;
+import org.knime.database.extension.mssql.MSSQLServerDestination;
+import org.knime.database.extension.mssql.MSSQLServerSource;
+import org.knime.database.extension.mssql.MSSQLServerTypeMappingService;
 
 /**
- * Wrapper class for {@link WarehouseAPI} that suppresses authentication popup.
+ * Database type mapping service for Fabric Warehouse.
  *
  * @author Tobias Koetter, KNIME GmbH, Konstanz, Germany
  */
-public class WarehouseAPIWrapper extends APIWrapper<WarehouseAPI> implements WarehouseAPI {
+public final class FabricWarehouseTypeMappingService
+        extends AbstractDBDataTypeMappingService<MSSQLServerSource, MSSQLServerDestination> {
+
+    private static final FabricWarehouseTypeMappingService INSTANCE = new FabricWarehouseTypeMappingService();
 
     /**
-     * Default constructor.
+     * Gets the singleton {@link MSSQLServerTypeMappingService} instance.
      *
-     * @param api the API to wrap
+     * @return the only {@link MSSQLServerTypeMappingService} instance.
      */
-    public WarehouseAPIWrapper(final WarehouseAPI api) {
-        super(api, "warehouses");
+    public static FabricWarehouseTypeMappingService getInstance() {
+        return INSTANCE;
     }
 
-    @Override
-    public Warehouses listWarehouses(final String workspaceId) throws IOException {
-        return invoke(() -> m_api.listWarehouses(workspaceId));
+    private FabricWarehouseTypeMappingService() {
+        super(MSSQLServerSource.class, MSSQLServerDestination.class);
+
+        // Default consumption paths
+        final Map<DataType, Triple<DataType, Class<?>, SQLType>> defaultConsumptionMap = getDefaultConsumptionTriples();
+        addTriple(defaultConsumptionMap, BinaryObjectDataCell.TYPE, InputStream.class, JDBCType.LONGVARBINARY);
+        addTriple(defaultConsumptionMap, ZonedDateTimeCellFactory.TYPE, String.class, JDBCType.VARCHAR);
+        setDefaultConsumptionTriples(defaultConsumptionMap);
+
+        // Default production paths
+        setDefaultProductionTriples(getDefaultProductionTriples());
+
+        // See https://learn.microsoft.com/en-us/fabric/data-warehouse/data-types
+        addColumnType(JDBCType.DOUBLE, "float(53)");
+        addColumnType(JDBCType.NVARCHAR, "varchar");
+        addColumnType(JDBCType.NCHAR, "varchar");
+        addColumnType(JDBCType.LONGNVARCHAR, "varchar");
+        addColumnType(JDBCType.LONGVARCHAR, "varchar");
+        // see https://docs.microsoft.com/en-us/sql/connect/jdbc/using-advanced-data-types?view=sql-server-2017
+        addColumnType(JDBCType.LONGVARBINARY, "varbinary(max)");
+        addColumnType(JDBCType.TIMESTAMP, "datetime2");
+
     }
 
-    @Override
-    public Warehouses listWarehouses(final String workspaceId, final String continuationToken) throws IOException {
-        return invoke(() -> m_api.listWarehouses(workspaceId, continuationToken));
-    }
-
-    @Override
-    public Warehouse getWarehouse(final String workspaceId, final String warehouseId) throws IOException {
-        return invoke(() -> m_api.getWarehouse(workspaceId, warehouseId));
-    }
 }

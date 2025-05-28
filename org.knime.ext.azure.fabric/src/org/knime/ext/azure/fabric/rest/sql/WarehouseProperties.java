@@ -42,43 +42,36 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ---------------------------------------------------------------------
+ *
+ * History
+ *   2025-05-19 (Tobias): created
  */
-package org.knime.ext.azure.fabric.rest.wrapper;
+package org.knime.ext.azure.fabric.rest.sql;
 
-import java.io.IOException;
-
-import org.knime.ext.azure.fabric.rest.sql.Warehouse;
-import org.knime.ext.azure.fabric.rest.sql.WarehouseAPI;
-import org.knime.ext.azure.fabric.rest.sql.Warehouses;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
- * Wrapper class for {@link WarehouseAPI} that suppresses authentication popup.
+ * The warehouse item properties.
  *
  * @author Tobias Koetter, KNIME GmbH, Konstanz, Germany
  */
-public class WarehouseAPIWrapper extends APIWrapper<WarehouseAPI> implements WarehouseAPI {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class WarehouseProperties {
 
     /**
-     * Default constructor.
-     *
-     * @param api the API to wrap
+     * The SQL connection string connected to the workspace containing this
+     * warehouse.
      */
-    public WarehouseAPIWrapper(final WarehouseAPI api) {
-        super(api, "warehouses");
-    }
+    public String connectionString;
 
-    @Override
-    public Warehouses listWarehouses(final String workspaceId) throws IOException {
-        return invoke(() -> m_api.listWarehouses(workspaceId));
-    }
+    /**
+     * The date and time the warehouse was created.
+     */
+    public String createdDate;
 
-    @Override
-    public Warehouses listWarehouses(final String workspaceId, final String continuationToken) throws IOException {
-        return invoke(() -> m_api.listWarehouses(workspaceId, continuationToken));
-    }
+    /**
+     * The date and time the warehouse was last updated.
+     */
+    public String lastUpdatedTime;
 
-    @Override
-    public Warehouse getWarehouse(final String workspaceId, final String warehouseId) throws IOException {
-        return invoke(() -> m_api.getWarehouse(workspaceId, warehouseId));
-    }
 }

@@ -95,4 +95,19 @@ public interface WarehouseAPI {
     @Path("{workspaceId}/warehouses")
     Warehouses listWarehouses(@PathParam("workspaceId") String workspaceId,
             @QueryParam("continuationToken") String continuationToken) throws IOException;
+
+    /**
+     * @param workspaceId
+     *            the unique Fabric workspace id the warehouse belongs to
+     * @param warehouseId
+     *            the unique warehouse id to get all detail for
+     * @param continuationToken
+     *            for pagination
+     * @return list of warehouses
+     * @throws IOException
+     */
+    @GET
+    @Path("{workspaceId}/warehouses/{warehouseId}")
+    Warehouse getWarehouse(@PathParam("workspaceId") String workspaceId, @PathParam("warehouseId") String warehouseId)
+            throws IOException;
 }
