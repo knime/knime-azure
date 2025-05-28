@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.0"?>
+<plugin>
+   <extension
+         point="org.knime.workbench.repository.nodes">
+      <node
+            category-path="/db/connector"
+            deprecated="false"
+            factory-class="org.knime.ext.azure.fabric.warehouse.node.connector.FabricWarehouseConnectorNodeFactory"
+            hidden="false">
+      </node>
+   </extension>
+   
+   <!-- Database Types -->
+   <extension point="org.knime.database.DBType">
+      <DBType id="fabricwarehouse" name="Microsoft Fabric Data Warehouse" urlTemplateValidator="org.knime.database.node.connector.server.ServerUrlTemplateValidator">
+          <UrlTemplateExamples>
+             <UrlTemplateExample title="Fabric Data Warehouse" template="jdbc:sqlserver://&lt;host&gt;:&lt;port&gt;;database=[database]"/>
+          </UrlTemplateExamples>
+      </DBType>
+   </extension>
+   
+   <!-- Dialects -->
+   <extension point="org.knime.database.SQLDialect">
+      <SQLDialect dbTypes="fabricwarehouse" factory="org.knime.ext.azure.fabric.warehouse.dialect.FabricWarhouseSQLDialect$Factory"/>
+   </extension>
+   
+   <!-- Type mapping service -->   
+   <extension point="org.knime.database.DBTypeMappingService">
+      <DBTypeMappingService
+            dbTypeId="fabricwarehouse"
+            supplier="org.knime.ext.azure.fabric.warehouse.FabricWarehouseTypeMappingServiceSupplier"/>
+   </extension>
+   
+   <!-- Agents -->
+   <extension point="org.knime.database.Agent">
+      <!-- Farbic Warehouse -->
+      <Agent
+            dbTypes="fabricwarehouse"
+            factory="org.knime.ext.azure.fabric.warehouse.FabricWarehouseAgentFactory"
+            interface="org.knime.database.agent.loader.DBLoader"/>
+      <Agent
+            dbTypes="fabricwarehouse"
+            factory="org.knime.ext.azure.fabric.warehouse.FabricWarehouseAgentFactory"
+            interface="org.knime.database.agent.metadata.DBMetadataReader"/>
+      <Agent
+            dbTypes="fabricwarehouse"
+            factory="org.knime.ext.azure.fabric.warehouse.FabricWarehouseAgentFactory"
+            interface="org.knime.database.agent.sampling.DBSampling"/>
+      <Agent
+            dbTypes="fabricwarehouse"
+            factory="org.knime.ext.azure.fabric.warehouse.FabricWarehouseAgentFactory"
+            interface="org.knime.database.agent.ddl.DBStructureManipulator"/>
+   </extension>
+   
+
+   <!--  Aggregation Functions -->
+   <extension point="org.knime.database.AggregationFunction">
+
+      <!-- AvgDistinctDBAggregationFunction -->
+      <AggregationFunction
+            factory="org.knime.database.function.aggregation.impl.functions.AvgDistinctDBAggregationFunction$Factory"
+            dbTypes="fabricwarehouse"/>
+
+      <!-- CountDistinctDBAggregationFunction -->
+      <AggregationFunction
+            factory="org.knime.database.function.aggregation.impl.functions.CountDistinctDBAggregationFunction$Factory"
+            dbTypes="fabricwarehouse"/>
+
+      <!-- MaxDBAggregationFunction -->
+      <AggregationFunction
+            factory="org.knime.database.function.aggregation.impl.functions.MaxDBAggregationFunction$Factory"
+            dbTypes="fabricwarehouse"/>
+
+      <!-- MinDBAggregationFunction -->
+      <AggregationFunction
+            factory="org.knime.database.function.aggregation.impl.functions.MinDBAggregationFunction$Factory"
+            dbTypes="fabricwarehouse"/>
+
+      <!-- SumDBAggregationFunction -->
+      <AggregationFunction
+            factory="org.knime.database.function.aggregation.impl.functions.SumDistinctDBAggregationFunction$Factory"
+            dbTypes="fabricwarehouse"/>
+
+      <!-- BitAndDBAggregationFunction -->
+      <AggregationFunction
+            factory="org.knime.database.function.aggregation.impl.functions.BitAndDBAggregationFunction$Factory"
+            dbTypes="fabricwarehouse"/>
+
+      <!-- ChecksumDBAggregationFunction -->
+      <AggregationFunction
+            factory="org.knime.database.extension.mssql.functions.ChecksumDBAggregationFunction$Factory"
+            dbTypes="fabricwarehouse"/>
+
+      <!-- CountBigDistinctDBAggregationFunction -->
+      <AggregationFunction
+            factory="org.knime.database.extension.mssql.functions.CountBigDistinctDBAggregationFunction$Factory"
+            dbTypes="fabricwarehouse"/>
+
+      <!-- StdDevDBAggregationFunction for MSSQL Server -->
+      <AggregationFunction
+            factory="org.knime.database.extension.mssql.functions.StdDevDBAggregationFunction$Factory"
+            dbTypes="fabricwarehouse"/>
+
+      <!-- StdDevPDBAggregationFunction -->
+      <AggregationFunction
+            factory="org.knime.database.extension.mssql.functions.StdDevPDBAggregationFunction$Factory"
+            dbTypes="fabricwarehouse"/>
+
+      <!-- VarDBAggregationFunction -->
+      <AggregationFunction
+            factory="org.knime.database.extension.mssql.functions.VarDBAggregationFunction$Factory"
+            dbTypes="fabricwarehouse"/>
+
+      <!-- VarPDBAggregationFunction -->
+      <AggregationFunction
+            factory="org.knime.database.extension.mssql.functions.VarPDBAggregationFunction$Factory"
+            dbTypes="fabricwarehouse"/>
+   </extension>
+   
+   <!-- Loader node implementations -->
+   <extension point="org.knime.database.nodes.LoaderNode2">
+      <LoaderNode2 dbTypes="fabricwarehouse" class="org.knime.ext.azure.fabric.warehouse.agent.FabricWarehouseLoaderNode2"/>
+   </extension>
+
+</plugin>

@@ -250,7 +250,7 @@ public final class FabricRESTClient {
      * @throws NoSuchCredentialException
      *             if the input credential is invalid
      * @throws IOException
-     *             if there is an issue retrieving the actual Fabric-scoped access.
+     *             if there is an issue retrieving the actual Fabric-scoped access
      *             token
      */
     public static <T> T fromFabricPort(final Class<T> proxy, final PortObjectSpec[] inSpecs)

@@ -122,7 +122,7 @@ public class FabricConnection {
      * @throws NoSuchCredentialException
      *             if the input credential is invalid
      * @throws IOException
-     *             if there is an issue retrieving the actual Fabric-scoped access.
+     *             if there is an issue retrieving the actual Fabric-scoped access
      *             token
      */
     public <T> T getAPI(final Class<T> proxy) throws NoSuchCredentialException, IOException {

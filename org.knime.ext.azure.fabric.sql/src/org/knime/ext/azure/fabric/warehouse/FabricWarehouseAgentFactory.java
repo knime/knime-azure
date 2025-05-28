@@ -43,42 +43,57 @@
  *  when such Node is propagated with or for interoperation with KNIME.
  * ---------------------------------------------------------------------
  */
-package org.knime.ext.azure.fabric.rest.wrapper;
 
-import java.io.IOException;
+package org.knime.ext.azure.fabric.warehouse;
 
-import org.knime.ext.azure.fabric.rest.sql.Warehouse;
-import org.knime.ext.azure.fabric.rest.sql.WarehouseAPI;
-import org.knime.ext.azure.fabric.rest.sql.Warehouses;
+import org.knime.database.agent.DBAgentFactory;
+import org.knime.database.agent.loader.DBLoader;
+import org.knime.database.agent.metadata.DBMetadataReader;
+import org.knime.database.agent.metadata.impl.DefaultDBMetadataReader;
+import org.knime.database.attribute.AttributeCollection;
+import org.knime.database.attribute.AttributeCollection.Accessibility;
+import org.knime.database.extension.mssql.MSSQLAgentFactory;
+import org.knime.ext.azure.fabric.warehouse.agent.FabricWarehouseLoader;
 
 /**
- * Wrapper class for {@link WarehouseAPI} that suppresses authentication popup.
+ * {@linkplain DBAgentFactory Agent factory} for the Microsoft Fabric Data
+ * Warehouse.
  *
  * @author Tobias Koetter, KNIME GmbH, Konstanz, Germany
  */
-public class WarehouseAPIWrapper extends APIWrapper<WarehouseAPI> implements WarehouseAPI {
+public class FabricWarehouseAgentFactory extends MSSQLAgentFactory {
+
+    private static final AttributeCollection METADATA_ATTRIBUTES;
+    static {
+        final AttributeCollection.Builder builder = AttributeCollection.builder(DefaultDBMetadataReader.ATTRIBUTES);
+        builder.add(Accessibility.EDITABLE, DefaultDBMetadataReader.ATTRIBUTE_CAPABILITY_MULTI_DBS, false);
+        METADATA_ATTRIBUTES = builder.build();
+    }
+    //
+    // private static final AttributeCollection SAMPLING_ATTRIBUTES;
+    // static {
+    // final AttributeCollection.Builder builder =
+    // AttributeCollection.builder(DefaultDBSampling.ATTRIBUTES);
+    // builder.add(Accessibility.READ_ONLY,
+    // DefaultDBSampling.ATTRIBUTE_CAPABILITY_RANDOM, true);
+    // SAMPLING_ATTRIBUTES = builder.build();
+    // }
 
     /**
-     * Default constructor.
-     *
-     * @param api the API to wrap
+     * Constructs a {@link FabricWarehouseAgentFactory}.
      */
-    public WarehouseAPIWrapper(final WarehouseAPI api) {
-        super(api, "warehouses");
+    public FabricWarehouseAgentFactory() {
+        super();
+        putAttributes(DBMetadataReader.class, METADATA_ATTRIBUTES);
+        putCreator(DBMetadataReader.class,
+                parameters -> new DefaultDBMetadataReader(parameters.getSessionReference()));
+        // putAttributes(DBSampling.class, SAMPLING_ATTRIBUTES);
+        // putCreator(DBSampling.class, parameters -> new
+        // MSSQLServerDBSampling(parameters.getSessionReference()));
+        // putCreator(DBStructureManipulator.class,
+        // parameters -> new
+        // DefaultDBStructureManipulator(parameters.getSessionReference()));
+        putCreator(DBLoader.class, parameters -> new FabricWarehouseLoader(parameters.getSessionReference()));
     }
 
-    @Override
-    public Warehouses listWarehouses(final String workspaceId) throws IOException {
-        return invoke(() -> m_api.listWarehouses(workspaceId));
-    }
-
-    @Override
-    public Warehouses listWarehouses(final String workspaceId, final String continuationToken) throws IOException {
-        return invoke(() -> m_api.listWarehouses(workspaceId, continuationToken));
-    }
-
-    @Override
-    public Warehouse getWarehouse(final String workspaceId, final String warehouseId) throws IOException {
-        return invoke(() -> m_api.getWarehouse(workspaceId, warehouseId));
-    }
 }

@@ -42,43 +42,28 @@
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
  * ---------------------------------------------------------------------
+ *
+ * History
+ *   2025-05-21 (Tobias): created
  */
-package org.knime.ext.azure.fabric.rest.wrapper;
+package org.knime.ext.azure.fabric.warehouse;
 
-import java.io.IOException;
-
-import org.knime.ext.azure.fabric.rest.sql.Warehouse;
-import org.knime.ext.azure.fabric.rest.sql.WarehouseAPI;
-import org.knime.ext.azure.fabric.rest.sql.Warehouses;
+import org.knime.database.DBType;
+import org.knime.database.DBTypeRegistry;
 
 /**
- * Wrapper class for {@link WarehouseAPI} that suppresses authentication popup.
+ * Database-specific convenience constants and methods.
  *
  * @author Tobias Koetter, KNIME GmbH, Konstanz, Germany
  */
-public class WarehouseAPIWrapper extends APIWrapper<WarehouseAPI> implements WarehouseAPI {
-
+public class FabricWarehouse {
     /**
-     * Default constructor.
-     *
-     * @param api the API to wrap
+     * The {@link DBType} object corresponding to the database.
      */
-    public WarehouseAPIWrapper(final WarehouseAPI api) {
-        super(api, "warehouses");
+    public static final DBType DB_TYPE = DBTypeRegistry.getInstance().getRegisteredDBType("fabricwarehouse").get();
+
+    private FabricWarehouse() {
+        throw new UnsupportedOperationException();
     }
 
-    @Override
-    public Warehouses listWarehouses(final String workspaceId) throws IOException {
-        return invoke(() -> m_api.listWarehouses(workspaceId));
-    }
-
-    @Override
-    public Warehouses listWarehouses(final String workspaceId, final String continuationToken) throws IOException {
-        return invoke(() -> m_api.listWarehouses(workspaceId, continuationToken));
-    }
-
-    @Override
-    public Warehouse getWarehouse(final String workspaceId, final String warehouseId) throws IOException {
-        return invoke(() -> m_api.getWarehouse(workspaceId, warehouseId));
-    }
 }

@@ -43,42 +43,25 @@
  *  when such Node is propagated with or for interoperation with KNIME.
  * ---------------------------------------------------------------------
  */
-package org.knime.ext.azure.fabric.rest.wrapper;
 
-import java.io.IOException;
+package org.knime.ext.azure.fabric.warehouse;
 
-import org.knime.ext.azure.fabric.rest.sql.Warehouse;
-import org.knime.ext.azure.fabric.rest.sql.WarehouseAPI;
-import org.knime.ext.azure.fabric.rest.sql.Warehouses;
+import org.knime.database.datatype.mapping.DBTypeMappingService;
+import org.knime.database.datatype.mapping.DBTypeMappingServiceSupplier;
+import org.knime.database.extension.mssql.MSSQLServerDestination;
+import org.knime.database.extension.mssql.MSSQLServerSource;
 
 /**
- * Wrapper class for {@link WarehouseAPI} that suppresses authentication popup.
+ * Microsoft Fabric Data Warehouse data type mapping service supplier.
  *
  * @author Tobias Koetter, KNIME GmbH, Konstanz, Germany
  */
-public class WarehouseAPIWrapper extends APIWrapper<WarehouseAPI> implements WarehouseAPI {
-
-    /**
-     * Default constructor.
-     *
-     * @param api the API to wrap
-     */
-    public WarehouseAPIWrapper(final WarehouseAPI api) {
-        super(api, "warehouses");
-    }
+public class FabricWarehouseTypeMappingServiceSupplier
+    implements DBTypeMappingServiceSupplier<MSSQLServerSource, MSSQLServerDestination> {
 
     @Override
-    public Warehouses listWarehouses(final String workspaceId) throws IOException {
-        return invoke(() -> m_api.listWarehouses(workspaceId));
+    public DBTypeMappingService<MSSQLServerSource, MSSQLServerDestination> get() {
+        return FabricWarehouseTypeMappingService.getInstance();
     }
 
-    @Override
-    public Warehouses listWarehouses(final String workspaceId, final String continuationToken) throws IOException {
-        return invoke(() -> m_api.listWarehouses(workspaceId, continuationToken));
-    }
-
-    @Override
-    public Warehouse getWarehouse(final String workspaceId, final String warehouseId) throws IOException {
-        return invoke(() -> m_api.getWarehouse(workspaceId, warehouseId));
-    }
 }
