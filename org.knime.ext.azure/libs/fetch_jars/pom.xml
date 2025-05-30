@@ -37,15 +37,11 @@
 		<dependency>
 			<groupId>com.azure</groupId>
 			<artifactId>azure-storage-file-datalake</artifactId>
-			<version>12.21.0</version>
+			<version>12.23.0</version>
 			<exclusions>
 				<exclusion>
 					<groupId>com.azure</groupId>
 					<artifactId>azure-core-http-netty</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.codehaus.woodstox</groupId>
-					<artifactId>stax2-api</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
