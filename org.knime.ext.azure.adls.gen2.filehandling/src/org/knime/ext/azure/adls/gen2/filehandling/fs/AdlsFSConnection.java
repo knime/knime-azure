@@ -50,19 +50,8 @@ package org.knime.ext.azure.adls.gen2.filehandling.fs;
 
 import java.io.IOException;
 
-import org.knime.credentials.base.oauth.api.JWTCredential;
-import org.knime.ext.azure.AzureUtils;
-import org.knime.ext.azure.TokenCredentialFactory;
-import org.knime.ext.microsoft.authentication.credential.AzureStorageSasUrlCredential;
-import org.knime.ext.microsoft.authentication.credential.AzureStorageSharedKeyCredential;
 import org.knime.filehandling.core.connections.FSConnection;
 import org.knime.filehandling.core.connections.base.BaseFSConnection;
-
-import com.azure.core.http.policy.TimeoutPolicy;
-import com.azure.core.util.HttpClientOptions;
-import com.azure.storage.common.StorageSharedKeyCredential;
-import com.azure.storage.file.datalake.DataLakeServiceClient;
-import com.azure.storage.file.datalake.DataLakeServiceClientBuilder;
 
 /**
  * ADLS implementation of the {@link FSConnection} interface.
@@ -76,42 +65,15 @@ public class AdlsFSConnection extends BaseFSConnection {
     private final AdlsFileSystem m_filesystem;
 
     /**
+     * Constructor.
+     *
      * @param config
      *            The connection configuration
      * @throws IOException
-     *
+     *             if something goes wrong while validating the connection.
      */
     public AdlsFSConnection(final AdlsFSConnectionConfig config) throws IOException {
-        final DataLakeServiceClient client = createClient(config);
-        m_filesystem = new AdlsFileSystem(config, client, CACHE_TTL);
-    }
-
-    static DataLakeServiceClient createClient(final AdlsFSConnectionConfig config) {
-
-        final var credential = config.getCredential();
-
-        DataLakeServiceClientBuilder builder = new DataLakeServiceClientBuilder()
-                .endpoint(AzureUtils.getEndpoint(credential))//
-                .addPolicy(new TimeoutPolicy(config.getTimeout()));
-
-        if (credential instanceof AzureStorageSharedKeyCredential sharedKeyCred) {
-            builder.credential(new StorageSharedKeyCredential(//
-                    sharedKeyCred.getStorageAccountName(), //
-                    sharedKeyCred.getSharedKey()));
-        } else if (credential instanceof AzureStorageSasUrlCredential) {
-            // Do nothing. SAS token is a part of the endpoint
-        } else if (credential instanceof JWTCredential jwtCredential) {
-            builder.credential(TokenCredentialFactory.create(jwtCredential));
-        } else {
-            throw new UnsupportedOperationException("Unsupported credential type " + credential.getType());
-        }
-
-        if (AzureUtils.isProxyActive()) {
-            final var clientOptions = new HttpClientOptions();
-            clientOptions.setProxyOptions(AzureUtils.loadSystemProxyOptions());
-            builder.clientOptions(clientOptions);
-        }
-        return builder.buildClient();
+        m_filesystem = new AdlsFileSystem(config, CACHE_TTL);
     }
 
     @Override

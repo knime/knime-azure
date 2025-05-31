@@ -52,6 +52,7 @@ import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 
+import org.knime.credentials.base.oauth.api.AccessTokenAccessor;
 import org.knime.credentials.base.oauth.api.JWTCredential;
 
 import com.azure.core.credential.AccessToken;
@@ -60,7 +61,7 @@ import com.azure.core.credential.TokenCredential;
 import reactor.core.publisher.Mono;
 
 /**
- * Factory that wraps a {@link JWTCredential} into an Azure
+ * Factory that wraps a {@link AccessTokenAccessor} into an Azure
  * {@link TokenCredential}.
  *
  * @author Alexander Bondaletov
@@ -73,19 +74,19 @@ public final class TokenCredentialFactory {
     /**
      * Wraps the given {@link JWTCredential} into Azure's {@link TokenCredential}.
      *
-     * @param credential
+     * @param tokenAcessor
      *            The {@link JWTCredential} to wrap.
      * @return a new {@link TokenCredential} that wraps the given
      *         {@link JWTCredential}
      */
-    public static TokenCredential create(final JWTCredential credential) {
-        final var accessTokenMono = Mono.fromCallable(() -> toMsalAccessToken(credential));
+    public static TokenCredential create(final AccessTokenAccessor tokenAcessor) {
+        final var accessTokenMono = Mono.fromCallable(() -> toMsalAccessToken(tokenAcessor));
         return ignored -> accessTokenMono;
     }
 
-    private static AccessToken toMsalAccessToken(final JWTCredential credential) throws IOException {
-        final var accessToken = credential.getAccessToken(); // potentially throws IOE when token cannot be refreshed
-        final var expiration = credential.getExpiresAfter()
+    private static AccessToken toMsalAccessToken(final AccessTokenAccessor tokenAccessor) throws IOException {
+        final var accessToken = tokenAccessor.getAccessToken(); // potentially throws IOE when token cannot be refreshed
+        final var expiration = tokenAccessor.getExpiresAfter()
                 .map(instant -> OffsetDateTime.ofInstant(instant, ZoneId.of("UTC"))).orElseThrow();
 
         return new AccessToken(accessToken, expiration);

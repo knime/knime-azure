@@ -203,8 +203,8 @@ public final class AzureUtils {
      * @return The storage account.
      */
     public static String getStorageAccount(final Credential credential) {
-        if (credential instanceof AzureStorageSharedKeyCredential) {
-            return ((AzureStorageSharedKeyCredential) credential).getStorageAccountName();
+        if (credential instanceof AzureStorageSharedKeyCredential sharedKeyCredential) {
+            return sharedKeyCredential.getStorageAccountName();
         } else {
             return extractStorageAccount(getEndpoint(credential));
         }
@@ -224,14 +224,14 @@ public final class AzureUtils {
      * @return The endpoint URL.
      */
     public static String getEndpoint(final Credential credential) {
-        if (credential instanceof AzureStorageSharedKeyCredential) {
-            return ((AzureStorageSharedKeyCredential) credential).getEndpoint();
-        } else if (credential instanceof AzureStorageSasUrlCredential) {
-            return ((AzureStorageSasUrlCredential) credential).getSasUrl().toString();
-        } else if (credential instanceof AccessTokenCredential) {
-            return extractEndpoint((AccessTokenCredential) credential);
-        } else if (credential instanceof JWTCredential) {
-            return extractEndpoint((JWTCredential) credential);
+        if (credential instanceof AzureStorageSharedKeyCredential sharedKeyCredential) {
+            return sharedKeyCredential.getEndpoint();
+        } else if (credential instanceof AzureStorageSasUrlCredential sasUrlCredential) {
+            return sasUrlCredential.getSasUrl().toString();
+        } else if (credential instanceof AccessTokenCredential accessTokenCredential) {
+            return extractEndpoint(accessTokenCredential);
+        } else if (credential instanceof JWTCredential jwtCredential) {
+            return extractEndpoint(jwtCredential);
         }
         throw new UnsupportedOperationException("Unsupported credential type " + credential.getType());
     }

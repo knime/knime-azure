@@ -54,12 +54,11 @@ import java.nio.file.Path;
 import java.util.Collections;
 
 import org.knime.ext.azure.AzureUtils;
-import org.knime.filehandling.core.connections.DefaultFSLocationSpec;
-import org.knime.filehandling.core.connections.FSCategory;
-import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.connections.base.BaseFileSystem;
 
+import com.azure.core.util.HttpClientOptions;
 import com.azure.storage.file.datalake.DataLakeServiceClient;
+import com.azure.storage.file.datalake.DataLakeServiceClientBuilder;
 import com.azure.storage.file.datalake.models.DataLakeStorageException;
 
 /**
@@ -78,24 +77,46 @@ public class AdlsFileSystem extends BaseFileSystem<AdlsPath> {
     private final boolean m_credentialsCanListContainers;
 
     /**
+     * Constructor.
+     *
      * @param config
      *            Connection configuration
-     * @param client
-     *            The client to use.
      * @param cacheTTL
      *            The time to live for cached elements in milliseconds.
      * @throws IOException
+     *             if something goes wrong while validating the connection.
      */
-    protected AdlsFileSystem(final AdlsFSConnectionConfig config, final DataLakeServiceClient client,
-            final long cacheTTL) throws IOException {
+    public AdlsFileSystem(final AdlsFSConnectionConfig config, final long cacheTTL) throws IOException {
 
         super(new AdlsFileSystemProvider(), //
                 cacheTTL, //
                 config.getWorkingDirectory(), //
-                createFSLocationSpec(client.getAccountName()));
+                config.getFSLocationSpec());
 
-        m_client = client;
+        m_client = createClient(config);
         m_credentialsCanListContainers = ensureSuccessfulAuthentication();
+    }
+
+    private static DataLakeServiceClient createClient(final AdlsFSConnectionConfig config) {
+
+        final var httpClientOptions = new HttpClientOptions();
+        httpClientOptions.setConnectTimeout(config.getConnectTimeout());
+        httpClientOptions.setReadTimeout(config.getReadTimeout());
+        if (AzureUtils.isProxyActive()) {
+            httpClientOptions.setProxyOptions(AzureUtils.loadSystemProxyOptions());
+        }
+
+        final var clientBuilder = new DataLakeServiceClientBuilder()
+                .endpoint(config.getEndpoint())//
+                .clientOptions(httpClientOptions);
+
+        if (config.getAzureTokenCredential() != null) {
+            clientBuilder.credential(config.getAzureTokenCredential());
+        } else if (config.getStorageSharedKeyCredential() != null) {
+            clientBuilder.credential(config.getStorageSharedKeyCredential());
+        }
+
+        return clientBuilder.buildClient();
     }
 
     /**
@@ -125,16 +146,6 @@ public class AdlsFileSystem extends BaseFileSystem<AdlsPath> {
      */
     public boolean canCredentialsListContainers() {
         return m_credentialsCanListContainers;
-    }
-
-    /**
-     * @param accountName
-     *            The storage account name.
-     * @return the {@link FSLocationSpec} for a ADLS file system.
-     */
-    public static DefaultFSLocationSpec createFSLocationSpec(final String accountName) {
-        return new DefaultFSLocationSpec(FSCategory.CONNECTED, //
-                String.format("%s:%s", AdlsFSDescriptorProvider.FS_TYPE, accountName));
     }
 
     /**

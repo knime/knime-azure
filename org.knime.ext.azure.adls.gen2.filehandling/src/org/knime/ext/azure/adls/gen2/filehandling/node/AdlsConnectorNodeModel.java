@@ -64,9 +64,7 @@ import org.knime.core.node.port.PortType;
 import org.knime.credentials.base.Credential;
 import org.knime.credentials.base.CredentialPortObject;
 import org.knime.credentials.base.CredentialPortObjectSpec;
-import org.knime.ext.azure.AzureUtils;
 import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFSConnection;
-import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFileSystem;
 import org.knime.filehandling.core.connections.FSConnectionRegistry;
 import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
@@ -93,6 +91,10 @@ final class AdlsConnectorNodeModel extends NodeModel {
 
     @Override
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
+        if (inSpecs[0] == null) {
+            return new PortObjectSpec[] { null };
+        }
+
         m_fsId = FSConnectionRegistry.getInstance().getKey();
 
         var credential = ((CredentialPortObjectSpec) inSpecs[0]).getCredential(Credential.class);
@@ -101,9 +103,10 @@ final class AdlsConnectorNodeModel extends NodeModel {
     }
 
     private FileSystemPortObjectSpec createSpec(final Credential credential) {
-        String storageAccount = AzureUtils.getStorageAccount(credential);
-        return new FileSystemPortObjectSpec(FILE_SYSTEM_NAME, m_fsId,
-                AdlsFileSystem.createFSLocationSpec(storageAccount));
+        return new FileSystemPortObjectSpec(//
+                FILE_SYSTEM_NAME, //
+                m_fsId, //
+                AdlsConnectorSettings.createFSLocationSpec(credential));
     }
 
     @SuppressWarnings("resource")

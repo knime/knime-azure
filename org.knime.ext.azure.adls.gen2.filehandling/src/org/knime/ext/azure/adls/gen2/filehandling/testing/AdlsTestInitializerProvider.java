@@ -49,17 +49,19 @@
 package org.knime.ext.azure.adls.gen2.filehandling.testing;
 
 import java.io.IOException;
-import java.time.Duration;
 import java.util.Map;
 
 import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFSConnection;
 import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFSConnectionConfig;
 import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFSDescriptorProvider;
 import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFileSystem;
+import org.knime.ext.azure.adls.gen2.filehandling.node.AdlsConnectorSettings;
 import org.knime.ext.microsoft.authentication.credential.AzureStorageSharedKeyCredential;
 import org.knime.filehandling.core.connections.FSLocationSpec;
 import org.knime.filehandling.core.connections.meta.FSType;
 import org.knime.filehandling.core.testing.DefaultFSTestInitializerProvider;
+
+import com.azure.storage.common.StorageSharedKeyCredential;
 
 /**
  * Test initializer provider for the ADLS
@@ -75,14 +77,23 @@ public class AdlsTestInitializerProvider extends DefaultFSTestInitializerProvide
     @SuppressWarnings("resource")
     @Override
     public AdlsTestInitializer setup(final Map<String, String> configuration) throws IOException {
-        String workDir = generateRandomizedWorkingDir(getParameter(configuration, WORKDIR_PREFIX),
+
+        final var workDir = generateRandomizedWorkingDir(//
+                getParameter(configuration, WORKDIR_PREFIX), //
                 AdlsFileSystem.PATH_SEPARATOR);
 
-        final AdlsFSConnectionConfig config = new AdlsFSConnectionConfig(workDir);
-        var credential = new AzureStorageSharedKeyCredential(getParameter(configuration, ACCOUNT),
+        final var credential = new AzureStorageSharedKeyCredential(//
+                getParameter(configuration, ACCOUNT), //
                 getParameter(configuration, KEY));
-        config.setCredential(credential);
-        config.setTimeout(Duration.ofSeconds(AdlsFSConnectionConfig.DEFAULT_TIMEOUT));
+
+        final var config = new AdlsFSConnectionConfig(//
+                credential.getEndpoint(), //
+                AdlsConnectorSettings.createFSLocationSpec(credential), //
+                workDir);
+
+        config.setStorageSharedKeyCredential(new StorageSharedKeyCredential(//
+                getParameter(configuration, ACCOUNT), //
+                getParameter(configuration, KEY)));
 
         return new AdlsTestInitializer(new AdlsFSConnection(config));
     }
@@ -94,7 +105,10 @@ public class AdlsTestInitializerProvider extends DefaultFSTestInitializerProvide
 
     @Override
     public FSLocationSpec createFSLocationSpec(final Map<String, String> configuration) {
-        return AdlsFileSystem.createFSLocationSpec(getParameter(configuration, ACCOUNT));
-    }
+        final var credential = new AzureStorageSharedKeyCredential(//
+                getParameter(configuration, ACCOUNT), //
+                getParameter(configuration, KEY));
 
+        return AdlsConnectorSettings.createFSLocationSpec(credential);
+    }
 }
