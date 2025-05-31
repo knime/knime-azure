@@ -61,7 +61,7 @@ import org.knime.filehandling.core.connections.uriexport.noconfig.NoConfigURIExp
  * @author Ayaz Ali Qureshi, KNIME GmbH, Berlin, Germany
  * @author Alexander Bondaletov
  */
-final class AbfsURIExporterFactory extends NoConfigURIExporterFactory {
+public final class AbfsURIExporterFactory extends NoConfigURIExporterFactory {
 
     static final URIExporterID EXPORTER_ID = new URIExporterID("microsoft-adlsgen2-abfss");
 

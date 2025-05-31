@@ -50,11 +50,15 @@ package org.knime.ext.azure.adls.gen2.filehandling.fs;
 
 import java.time.Duration;
 
-import org.knime.credentials.base.Credential;
+import org.knime.filehandling.core.connections.FSLocationSpec;
+import org.knime.filehandling.core.connections.meta.FSConnectionConfig;
 import org.knime.filehandling.core.connections.meta.base.BaseFSConnectionConfig;
 
+import com.azure.core.credential.TokenCredential;
+import com.azure.storage.common.StorageSharedKeyCredential;
+
 /**
- * Azure Datalake connection configuration implementation.
+ * {@link FSConnectionConfig} implementation for Azure DataLake Gen2.
  *
  * @author Moditha Hewasinghage
  */
@@ -65,46 +69,110 @@ public class AdlsFSConnectionConfig extends BaseFSConnectionConfig {
      */
     public static final int DEFAULT_TIMEOUT = 30;
 
-    private Credential m_credential;
+    private final String m_endpoint;
 
-    private Duration m_timeout;
+    private final FSLocationSpec m_fsLocationSpec;
+
+    private TokenCredential m_azureTokenCredential;
+
+    private StorageSharedKeyCredential m_storageSharedKeyCredential;
+
+    private Duration m_connectionTimeout;
+
+    private Duration m_readTimeout;
 
     /**
      * Constructor.
      *
+     * @param endpoint
+     *            The data lake service endpoint, which may contain a (SAS token)
+     * @param fsLocationSpec
+     *            The {@link FSLocationSpec} to use for the file system connection.
      * @param workingDirectory
+     *            The working directory to use.
      */
-    public AdlsFSConnectionConfig(final String workingDirectory) {
+    public AdlsFSConnectionConfig(final String endpoint, //
+            final FSLocationSpec fsLocationSpec, //
+            final String workingDirectory) {
+
         super(workingDirectory, true);
+        m_endpoint = endpoint;
+        m_fsLocationSpec = fsLocationSpec;
+        m_connectionTimeout = Duration.ofSeconds(DEFAULT_TIMEOUT);
+        m_readTimeout = Duration.ofSeconds(DEFAULT_TIMEOUT);
     }
 
     /**
-     * @return the {@link Credential}
+     * @return the data lake service endpoint, which may contain a (SAS token)
      */
-    public Credential getCredential() {
-        return m_credential;
+    public String getEndpoint() {
+        return m_endpoint;
     }
 
     /**
-     * @param credential
-     *            the {@link Credential} to set
+     * @return the {@link FSLocationSpec} to use
      */
-    public void setCredential(final Credential credential) {
-        m_credential = credential;
+    public FSLocationSpec getFSLocationSpec() {
+        return m_fsLocationSpec;
     }
 
     /**
-     * @return the timeout
+     * @return the {@link TokenCredential} to use, may be null.
      */
-    public Duration getTimeout() {
-        return m_timeout;
+    public TokenCredential getAzureTokenCredential() {
+        return m_azureTokenCredential;
+    }
+
+    /**
+     * @param azureTokenCredential
+     *            the azureTokenCredential to set
+     */
+    public void setAzureTokenCredential(final TokenCredential azureTokenCredential) {
+        m_azureTokenCredential = azureTokenCredential;
+    }
+
+    /**
+     * @return the {@link StorageSharedKeyCredential} to use, may be null.
+     */
+    public StorageSharedKeyCredential getStorageSharedKeyCredential() {
+        return m_storageSharedKeyCredential;
+    }
+
+    /**
+     * @param storageSharedKeyCredential
+     *            the storageSharedKeyCredential to set
+     */
+    public void setStorageSharedKeyCredential(final StorageSharedKeyCredential storageSharedKeyCredential) {
+        m_storageSharedKeyCredential = storageSharedKeyCredential;
+    }
+
+    /**
+     * @return the connection timeout
+     */
+    public Duration getConnectTimeout() {
+        return m_connectionTimeout;
     }
 
     /**
      * @param timeout
-     *            the timeout to set
+     *            the connection timeout to set
      */
-    public void setTimeout(final Duration timeout) {
-        m_timeout = timeout;
+    public void setConnectionTimeout(final Duration timeout) {
+        m_connectionTimeout = timeout;
+    }
+
+    /**
+     * @return the read timeout
+     */
+    public Duration getReadTimeout() {
+        return m_readTimeout;
+    }
+
+    /**
+     * @param timeout
+     *            the read timeout to set
+     */
+    public void setReadTimeout(final Duration timeout) {
+        m_readTimeout = timeout;
     }
 }

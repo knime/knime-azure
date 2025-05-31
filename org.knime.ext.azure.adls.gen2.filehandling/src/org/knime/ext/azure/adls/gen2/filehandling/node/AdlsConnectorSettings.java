@@ -56,15 +56,26 @@ import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.defaultnodesettings.SettingsModelIntegerBounded;
 import org.knime.core.node.defaultnodesettings.SettingsModelString;
 import org.knime.credentials.base.Credential;
+import org.knime.credentials.base.oauth.api.JWTCredential;
+import org.knime.ext.azure.AzureUtils;
+import org.knime.ext.azure.TokenCredentialFactory;
 import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFSConnectionConfig;
+import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFSDescriptorProvider;
 import org.knime.ext.azure.adls.gen2.filehandling.fs.AdlsFileSystem;
+import org.knime.ext.microsoft.authentication.credential.AzureStorageSasUrlCredential;
+import org.knime.ext.microsoft.authentication.credential.AzureStorageSharedKeyCredential;
+import org.knime.filehandling.core.connections.DefaultFSLocationSpec;
+import org.knime.filehandling.core.connections.FSCategory;
+import org.knime.filehandling.core.connections.FSLocationSpec;
+
+import com.azure.storage.common.StorageSharedKeyCredential;
 
 /**
  * Settings for Adls connector node.
  *
  * @author Alexander Bondaletov
  */
-final class AdlsConnectorSettings {
+public final class AdlsConnectorSettings {
     private static final String KEY_WORKING_DIRECTORY = "workingDirectory";
     private static final String KEY_TIMEOUT = "timeout";
 
@@ -76,7 +87,10 @@ final class AdlsConnectorSettings {
      */
     public AdlsConnectorSettings() {
         m_workingDirectory = new SettingsModelString(KEY_WORKING_DIRECTORY, AdlsFileSystem.PATH_SEPARATOR);
-        m_timeout = new SettingsModelIntegerBounded(KEY_TIMEOUT, AdlsFSConnectionConfig.DEFAULT_TIMEOUT, 0, Integer.MAX_VALUE);
+        m_timeout = new SettingsModelIntegerBounded(KEY_TIMEOUT, //
+                AdlsFSConnectionConfig.DEFAULT_TIMEOUT, //
+                0, //
+                Integer.MAX_VALUE);
     }
 
     /**
@@ -159,15 +173,41 @@ final class AdlsConnectorSettings {
     }
 
     /**
+     * Creates an {@link FSLocationSpec} for the given credential.
      *
      * @param credential
-     *            The {@link Credential} to use.
-     * @return The FSConnectionConfig for Azure data lake
+     *            The credential to derive the file system location spec from.
+     * @return the {@link FSLocationSpec} for a ADLS file system.
      */
-    public AdlsFSConnectionConfig toFSConnectionConfig(final Credential credential) {
-        var config = new AdlsFSConnectionConfig(getWorkingDirectory());
-        config.setCredential(credential);
-        config.setTimeout(getTimeout());
+    public static DefaultFSLocationSpec createFSLocationSpec(final Credential credential) {
+        return new DefaultFSLocationSpec(//
+                FSCategory.CONNECTED, //
+                String.format("%s:%s", AdlsFSDescriptorProvider.FS_TYPE, AzureUtils.getStorageAccount(credential)));
+    }
+
+    AdlsFSConnectionConfig toFSConnectionConfig(final Credential credential) {
+
+        final var fsLocationSpec = createFSLocationSpec(credential);
+        final var endpoint = AzureUtils.getEndpoint(credential);
+
+        var config = new AdlsFSConnectionConfig(//
+                endpoint, //
+                fsLocationSpec, //
+                getWorkingDirectory());
+
+        if (credential instanceof AzureStorageSharedKeyCredential sharedKeyCred) {
+            config.setStorageSharedKeyCredential(new StorageSharedKeyCredential(//
+                    sharedKeyCred.getStorageAccountName(), //
+                    sharedKeyCred.getSharedKey()));
+        } else if (credential instanceof AzureStorageSasUrlCredential) {
+            // Do nothing. SAS token is a part of the endpoint
+        } else if (credential instanceof JWTCredential jwtCredential) {
+            config.setAzureTokenCredential(TokenCredentialFactory.create(jwtCredential));
+        }
+
+        config.setConnectionTimeout(getTimeout());
+        config.setReadTimeout(getTimeout());
+
         return config;
 
     }
