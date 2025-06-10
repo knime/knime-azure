@@ -52,6 +52,7 @@ import java.io.IOException;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
 
@@ -92,4 +93,19 @@ public interface WorkspaceAPI {
      */
     @GET
     Workspaces listWorkspaces(@QueryParam("continuationToken") String continuationToken) throws IOException;
+
+    /**
+     * Retrieves a specific workspace by its ID.
+     *
+     * @param workspaceId
+     *            The ID of the workspace to retrieve. This is the unique identifier
+     * @return the {@link Workspace} with the given ID
+     * @throws IOException
+     *             If an I/O error occured.
+     * @throws WebApplicationException
+     *             If the REST API returned an error.
+     */
+    @GET
+    @Path("{workspaceId}")
+    Workspace getWorkspace(@PathParam("workspaceId") final String workspaceId) throws IOException;
 }

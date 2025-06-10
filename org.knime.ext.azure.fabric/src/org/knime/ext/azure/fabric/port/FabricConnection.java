@@ -48,6 +48,7 @@
  */
 package org.knime.ext.azure.fabric.port;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Objects;
 
@@ -120,8 +121,11 @@ public class FabricConnection {
      * @return client implementation for given proxy interface
      * @throws NoSuchCredentialException
      *             if the input credential is invalid
+     * @throws IOException
+     *             if there is an issue retrieving the actual Fabric-scoped access.
+     *             token
      */
-    public <T> T getAPI(final Class<T> proxy) throws NoSuchCredentialException {
+    public <T> T getAPI(final Class<T> proxy) throws NoSuchCredentialException, IOException {
         return FabricRESTClient.fromFabricConnection(proxy, this);
     }
 

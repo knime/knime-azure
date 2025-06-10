@@ -249,17 +249,18 @@ public final class FabricRESTClient {
      *             if the input port is invalid
      * @throws NoSuchCredentialException
      *             if the input credential is invalid
+     * @throws IOException
+     *             if there is an issue retrieving the actual Fabric-scoped access.
+     *             token
      */
     public static <T> T fromFabricPort(final Class<T> proxy, final PortObjectSpec[] inSpecs)
-            throws InvalidSettingsException, NoSuchCredentialException {
+            throws InvalidSettingsException, NoSuchCredentialException, IOException {
         if (inSpecs.length == 0) {
             throw new InvalidSettingsException("Missing input connection, Microsoft Authenticator required.");
         }
 
-        if (inSpecs[0] instanceof FabricWorkspacePortObjectSpec) {
-            final FabricWorkspacePortObjectSpec spec = (FabricWorkspacePortObjectSpec) inSpecs[0];
-            return fromFabricConnection(proxy, spec.getFabricConnection());
-
+        if (inSpecs[0] instanceof FabricWorkspacePortObjectSpec fabricWorkspaceSpec) {
+            return fromFabricConnection(proxy, fabricWorkspaceSpec.getFabricConnection());
         }
 
         throw new InvalidSettingsException("Invalid input connection, Microsoft Fabric Workspace Connector required.");
@@ -281,11 +282,14 @@ public final class FabricRESTClient {
      * @return client implementation for given proxy interface
      * @throws NoSuchCredentialException
      *             if the input credential is invalid
+     * @throws IOException
+     *             if there is an issue retrieving the actual Fabric-scoped access.
+     *             token
      */
     public static <T> T fromFabricConnection(final Class<T> proxy, final FabricConnection connection)
-            throws NoSuchCredentialException {
+            throws NoSuchCredentialException, IOException {
 
-        final var tokenAccessor = connection.getCredential().toAccessor(AccessTokenAccessor.class);
+        final var tokenAccessor = FabricCredentialUtil.toAccessTokenAccessor(connection.getCredential());
         return create(tokenAccessor, proxy, connection.getReadTimeout(), connection.getConnectionTimeout());
     }
 
@@ -329,7 +333,7 @@ public final class FabricRESTClient {
                 CastUtils.cast((Map<String, List<Object>>)message.get(Message.PROTOCOL_HEADERS));
 
             try {
-                final String authHeader = String.format("%s %s", //
+                final var authHeader = String.format("%s %s", //
                         m_tokenAccessor.getTokenType(), m_tokenAccessor.getAccessToken());
                 headers.put("Authorization", List.of(authHeader));
             } catch (IOException ex) {

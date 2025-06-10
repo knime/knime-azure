@@ -4,6 +4,7 @@ Bundle-Name: Microsoft Fabric integration
 Bundle-SymbolicName: org.knime.ext.azure.fabric;singleton:=true
 Bundle-Version: 5.5.0.qualifier
 Export-Package: org.knime.ext.azure.fabric.port;uses:="org.knime.ext.azure.fabric,org.knime.core.node,org.knime.core.node.port",
+ org.knime.ext.azure.fabric.rest,
  org.knime.ext.azure.fabric.rest.general,
  org.knime.ext.azure.fabric.rest.sql;uses:="org.knime.ext.azure.fabric.rest.workspace,org.knime.ext.azure.fabric.rest",
  org.knime.ext.azure.fabric.rest.workspace

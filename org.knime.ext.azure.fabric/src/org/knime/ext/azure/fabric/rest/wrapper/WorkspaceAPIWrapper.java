@@ -50,6 +50,7 @@ package org.knime.ext.azure.fabric.rest.wrapper;
 
 import java.io.IOException;
 
+import org.knime.ext.azure.fabric.rest.workspace.Workspace;
 import org.knime.ext.azure.fabric.rest.workspace.WorkspaceAPI;
 import org.knime.ext.azure.fabric.rest.workspace.Workspaces;
 
@@ -78,5 +79,10 @@ public class WorkspaceAPIWrapper extends APIWrapper<WorkspaceAPI> implements Wor
     @Override
     public Workspaces listWorkspaces(final String continuationToken) throws IOException {
         return invoke(() -> m_api.listWorkspaces(continuationToken));
+    }
+
+    @Override
+    public Workspace getWorkspace(final String workspaceId) throws IOException {
+        return invoke(() -> m_api.getWorkspace(workspaceId));
     }
 }
