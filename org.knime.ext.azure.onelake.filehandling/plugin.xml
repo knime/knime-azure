@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.0"?>
+<plugin>
+   <extension
+         point="org.knime.workbench.repository.nodes">
+      <node
+            category-path="/io/connectors"
+            factory-class="org.knime.ext.azure.onelake.filehandling.node.OneLakeConnectorNodeFactory"
+            id="org.knime.ext.azure.onelake.filehandling.node.OneLakeConnectorNodeFactory">
+      </node>
+
+   </extension>
+   <extension
+         point="org.knime.filehandling.core.FSDescriptorProvider">
+      <FSDescriptorProvider
+            class="org.knime.ext.azure.onelake.filehandling.fs.OneLakeFSDescriptorProvider">
+      </FSDescriptorProvider>
+   </extension>
+</plugin>
