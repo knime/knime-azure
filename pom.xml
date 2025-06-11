@@ -108,5 +108,15 @@
 			<layout>p2</layout>
 			<url>${knime.office365.p2}</url>
 		</repository>
+		<repository>
+			<id>p2-knime-database</id>
+			<layout>p2</layout>
+			<url>${knime.database.p2}</url>
+		</repository>
+		<repository>
+			<id>p2-knime-bigdata</id>
+			<layout>p2</layout>
+			<url>${knime.bigdata.p2}</url>
+		</repository>
 	</repositories>
 </project><!-- vim: set shiftwidth=4 expandtab smarttab: -->
