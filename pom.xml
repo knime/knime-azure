@@ -88,11 +88,41 @@
             <layout>p2</layout>
             <url>${knime.filehandling.core.p2}</url>
         </repository>
+        <repository>
+            <id>p2-knime-aws</id>
+            <layout>p2</layout>
+            <url>${knime.aws.p2}</url>
+        </repository>
+        <repository>
+            <id>p2-knime-bigdata</id>
+            <layout>p2</layout>
+            <url>${knime.bigdata.p2}</url>
+        </repository>
+        <repository>
+            <id>p2-knime-bigdata-externals</id>
+            <layout>p2</layout>
+            <url>${knime.p2.repo}/knime-bigdata-externals/${git.branch}</url>
+        </repository>
 		<repository>
 			<id>p2-knime-core</id>
 			<layout>p2</layout>
 			<url>${knime.core.p2}</url>
 		</repository>
+        <repository>
+            <id>p2-knime-database</id>
+            <layout>p2</layout>
+            <url>${knime.database.p2}</url>
+        </repository>
+        <repository>
+            <id>p2-knime-js-core</id>
+            <layout>p2</layout>
+            <url>${knime.js.core.p2}</url>
+        </repository>
+        <repository>
+            <id>p2-knime-kerberos</id>
+            <layout>p2</layout>
+            <url>${knime.kerberos.p2}</url>
+        </repository>
 		<repository>
 			<id>p2-knime-shared</id>
 			<layout>p2</layout>
