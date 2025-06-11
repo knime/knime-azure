@@ -22,19 +22,24 @@ try {
         dependencies: [
                 // yes, we really need all this stuff. knime-cloud pulls in most of it...
 		repositories:  [
-		    'knime-credentials-base',
-		    'knime-gateway',
+		    'knime-aws',
 		    'knime-azure',
-		    'knime-js-base',
-		    'knime-filehandling',
-		    'knime-office365',
-		    'knime-streaming',
+		    'knime-base-expressions',
+		    'knime-bigdata',
+		    'knime-bigdata-externals',
 		    'knime-cloud',
+		    'knime-credentials-base',
 		    'knime-database',
-		    'knime-kerberos',
-		    'knime-textprocessing',
 		    'knime-expressions',
+		    'knime-filehandling',
+		    'knime-gateway',
+		    'knime-js-base',
+		    'knime-kerberos',
+		    'knime-office365',
 		    'knime-rest',
+		    'knime-scripting-editor',
+		    'knime-streaming',
+		    'knime-textprocessing',
 		    'knime-xml'],
         ]
     )
