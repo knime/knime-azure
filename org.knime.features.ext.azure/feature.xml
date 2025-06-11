@@ -748,6 +748,10 @@ propagated with or for interoperation with KNIME.
          version="0.0.0"/>
 
    <plugin
+         id="org.knime.ext.azure.onelake.filehandling"
+         version="0.0.0"/>
+
+   <plugin
          id="org.knime.ext.azure.fabric"
          version="0.0.0"/>
 
