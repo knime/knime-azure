@@ -21,26 +21,31 @@ try {
     workflowTests.runTests(
         dependencies: [
                 // yes, we really need all this stuff. knime-cloud pulls in most of it...
-		repositories:  [
-		    'knime-aws',
-		    'knime-azure',
-		    'knime-base-expressions',
-		    'knime-bigdata',
-		    'knime-bigdata-externals',
-		    'knime-cloud',
-		    'knime-credentials-base',
-		    'knime-database',
-		    'knime-expressions',
-		    'knime-filehandling',
-		    'knime-gateway',
-		    'knime-js-base',
-		    'knime-kerberos',
-		    'knime-office365',
-		    'knime-rest',
-		    'knime-scripting-editor',
-		    'knime-streaming',
-		    'knime-textprocessing',
-		    'knime-xml'],
+    		repositories:  [
+    		    'knime-aws',
+    		    'knime-azure',
+    		    'knime-base-expressions',
+    		    'knime-bigdata',
+    		    'knime-bigdata-externals',
+    		    'knime-cloud',
+    		    'knime-credentials-base',
+    		    'knime-database',
+    		    'knime-database-proprietary',
+    		    'knime-expressions',
+    		    'knime-filehandling',
+    		    'knime-gateway',
+    		    'knime-js-base',
+    		    'knime-kerberos',
+    		    'knime-office365',
+    		    'knime-rest',
+    		    'knime-scripting-editor',
+    		    'knime-streaming',
+    		    'knime-textprocessing',
+    		    'knime-xml'
+		    ],
+            ius: [
+                'org.knime.features.database.extensions.sqlserver.driver.feature.group'
+            ]
         ]
     )
 
