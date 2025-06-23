@@ -80,21 +80,23 @@ public class FabricWarehouseConnectorNodeFactory extends ConfigurableNodeFactory
     private static final String DB_OUTPUT_NAME = "DB Connection";
 
     private static final String FULL_DESCRIPTION = """
-            The Microsoft Fabric Data Warehouse Connector node allows to connect to a
-            <a href='https://learn.microsoft.com/en-us/fabric/data-warehouse/data-warehousing'>Fabric Data Warehouse.
-            </a> Once connected you can use the
-            <a href='https://docs.knime.com/latest/db_extension_guide/index.html'>KNIME Database nodes</a>
-            to work with your data in the Microsoft Fabric Data Warehouse.
-
-            To upload large datasets to the Microsoft Fabric Data Warehouse, use the
-            <a href='https://hub.knime.com/n/hp8L4I_m6lJfldj5'>DB Loader node.</a> It uses the
+            <p>
+            Connects to a
+            <a href='https://learn.microsoft.com/en-us/fabric/data-warehouse/data-warehousing'>Fabric Data Warehouse,</a>
+            enabling the use of the
+            <a href='https://docs.knime.com/latest/db_extension_guide/index.html'>KNIME Database nodes</a> for
+            querying and processing data.
+            </p>
+            <p>
+            For loading large datasets, use the <a href='https://hub.knime.com/n/hp8L4I_m6lJfldj5'>DB Loader node,</a>
+            which uploads Parquet files via the
             <a href='https://learn.microsoft.com/en-us/sql/t-sql/statements/copy-into-transact-sql?view=fabric'>
-            COPY INTO command</a> to load data via PArquet files into the Microsoft Fabric Data Warehouse.
-            <a href='https://learn.microsoft.com/en-us/fabric/onelake/onelake-overview'>Fabric OneLake paths</a>
-            are currently not supported, only BLOB and ADLS Gen2 storage accounts are supported. To use the
-            DB Loader node, you need to connect it either to an
-            <a href='https://hub.knime.com/n/-3zjQ7L-UWuUzzT6'>Azure Data Lake Storage Gen2 Connector node</a>
-            or to an <a href='https://hub.knime.com/n/1iu8u7meRrzU-iPg'>Azure Blob Storage Connector node.</a>
+            COPY INTO command.</a> Only Azure Blob Storage and ADLS Gen2 are supported
+            (<a href='https://learn.microsoft.com/en-us/fabric/onelake/onelake-overview'>OneLake is not</a>).
+            To use the DB Loader, connect it to the
+            <a href='https://hub.knime.com/n/-3zjQ7L-UWuUzzT6'>Azure Data Lake Storage Gen2 Connector</a>
+            or to an <a href='https://hub.knime.com/n/1iu8u7meRrzU-iPg'>Azure Blob Storage Connector</a> node.
+            </p>
             """;
 
     static final WebUINodeConfiguration CONFIG = WebUINodeConfiguration.builder()//
