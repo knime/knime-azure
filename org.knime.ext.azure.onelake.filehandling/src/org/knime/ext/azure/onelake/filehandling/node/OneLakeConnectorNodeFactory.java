@@ -62,26 +62,57 @@ import org.knime.filehandling.core.port.FileSystemPortObject;
 public class OneLakeConnectorNodeFactory extends WebUINodeFactory<OneLakeConnectorNodeModel> {
 
     private static final String FULL_DESCRIPTION = """
-            <p>Connects to the OneLake data of a Microsoft Fabric workspace, in order to read/write files
-            in downstream nodes.
+            <p>
+            Establishes a connection to the
+            <a href="https://learn.microsoft.com/en-us/fabric/onelake/onelake-overview">OneLake</a> storage of a
+            <a href="https://learn.microsoft.com/en-us/fabric/fundamentals/microsoft-fabric-overview">Microsoft Fabric workspace,</a>
+            enabling downstream nodes to access, read, and write files.
             </p>
 
             <p>
-            The resulting output port allows downstream nodes to access OneLake as a file system, e.g.
-            to read or write files and folders, or to perform other file system operations (browse/list
-            files, copy, move, ...).
+            The node's output port exposes OneLake as a
+            <a href="https://docs.knime.com/latest/analytics_platform_file_handling_guide/index.html#connected-fs">connected file system.</a>
+            This allows downstream nodes to perform common file operations, including reading, writing, browsing,
+            listing, copying, and moving files and folders.
+            For an overview of working with files and file systems in KNIME, see the
+            <a href="https://docs.knime.com/latest/analytics_platform_file_handling_guide/index.html">KNIME File Handling Guide.</a>.
             </p>
 
             <p>
-            <b>Path syntax:</b> Paths for this connector are specified with a UNIX-like syntax, for example
-            <tt>/Example.Lakehouse/Files/myfolder/file.csv</tt>, which is an absolute
-            path that consists of:
+            <b>Path syntax</b> <br/>
+            Paths use a UNIX-like format. For example: <tt>/Example.Lakehouse/Files/myfolder/file.csv</tt>.
+            This absolute path includes:
             <ol>
-                <li>a leading slash (<tt>/</tt>)</li>
-                <li>the name of a Fabric-managed item in the workspace (<tt>Example.Lakehouse</tt>)</li>
-                <li>the name of a Fabric-managed folder inside the item (<tt>Files</tt>)</li>
-                <li>The name of a folder or file (<tt>myfolder/file.csv</tt>)</li>
+                <li>Aa leading slash (<tt>/</tt>)</li>
+                <li>The name of a Fabric-managed item in the workspace (<tt>Example.Lakehouse</tt>)</li>
+                <li>A predefined folder within the item (<tt>Files</tt>)</li>
+                <li>A user-defined folder and file (<tt>myfolder/file.csv</tt>)</li>
             </ol>
+            </p>
+
+            <p>
+            <b>Limitations</b> <br/>
+            <ul>
+                <li>
+                    Fabric-managed paths are <b>read-only</b>. These include top-level items such as
+                    <tt>/MyLakehouse.lakehouse</tt> and their system folders like <tt>/MyLakehouse.lakehouse/Files</tt>
+                    and <tt>/MyLakehouse.lakehouse/Tables</tt>.
+                    <br/>
+                    The <b>Tables</b> folder contains
+                    <a href="https://learn.microsoft.com/en-us/fabric/data-engineering/lakehouse-and-delta-tables">Delta Lake files</a>
+                    for Fabric-managed tables and must not be modified directly.
+                    <br/>
+                    Within the <b>Files</b> folder, users can freely create, modify, move, or delete their own
+                    subfolders and files.
+                </li>
+                <li>
+                    <a href="https://learn.microsoft.com/en-us/fabric/fundamentals/workspaces-folders"><b>Workspace folders</b></a>
+                    are not represented in the file system. Their contents appear at the root level with unique names.
+                    This behavior is due to current limitations of the
+                    <a href="https://learn.microsoft.com/en-us/rest/api/fabric/core/folders">OneLake API,</a>
+                    which is in preview and subject to change.
+                </li>
+            </ul>
             </p>
             """;
 
