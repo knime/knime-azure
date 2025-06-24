@@ -61,6 +61,7 @@ import org.knime.core.node.port.PortObjectSpec;
 import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
 import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.Advanced;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.NumberInputWidget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.choices.ChoicesProvider;
@@ -86,7 +87,8 @@ public class FabricWorkspaceSettings implements DefaultNodeSettings {
     private static final Comparator<Workspace> COMPARATOR = Comparator.comparing(i -> i.displayName,
             AlphanumericComparator.NATURAL_ORDER);
 
-    @Section(title = "Timeouts", advanced = true)
+    @Section(title = "Timeouts")
+    @Advanced
     interface ConnectionTimeoutsSection {
     }
 
