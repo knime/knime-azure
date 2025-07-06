@@ -50,6 +50,9 @@ package org.knime.ext.azure.fabric.node.connector;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.time.Duration;
 
 import org.knime.core.node.CanceledExecutionException;
@@ -66,6 +69,13 @@ import org.knime.credentials.base.CredentialRef;
 import org.knime.ext.azure.fabric.port.FabricConnection;
 import org.knime.ext.azure.fabric.port.FabricWorkspacePortObject;
 import org.knime.ext.azure.fabric.port.FabricWorkspacePortObjectSpec;
+import org.knime.ext.azure.fabric.rest.FabricRESTClient;
+import org.knime.ext.azure.fabric.rest.workspace.WorkspaceAPI;
+
+import jakarta.ws.rs.ForbiddenException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.ProcessingException;
+import jakarta.ws.rs.WebApplicationException;
 
 /**
  * The Databricks Workspace Connector node model.
@@ -124,8 +134,41 @@ final class FabricWorkspaceConnectorNodeModel extends WebUINodeModel<FabricWorks
         // fetch a Fabric-scoped access token if necessary
         FabricCredentialUtil.toAccessTokenAccessor(credRef);
 
-        return new PortObject[] {
-                new FabricWorkspacePortObject(createFabricSpec(settings, credRef)) };
+        final var spec = createFabricSpec(settings, credRef);
+        testConnection(spec);
+        return new PortObject[] { new FabricWorkspacePortObject(spec) };
+    }
+
+    private static void testConnection(final FabricWorkspacePortObjectSpec spec) throws IOException {
+        try {
+            final var client = FabricRESTClient.fromFabricConnection(//
+                    WorkspaceAPI.class, spec.getFabricConnection());
+            makeTestCall(spec.getFabricConnection().getWorkspaceId(), client);
+        } catch (NotFoundException ex) {
+            throw new IOException("Specified workspace does not exist!", ex);
+        } catch (ForbiddenException ex) {
+            throw new IOException("Access to workspace was denied. "//
+                    + "Please check that the user has access to the Fabric workspace.", ex);
+        } catch (WebApplicationException ex) {
+            throw new IOException("Could not get Fabric workspaces: " + ex.getMessage(), ex);
+        } catch (SocketTimeoutException ex) {
+            throw new IOException("Connection timed out!", ex);
+        } catch (UnknownHostException ex) {
+            throw new IOException("No route to host! Please check your Internet connection.", ex);
+        } catch (ConnectException ex) {
+            throw new IOException("Could not connect: " + ex.getMessage(), ex);
+        } catch (Throwable t) { // NOSONAR from unwrapping cause, should never be a Throwable
+            throw new IOException("Error while testing connection!", t);
+        }
+    }
+
+    private static void makeTestCall(final String workspaceId, //
+            final WorkspaceAPI client) throws Throwable { // NOSONAR comes from cause
+        try {
+            client.getWorkspace(workspaceId);
+        } catch (ProcessingException wrapper) { // NOSONAR: interested in content
+            throw wrapper.getCause();
+        }
     }
 
     @Override

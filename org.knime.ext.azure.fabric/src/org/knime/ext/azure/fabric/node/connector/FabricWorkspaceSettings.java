@@ -51,6 +51,7 @@ package org.knime.ext.azure.fabric.node.connector;
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -67,6 +68,8 @@ import org.knime.core.webui.node.dialog.defaultdialog.widget.choices.ChoicesProv
 import org.knime.core.webui.node.dialog.defaultdialog.widget.choices.StringChoice;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.choices.StringChoicesProvider;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.handler.WidgetHandlerException;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.Reference;
+import org.knime.core.webui.node.dialog.defaultdialog.widget.updates.ValueReference;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.validation.NumberInputWidgetValidation.MinValidation.IsNonNegativeValidation;
 import org.knime.ext.azure.fabric.rest.FabricRESTClient;
 import org.knime.ext.azure.fabric.rest.workspace.Workspace;
@@ -107,6 +110,7 @@ public class FabricWorkspaceSettings implements DefaultNodeSettings {
         advanced = true)
     @NumberInputWidget(minValidation = IsNonNegativeValidation.class)
     @Layout(ConnectionTimeoutsSection.class)
+    @ValueReference(ConnectionTimeoutRef.class)
     int m_connectionTimeout = 30;
 
     @Widget(title = "Read timeout (seconds)",
@@ -118,6 +122,7 @@ public class FabricWorkspaceSettings implements DefaultNodeSettings {
         advanced = true)
     @NumberInputWidget(minValidation = IsNonNegativeValidation.class)
     @Layout(ConnectionTimeoutsSection.class)
+    @ValueReference(ReadTimeoutRef.class)
     int m_readTimeout = 30;
 
     Duration getReadTimeout() {
@@ -156,9 +161,14 @@ public class FabricWorkspaceSettings implements DefaultNodeSettings {
 
     private static final class WorkspaceChoiceProvider implements StringChoicesProvider {
 
+        private Supplier<Integer> m_connectionTimeout;
+        private Supplier<Integer> m_readTimeout;
+
         @Override
         public void init(final StateProviderInitializer initializer) {
             initializer.computeAfterOpenDialog();
+            m_connectionTimeout = initializer.computeFromValueSupplier(ConnectionTimeoutRef.class);
+            m_readTimeout = initializer.computeFromValueSupplier(ReadTimeoutRef.class);
         }
 
         @Override
@@ -168,10 +178,8 @@ public class FabricWorkspaceSettings implements DefaultNodeSettings {
                 final var client = FabricRESTClient.fromCredentialPort(//
                         WorkspaceAPI.class, //
                         context.getPortObjectSpecs(), //
-                        Duration.ofSeconds(10), //
-                        Duration.ofSeconds(10));
-                //// TK_TODO: How to access the user input values here similar to
-                //// DBTypeStateProvider
+                        Duration.ofSeconds(m_readTimeout.get()), //
+                        Duration.ofSeconds(m_connectionTimeout.get()));
 
                 final List<Workspace> workspaces = WorkspaceUtil.getAllWorkspaces(client);
                 return workspaces.stream() //
@@ -184,5 +192,12 @@ public class FabricWorkspaceSettings implements DefaultNodeSettings {
                         "Unable to fetch Microsoft Fabric workspace list (Reason: %s)".formatted(e.getMessage()));
             }
         }
+
+    }
+
+    static class ConnectionTimeoutRef implements Reference<Integer> {
+    }
+
+    static class ReadTimeoutRef implements Reference<Integer> {
     }
 }
