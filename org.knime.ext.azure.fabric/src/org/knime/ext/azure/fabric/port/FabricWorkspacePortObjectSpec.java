@@ -148,12 +148,7 @@ public final class FabricWorkspacePortObjectSpec extends AbstractSimplePortObjec
 
     @Override
     public JComponent[] getViews() {
-        String text;
-        if (getFabricConnection() != null) {
-            text = "<html>" + getFabricConnection().toString().replace("\n", "<br>") + "</html>";
-        } else {
-            text = "No connection available";
-        }
+        String text = FabricWorkspacePortViewFactory.createHtmlContent(getFabricConnection());
         JPanel f = ViewUtils.getInFlowLayout(new JLabel(text));
         f.setName("Connection");
         return new JComponent[]{f};

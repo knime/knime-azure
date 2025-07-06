@@ -30,4 +30,5 @@ Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .
 Automatic-Module-Name: org.knime.ext.azure.fabric
 Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-Activator: org.knime.ext.azure.fabric.base.FabricBasePlugin
 
