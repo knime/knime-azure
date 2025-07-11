@@ -10,7 +10,8 @@ Export-Package: org.knime.ext.azure.fabric.port;uses:="org.knime.ext.azure.fabri
  org.knime.ext.azure.fabric.rest.workspace
 Bundle-Vendor: KNIME AG, Zurich, Switzerland
 Require-Bundle: org.knime.core;bundle-version="[5.5.0,6.0.0)",
- org.knime.core.ui;bundle-version="[5.5.0,6.0.0)",
+ org.knime.core.ui;bundle-version="[5.6.0,6.0.0)",
+ org.knime.node.parameters;bundle-version="[5.6.0,6.0.0)",
  org.knime.workbench.repository;bundle-version="[5.5.0,6.0.0)",
  org.knime.credentials.base;bundle-version="[5.5.0,6.0.0)",
  org.knime.credentials.base.oauth;bundle-version="[5.5.0,6.0.0)",
