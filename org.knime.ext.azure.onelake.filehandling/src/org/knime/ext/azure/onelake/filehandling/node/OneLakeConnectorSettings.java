@@ -52,7 +52,7 @@ import java.io.IOException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
+import org.knime.node.parameters.NodeParameters;
 import org.knime.credentials.base.NoSuchCredentialException;
 import org.knime.ext.azure.fabric.port.FabricConnection;
 import org.knime.ext.azure.onelake.filehandling.fs.OneLakeFSConnectionConfig;
