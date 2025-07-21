@@ -164,7 +164,8 @@ public final class FabricWorkspacePortViewFactory {
         return new PortView() {
             @Override
             public Page getPage() {
-                return Page.builder(() -> createHtmlContent(portObject.getFabricConnection()), "index.html").build();
+                return Page.create().fromString(() -> createHtmlContent(portObject.getFabricConnection()))
+                        .relativePath("index.html");
             }
 
             @SuppressWarnings("unchecked")
@@ -188,7 +189,8 @@ public final class FabricWorkspacePortViewFactory {
         return new PortView() {
             @Override
             public Page getPage() {
-                return Page.builder(() -> createHtmlContent(pos.getFabricConnection()), "index.html").build();
+                return Page.create().fromString(() -> createHtmlContent(pos.getFabricConnection()))
+                        .relativePath("index.html");
             }
 
             @SuppressWarnings("unchecked")
