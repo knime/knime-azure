@@ -72,6 +72,7 @@ import com.azure.storage.blob.sas.BlobServiceSasSignatureValues;
  *
  * @author Ole Ostergaard, KNIME.com GmbH
  */
+@Deprecated
 public class AzureBSFilePickerNodeModel extends AbstractFilePickerNodeModel {
 
 	private static NodeLogger LOGGER = NodeLogger.getLogger(AzureBSFilePickerNodeModel.class);
@@ -84,8 +85,10 @@ public class AzureBSFilePickerNodeModel extends AbstractFilePickerNodeModel {
 	/**
 	 * @param nrInDataPorts
 	 * @param nrOutDataPorts
+	 * @deprecated
 	 */
-	protected AzureBSFilePickerNodeModel() {
+	@Deprecated
+    protected AzureBSFilePickerNodeModel() {
 		super(CFG_FILE_SELECTION,FLOW_VARIABLE_NAME);
 	}
 

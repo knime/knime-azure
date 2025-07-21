@@ -51,7 +51,6 @@ package org.knime.cloud.azure.abs.util;
 import javax.swing.JComponent;
 
 import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObject;
-import org.knime.cloud.core.util.port.CloudConnectionInformation;
 import org.knime.cloud.core.util.port.CloudConnectionInformationPortObjectSpec;
 import org.knime.core.node.port.PortType;
 
@@ -59,6 +58,7 @@ import org.knime.core.node.port.PortType;
  *
  * @author Ole Ostergaard, KNIME.com GmbH
  */
+@Deprecated
 public class AzureConnectionInformationPortObject extends ConnectionInformationPortObject {
 
 	/**
@@ -73,14 +73,22 @@ public class AzureConnectionInformationPortObject extends ConnectionInformationP
 
 	public static final PortType TYPE_OPTIONAL = ConnectionInformationPortObject.TYPE_OPTIONAL;
 
-	public AzureConnectionInformationPortObject(final CloudConnectionInformationPortObjectSpec connectionInformationPortObjectSpec) {
+	/**
+	 * The constructor.
+	 * @param connectionInformationPortObjectSpec spec
+	 * @deprecated
+	 */
+	@Deprecated
+    public AzureConnectionInformationPortObject(final CloudConnectionInformationPortObjectSpec connectionInformationPortObjectSpec) {
 		super(connectionInformationPortObjectSpec);
 	}
 
 	/**
 	 * No-argument constructor
+	 * @deprecated
 	 */
-	public AzureConnectionInformationPortObject() {
+	@Deprecated
+    public AzureConnectionInformationPortObject() {
 	}
 
 	/**
@@ -88,6 +96,6 @@ public class AzureConnectionInformationPortObject extends ConnectionInformationP
 	 */
 	@Override
 	public JComponent[] getViews() {
-		return new JComponent[] {new AzureConnectionInformationView((CloudConnectionInformation)getConnectionInformation())};
+		return new JComponent[] {new AzureConnectionInformationView(getConnectionInformation())};
 	}
 }

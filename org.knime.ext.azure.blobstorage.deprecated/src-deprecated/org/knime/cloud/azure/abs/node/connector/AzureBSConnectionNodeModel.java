@@ -76,6 +76,7 @@ import org.knime.core.util.Pair;
  *
  * @author Ole Ostergaard, KNIME.com GmbH
  */
+@Deprecated
 public class AzureBSConnectionNodeModel extends NodeModel {
 
 	private final AzureConnectionInformationSettings m_model = createAzureBSSettings();
@@ -92,8 +93,10 @@ public class AzureBSConnectionNodeModel extends NodeModel {
 	/**
 	 * @param nrInDataPorts
 	 * @param nrOutDataPorts
+	 * @deprecated
 	 */
-	protected AzureBSConnectionNodeModel() {
+	@Deprecated
+    protected AzureBSConnectionNodeModel() {
 		super(new PortType[] {}, new PortType[] { AzureConnectionInformationPortObject.TYPE });
 	}
 
@@ -118,7 +121,7 @@ public class AzureBSConnectionNodeModel extends NodeModel {
 	 * {@inheritDoc}
 	 */
 	@Override
-	protected void loadInternals(File nodeInternDir, ExecutionMonitor exec)
+	protected void loadInternals(final File nodeInternDir, final ExecutionMonitor exec)
 			throws IOException, CanceledExecutionException {
 		// Nothing to do
 	}
@@ -127,7 +130,7 @@ public class AzureBSConnectionNodeModel extends NodeModel {
 	 * {@inheritDoc}
 	 */
 	@Override
-	protected void saveInternals(File nodeInternDir, ExecutionMonitor exec)
+	protected void saveInternals(final File nodeInternDir, final ExecutionMonitor exec)
 			throws IOException, CanceledExecutionException {
 		// Nothing to do
 	}
@@ -136,7 +139,7 @@ public class AzureBSConnectionNodeModel extends NodeModel {
 	 * {@inheritDoc}
 	 */
 	@Override
-	protected void saveSettingsTo(NodeSettingsWO settings) {
+	protected void saveSettingsTo(final NodeSettingsWO settings) {
 		m_model.saveSettingsTo(settings);
 	}
 
@@ -144,7 +147,7 @@ public class AzureBSConnectionNodeModel extends NodeModel {
 	 * {@inheritDoc}
 	 */
 	@Override
-	protected void validateSettings(NodeSettingsRO settings) throws InvalidSettingsException {
+	protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
 		m_model.validateSettings(settings);
 	}
 
@@ -152,7 +155,7 @@ public class AzureBSConnectionNodeModel extends NodeModel {
 	 * {@inheritDoc}
 	 */
 	@Override
-	protected void loadValidatedSettingsFrom(NodeSettingsRO settings) throws InvalidSettingsException {
+	protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
 		m_model.loadValidatedSettings(settings);
 	}
 

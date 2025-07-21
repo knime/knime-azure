@@ -44,47 +44,78 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Aug 12, 2016 (oole): created
+ *   Aug 11, 2016 (oole): created
  */
-package org.knime.cloud.azure.abs.filehandler;
+package org.knime.cloud.azure.abs.util;
 
-import java.net.URI;
-
-import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
-import org.knime.base.filehandling.remote.files.ConnectionMonitor;
 import org.knime.base.filehandling.remote.files.Protocol;
-import org.knime.base.filehandling.remote.files.RemoteFile;
-import org.knime.base.filehandling.remote.files.RemoteFileHandler;
+import org.knime.cloud.azure.abs.filehandler.AzureBSConnection;
+import org.knime.cloud.core.util.ConnectionInformationCloudSettings;
 import org.knime.cloud.core.util.port.CloudConnectionInformation;
+import org.knime.core.node.defaultnodesettings.SettingsModelAuthentication;
+import org.knime.core.node.defaultnodesettings.SettingsModelAuthentication.AuthenticationType;
+import org.knime.core.node.workflow.CredentialsProvider;
+import org.knime.core.node.workflow.ICredentials;
 
 /**
- * Azure Blob Storage remote file handler.
+ * Settings model representing the Azure Blob Store connection information
  *
- * @author Ole Ostergaaard, KNIME.com GmbH
+ * @author Ole Ostergaard, KNIME.com GmbH
  */
-public class AzureBSRemoteFileHandler implements RemoteFileHandler<AzureBSConnection>{
+@Deprecated
+public class AzureConnectionInformationSettings extends ConnectionInformationCloudSettings{
 
+    private static final String SERVICE_NAME = "Azure Blob Store";
 
-	/** The {@link Protocol} of this {@link RemoteFileHandler}. */
-	public static final Protocol PROTOCOL = new Protocol(AzureBSConnection.PREFIX, AzureBSConnection.PORT, false, false, false, true, true,
-			true, true, false);
+	public static final int DEFAULT_TIMEOUT = 30000;
 
 	/**
-	 * {@inheritDoc}
+	 * Constructor.
+	 * @deprecated
 	 */
-	@Override
-	public Protocol[] getSupportedProtocols() {
-		return new Protocol[] {PROTOCOL};
+	@Deprecated
+    public AzureConnectionInformationSettings(final String prefix) {
+		super(prefix);
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	public RemoteFile<AzureBSConnection> createRemoteFile(URI uri, ConnectionInformation connectionInformation,
-			ConnectionMonitor<AzureBSConnection> connectionMonitor) throws Exception {
-		final AzureBSRemoteFile remoteFile = new AzureBSRemoteFile(uri,(CloudConnectionInformation) connectionInformation, connectionMonitor);
-		return remoteFile;
+	protected SettingsModelAuthentication createAuthenticationModel()  {
+		return new SettingsModelAuthentication("auth", AuthenticationType.USER_PWD, null, null, null);
 	}
 
+	/**
+	 * @param credentialsProvider
+	 * @param protocol
+	 * @return
+	 */
+	@Override
+	public CloudConnectionInformation createConnectionInformation(final CredentialsProvider credentialsProvider,
+			final Protocol protocol) {
+
+		// Create connection information object
+		final CloudConnectionInformation connectionInformation = new CloudConnectionInformation();
+
+		connectionInformation.setProtocol(protocol.getName());
+		connectionInformation.setHost(AzureBSConnection.HOST);
+		connectionInformation.setPort(protocol.getPort());
+		connectionInformation.setTimeout(getTimeout());
+
+		// Put storageAccount as user and accessKey as password
+		if (useWorkflowCredential()) {
+			// Use credentials
+			final ICredentials credentials = credentialsProvider.get(getWorkflowCredential());
+			connectionInformation.setUser(credentials.getLogin());
+			connectionInformation.setPassword(credentials.getPassword());
+		} else {
+			connectionInformation.setUser(getUserValue());
+			connectionInformation.setPassword(getPasswordValue());
+		}
+
+		connectionInformation.setServiceName(SERVICE_NAME);
+
+		return connectionInformation;
+	}
 }

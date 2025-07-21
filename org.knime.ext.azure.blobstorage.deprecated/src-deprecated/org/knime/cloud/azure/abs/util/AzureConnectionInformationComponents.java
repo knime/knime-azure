@@ -59,12 +59,15 @@ import org.knime.core.util.Pair;
  *
  * @author Ole Ostergaard, KNIME.com GmbH
  */
+@Deprecated
 public class AzureConnectionInformationComponents extends ConnectionInformationCloudComponents<AzureConnectionInformationSettings> {
 
 	/**
 	 * Constructor.
+	 * @deprecated
 	 */
-	public AzureConnectionInformationComponents(final AzureConnectionInformationSettings settings, HashMap<AuthenticationType, Pair<String, String>> nameMap) {
+	@Deprecated
+    public AzureConnectionInformationComponents(final AzureConnectionInformationSettings settings, final HashMap<AuthenticationType, Pair<String, String>> nameMap) {
 		super(settings, nameMap);
 	}
 

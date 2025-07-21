@@ -3,10 +3,12 @@
    <extension point="org.knime.workbench.repository.nodes">
       <node
             category-path="/io/filehandling/remote/connections"
+            deprecated="true"
             factory-class="org.knime.cloud.azure.abs.node.connector.AzureBSConnectionNodeFactory">
       </node>
       <node
             category-path="/io/filehandling/remote"
+            deprecated="true"
             factory-class="org.knime.cloud.azure.abs.node.filepicker.AzureBSFilePickerNodeFactory">
       </node>
 </extension>

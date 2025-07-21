@@ -44,105 +44,48 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Aug 11, 2016 (oole): created
+ *   Aug 12, 2016 (oole): created
  */
 package org.knime.cloud.azure.abs.filehandler;
 
-import java.time.Duration;
+import java.net.URI;
 
-import org.knime.base.filehandling.remote.files.Connection;
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+import org.knime.base.filehandling.remote.files.ConnectionMonitor;
+import org.knime.base.filehandling.remote.files.Protocol;
+import org.knime.base.filehandling.remote.files.RemoteFile;
+import org.knime.base.filehandling.remote.files.RemoteFileHandler;
 import org.knime.cloud.core.util.port.CloudConnectionInformation;
-import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeLogger;
-import org.knime.core.util.KnimeEncryption;
-import org.knime.ext.azure.AzureUtils;
-
-import com.azure.core.util.HttpClientOptions;
-import com.azure.storage.blob.BlobServiceClient;
-import com.azure.storage.blob.BlobServiceClientBuilder;
-import com.azure.storage.common.StorageSharedKeyCredential;
 
 /**
+ * Azure Blob Storage remote file handler.
  *
- * @author Ole Ostergaard, KNIME.com GmbH
+ * @author Ole Ostergaaard, KNIME.com GmbH
  */
-public class AzureBSConnection extends Connection {
+@Deprecated
+public class AzureBSRemoteFileHandler implements RemoteFileHandler<AzureBSConnection>{
 
-	public static final String PREFIX = "abs";
-	public static final String HOST = "blob.core.windows.net";
-	public static final int PORT = -1;
-	private static final String ENDPOINT_FORMAT = "https://%s.blob.core.windows.net";
-	private static final NodeLogger LOGGER = NodeLogger.getLogger(AzureBSConnection.class);
 
-	private final CloudConnectionInformation m_connectionInformation;
-
-	private BlobServiceClient m_client;
+	/** The {@link Protocol} of this {@link RemoteFileHandler}. */
+	public static final Protocol PROTOCOL = new Protocol(AzureBSConnection.PREFIX, AzureBSConnection.PORT, false, false, false, true, true,
+			true, true, false);
 
 	/**
-	 * Constructor.
+	 * {@inheritDoc}
 	 */
-	public AzureBSConnection(final CloudConnectionInformation connectionInformation) {
-		m_connectionInformation = connectionInformation;
+	@Override
+	public Protocol[] getSupportedProtocols() {
+		return new Protocol[] {PROTOCOL};
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void open() throws Exception {
-		if (!isOpen()) {
-			final String storageAccount = m_connectionInformation.getUser();
-			final String accessKey = KnimeEncryption.decrypt(m_connectionInformation.getPassword());
-
-			LOGGER.info("Create a new CloudBlobClient with connection timeout " + m_connectionInformation.getTimeout() + " milliseconds");
-
-			final var clientOptions = new HttpClientOptions() //
-				.setConnectTimeout(Duration.ofMillis(m_connectionInformation.getTimeout())) //
-				.setReadTimeout(Duration.ofMillis(m_connectionInformation.getTimeout()));
-
-			if (AzureUtils.isProxyActive()) {
-				clientOptions.setProxyOptions(AzureUtils.loadSystemProxyOptions());
-			}
-
-			m_client = new BlobServiceClientBuilder() //
-				.endpoint(String.format(ENDPOINT_FORMAT, storageAccount)) //
-				.credential(new StorageSharedKeyCredential(storageAccount, accessKey)) //
-				.clientOptions(clientOptions) //
-				.buildClient();
-
-			try {
-				m_client.getProperties();
-			} catch (final Exception e) { // NOSONAR
-				throw new InvalidSettingsException("Unable to connect. Check credentials.", e);
-			}
-		}
+	public RemoteFile<AzureBSConnection> createRemoteFile(final URI uri, final ConnectionInformation connectionInformation,
+			final ConnectionMonitor<AzureBSConnection> connectionMonitor) throws Exception {
+		final AzureBSRemoteFile remoteFile = new AzureBSRemoteFile(uri,(CloudConnectionInformation) connectionInformation, connectionMonitor);
+		return remoteFile;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public boolean isOpen() {
-		if (m_client != null) {
-			return true;
-		}
-		return false;
-	}
-
-	/**
-	 * Returns the {@link BlobServiceClient} for this connection
-	 *
-	 * @return the {@link BlobServiceClient} for this connection
-	 */
-	public BlobServiceClient getClient() {
-		return m_client;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void close() throws Exception {
-		// nothing to do
-	}
 }

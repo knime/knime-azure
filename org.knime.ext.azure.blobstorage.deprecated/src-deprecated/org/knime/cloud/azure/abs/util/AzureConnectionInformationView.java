@@ -63,6 +63,7 @@ import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionI
  *
  * @author Ole Ostergaard, KNIME.com GmbH
  */
+@Deprecated
 public class AzureConnectionInformationView extends JPanel{
 
 	private static final long serialVersionUID = 1L;
@@ -72,7 +73,9 @@ public class AzureConnectionInformationView extends JPanel{
 
 	/**
      * @param connectionInformation the {@link ConnectionInformation} containing the connection information
+     * @deprecated
      */
+    @Deprecated
     public AzureConnectionInformationView(final ConnectionInformation connectionInformation) {
         super(new GridBagLayout());
         super.setName("Connection");

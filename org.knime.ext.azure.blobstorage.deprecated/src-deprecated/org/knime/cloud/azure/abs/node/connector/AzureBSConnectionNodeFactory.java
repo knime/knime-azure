@@ -1,4 +1,4 @@
-package org.knime.cloud.azure.abs.node.filepicker;
+package org.knime.cloud.azure.abs.node.connector;
 
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeFactory;
@@ -10,14 +10,15 @@ import org.knime.core.node.NodeView;
  *
  * @author Ole Ostergaard, KNIME.com GmbH
  */
-public class AzureBSFilePickerNodeFactory extends NodeFactory<AzureBSFilePickerNodeModel> {
+@Deprecated
+public class AzureBSConnectionNodeFactory extends NodeFactory<AzureBSConnectionNodeModel> {
 
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	public AzureBSFilePickerNodeModel createNodeModel() {
-		return new AzureBSFilePickerNodeModel();
+	public AzureBSConnectionNodeModel createNodeModel() {
+		return new AzureBSConnectionNodeModel();
 	}
 
 	/**
@@ -32,8 +33,8 @@ public class AzureBSFilePickerNodeFactory extends NodeFactory<AzureBSFilePickerN
 	 * {@inheritDoc}
 	 */
 	@Override
-	public NodeView<AzureBSFilePickerNodeModel> createNodeView(final int viewIndex,
-			final AzureBSFilePickerNodeModel nodeModel) {
+	public NodeView<AzureBSConnectionNodeModel> createNodeView(final int viewIndex,
+			final AzureBSConnectionNodeModel nodeModel) {
 		return null;
 	}
 
@@ -50,7 +51,7 @@ public class AzureBSFilePickerNodeFactory extends NodeFactory<AzureBSFilePickerN
 	 */
 	@Override
 	public NodeDialogPane createNodeDialogPane() {
-		return new AzureBSFilePickerNodeDialog();
+		return new AzureBSConnectionNodeDialog();
 	}
 
 }

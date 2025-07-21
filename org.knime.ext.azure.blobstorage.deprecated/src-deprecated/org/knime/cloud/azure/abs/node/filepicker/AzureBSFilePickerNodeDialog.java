@@ -44,75 +44,61 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Aug 11, 2016 (oole): created
+ *   Jul 31, 2016 (budiyanto): created
  */
-package org.knime.cloud.azure.abs.util;
+package org.knime.cloud.azure.abs.node.filepicker;
 
-import org.knime.base.filehandling.remote.files.Protocol;
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformation;
+import org.knime.base.filehandling.remote.connectioninformation.port.ConnectionInformationPortObjectSpec;
 import org.knime.cloud.azure.abs.filehandler.AzureBSConnection;
-import org.knime.cloud.core.util.ConnectionInformationCloudSettings;
-import org.knime.cloud.core.util.port.CloudConnectionInformation;
-import org.knime.core.node.defaultnodesettings.SettingsModelAuthentication;
-import org.knime.core.node.defaultnodesettings.SettingsModelAuthentication.AuthenticationType;
-import org.knime.core.node.workflow.CredentialsProvider;
-import org.knime.core.node.workflow.ICredentials;
+import org.knime.cloud.core.node.filepicker.AbstractFilePickerNodeDialog;
+import org.knime.core.node.NotConfigurableException;
+import org.knime.core.node.port.PortObjectSpec;
 
 /**
- * Settings model representing the Azure Blob Store connection information
  *
- * @author Ole Ostergaard, KNIME.com GmbH
+ * @author Ole Ostergaard, KNIME.com
  */
-public class AzureConnectionInformationSettings extends ConnectionInformationCloudSettings{
+@Deprecated
+public class AzureBSFilePickerNodeDialog extends AbstractFilePickerNodeDialog {
 
-    private static final String SERVICE_NAME = "Azure Blob Store";
+	private ConnectionInformation m_connectionInformation;
 
-	public static final int DEFAULT_TIMEOUT = 30000;
+
 
 	/**
-	 * Constructor.
+	 * {@inheritDoc}
 	 */
-	public AzureConnectionInformationSettings(final String prefix) {
-		super(prefix);
+	@Override
+	protected void checkConnectionInformation(final PortObjectSpec specs) throws NotConfigurableException {
+		String error = "No Azure BlobStore connection information available";
+		if (specs != null) {
+			final ConnectionInformationPortObjectSpec object = (ConnectionInformationPortObjectSpec) specs;
+			m_connectionInformation = object.getConnectionInformation();
+			// Check if the port object has connection information
+			if (m_connectionInformation == null
+					|| !m_connectionInformation.getProtocol().equals(AzureBSConnection.PREFIX)) {
+				throw new NotConfigurableException(error);
+			}
+		} else {
+			throw new NotConfigurableException(error);
+		}
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	protected SettingsModelAuthentication createAuthenticationModel()  {
-		return new SettingsModelAuthentication("auth", AuthenticationType.USER_PWD, null, null, null);
+	protected String getCfgName() {
+		return AzureBSFilePickerNodeModel.CFG_FILE_SELECTION;
 	}
 
 	/**
-	 * @param credentialsProvider
-	 * @param protocol
-	 * @return
+	 * {@inheritDoc}
 	 */
 	@Override
-	public CloudConnectionInformation createConnectionInformation(CredentialsProvider credentialsProvider,
-			Protocol protocol) {
-
-		// Create connection information object
-		final CloudConnectionInformation connectionInformation = new CloudConnectionInformation();
-
-		connectionInformation.setProtocol(protocol.getName());
-		connectionInformation.setHost(AzureBSConnection.HOST);
-		connectionInformation.setPort(protocol.getPort());
-		connectionInformation.setTimeout(getTimeout());
-
-		// Put storageAccount as user and accessKey as password
-		if (useWorkflowCredential()) {
-			// Use credentials
-			final ICredentials credentials = credentialsProvider.get(getWorkflowCredential());
-			connectionInformation.setUser(credentials.getLogin());
-			connectionInformation.setPassword(credentials.getPassword());
-		} else {
-			connectionInformation.setUser(getUserValue());
-			connectionInformation.setPassword(getPasswordValue());
-		}
-
-		connectionInformation.setServiceName(SERVICE_NAME);
-
-		return connectionInformation;
+	protected ConnectionInformation getConnectionInformation() {
+		return m_connectionInformation;
 	}
+
 }

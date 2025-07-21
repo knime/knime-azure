@@ -76,12 +76,18 @@ import org.knime.core.node.workflow.CredentialsProvider;
  *
  * @author Ole Ostergaard, KNIME.com GmbH
  */
+@Deprecated
 public class AzureBSConnectionNodeDialog extends NodeDialogPane {
 
 	private final AzureConnectionInformationSettings m_settings = AzureBSConnectionNodeModel.createAzureBSSettings();
 	private final AzureConnectionInformationComponents m_components = new AzureConnectionInformationComponents(m_settings, AzureBSConnectionNodeModel.getNameMap());
 
-	public AzureBSConnectionNodeDialog() {
+	/**
+	 * The constructor
+	 * @deprecated
+	 */
+	@Deprecated
+    public AzureBSConnectionNodeDialog() {
 		final JPanel panel = new JPanel(new GridBagLayout());
 		final GridBagConstraints gbc = new GridBagConstraints();
 		gbc.insets = new Insets(5,5,5,5);
@@ -123,6 +129,7 @@ public class AzureBSConnectionNodeDialog extends NodeDialogPane {
 	 *
 	 * @author Patrick Winter, KNIME AG, Zurich, Switzerland
 	 */
+	@Deprecated
 	private class TestConnectionListener implements ActionListener {
 
 		/**

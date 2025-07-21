@@ -74,14 +74,17 @@ import com.azure.storage.blob.models.BlobItem;
  *
  * @author Ole Ostergaard, KNIME.com GmbH
  */
+@Deprecated
 public class AzureBSRemoteFile extends CloudRemoteFile<AzureBSConnection> {
 
 	/**
 	 * @param uri
 	 * @param connectionInformation
 	 * @param connectionMonitor
+	 * @deprecated
 	 */
-	public AzureBSRemoteFile(final URI uri, final CloudConnectionInformation connectionInformation,
+	@Deprecated
+    public AzureBSRemoteFile(final URI uri, final CloudConnectionInformation connectionInformation,
 			final ConnectionMonitor<AzureBSConnection> connectionMonitor) {
 		this(uri, connectionInformation, connectionMonitor, null, null);
 	}
@@ -92,8 +95,10 @@ public class AzureBSRemoteFile extends CloudRemoteFile<AzureBSConnection> {
 	 * @param connectionMonitor
 	 * @param containerName
 	 * @param blob
+	 * @deprecated
 	 */
-	public AzureBSRemoteFile(final URI uri, final CloudConnectionInformation connectionInformation,
+	@Deprecated
+    public AzureBSRemoteFile(final URI uri, final CloudConnectionInformation connectionInformation,
 			final ConnectionMonitor<AzureBSConnection> connectionMonitor, final String containerName, final BlobItem blob) {
 		super(uri, connectionInformation, connectionMonitor);
 		CheckUtils.checkArgumentNotNull(connectionInformation, "Connection Information must not be null");
