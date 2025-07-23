@@ -52,14 +52,14 @@ import java.io.IOException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.Layout;
-import org.knime.core.webui.node.dialog.defaultdialog.layout.Section;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
+import org.knime.node.parameters.NodeParameters;
 import org.knime.credentials.base.NoSuchCredentialException;
 import org.knime.ext.azure.fabric.port.FabricConnection;
 import org.knime.ext.azure.onelake.filehandling.fs.OneLakeFSConnectionConfig;
 import org.knime.ext.azure.onelake.filehandling.fs.OneLakeFileSystem;
+import org.knime.node.parameters.Widget;
+import org.knime.node.parameters.layout.Layout;
+import org.knime.node.parameters.layout.Section;
 
 /**
  * Node settings for the Microsoft OneLake Connector.
@@ -67,7 +67,7 @@ import org.knime.ext.azure.onelake.filehandling.fs.OneLakeFileSystem;
  * @author Bjoern Lohrmann, KNIME GmbH
  */
 @SuppressWarnings("restriction")
-public class OneLakeConnectorSettings implements DefaultNodeSettings {
+public class OneLakeConnectorSettings implements NodeParameters {
 
     @Section(title = "File System")
     interface FileSystemSection {

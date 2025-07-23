@@ -57,17 +57,18 @@ import org.knime.core.data.sort.AlphanumericComparator;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.port.PortObjectSpec;
-import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeSettings;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.Widget;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.choices.ChoicesProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.choices.StringChoice;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.choices.StringChoicesProvider;
 import org.knime.core.webui.node.dialog.defaultdialog.widget.handler.WidgetHandlerException;
 import org.knime.ext.azure.fabric.port.FabricConnection;
 import org.knime.ext.azure.fabric.port.FabricWorkspacePortObjectSpec;
 import org.knime.ext.azure.fabric.rest.sql.Warehouse;
 import org.knime.ext.azure.fabric.rest.sql.WarehouseAPI;
 import org.knime.ext.azure.fabric.rest.sql.Warehouses;
+import org.knime.node.parameters.NodeParameters;
+import org.knime.node.parameters.NodeParametersInput;
+import org.knime.node.parameters.Widget;
+import org.knime.node.parameters.widget.choices.ChoicesProvider;
+import org.knime.node.parameters.widget.choices.StringChoice;
+import org.knime.node.parameters.widget.choices.StringChoicesProvider;
 
 /**
  * Node settings for the Microsoft Fabric Workspace Connector node.
@@ -75,7 +76,7 @@ import org.knime.ext.azure.fabric.rest.sql.Warehouses;
  * @author Tobias Koetter, KNIME GmbH, Konstanz, Germany
  */
 @SuppressWarnings("restriction")
-public class FabricWarehouseSettings implements DefaultNodeSettings {
+public class FabricWarehouseSettings implements NodeParameters {
 
     private static final NodeLogger LOGGER = NodeLogger.getLogger(FabricWarehouseSettings.class);
 
@@ -108,9 +109,9 @@ public class FabricWarehouseSettings implements DefaultNodeSettings {
         }
 
         @Override
-        public List<StringChoice> computeState(final DefaultNodeSettingsContext context) {
+        public List<StringChoice> computeState(final NodeParametersInput context) {
             try {
-                final PortObjectSpec[] inSpecs = context.getPortObjectSpecs();
+                final PortObjectSpec[] inSpecs = context.getInPortSpecs();
                 if (inSpecs.length == 0) {
                     throw new InvalidSettingsException(
                             "Missing input connection, Microsoft Fabric Workspace Connector required.");
