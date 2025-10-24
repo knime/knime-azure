@@ -91,6 +91,7 @@ import org.knime.database.model.DBColumn;
 import org.knime.database.model.DBTable;
 import org.knime.database.node.io.load.DBLoaderNode2;
 import org.knime.database.node.io.load.DBLoaderNode2Factory;
+import org.knime.database.node.io.load.DBLoaderParameters;
 import org.knime.database.node.io.load.ExecutionParameters;
 import org.knime.database.node.io.load.impl.fs.ConnectableCsvLoaderNodeSettings2;
 import org.knime.database.node.io.load.impl.fs.ConnectedCsvLoaderNodeComponents2;
@@ -367,6 +368,11 @@ public class FabricWarehouseLoaderNode2
 
         // Output
         return dbTable;
+    }
+
+    @Override
+    public Class<? extends DBLoaderParameters> getParametersClass() {
+        return FabricWarehouseLoaderNodeParameters.class;
     }
 
 }
