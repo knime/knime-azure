@@ -113,6 +113,13 @@ public class OneLakeConnectorNodeFactory extends WebUINodeFactory<OneLakeConnect
                     which is in preview and subject to change.
                 </li>
             </ul>
+            <p>
+            <b>Note:</b> The scopes required by this node have to be consented
+            to at least once interactively by the user or workspace admin, especially for scopeless
+            secrets. Please refer to the <a \
+            href="https://docs.knime.com/latest/community_hub_secrets_guide/index.html#secret_type_azure_scopes"
+            >documentation</a> to find out which scopes are required.
+            </p>
             </p>
             """;
 

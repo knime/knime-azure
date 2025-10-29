@@ -97,6 +97,13 @@ public class FabricWarehouseConnectorNodeFactory extends ConfigurableNodeFactory
             <a href='https://hub.knime.com/n/-3zjQ7L-UWuUzzT6'>Azure Data Lake Storage Gen2 Connector</a>
             or to an <a href='https://hub.knime.com/n/1iu8u7meRrzU-iPg'>Azure Blob Storage Connector</a> node.
             </p>
+            <p>
+            <b>Note:</b> The scopes required by this node have to be consented
+            to at least once interactively by the user or workspace admin, especially for scopeless
+            secrets. Please refer to the <a \
+            href="https://docs.knime.com/latest/community_hub_secrets_guide/index.html\
+            #secret_type_azure_scopes">documentation</a> to find out which scopes are required.
+            </p>
             """;
 
     static final WebUINodeConfiguration CONFIG = WebUINodeConfiguration.builder()//

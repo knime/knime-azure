@@ -50,12 +50,14 @@ package org.knime.ext.azure.onelake.filehandling.node;
 
 import java.io.IOException;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.credentials.base.CredentialRef;
 import org.knime.credentials.base.NoSuchCredentialException;
 import org.knime.credentials.base.oauth.api.AccessTokenAccessor;
 import org.knime.credentials.base.oauth.api.AccessTokenWithScopesAccessor;
+import org.knime.credentials.base.oauth.api.IdentityProviderException;
 
 /**
  * Utility class for handling credentials related to Microsoft OneLake.
@@ -68,6 +70,8 @@ public final class OneLakeCredentialUtil {
      * Azure Storage scope for OneLake access tokens.
      */
     public static final String STORAGE_SCOPE = "https://storage.azure.com/.default";
+
+    private static final Pattern ERROR_PREFIX = Pattern.compile("^\\s*AADSTS(\\d+)", Pattern.CASE_INSENSITIVE); // NOSONAR
 
     private OneLakeCredentialUtil() {
         // Utility class, no instantiation
@@ -121,10 +125,28 @@ public final class OneLakeCredentialUtil {
         if (credRef.hasAccessor(AccessTokenAccessor.class)) {
             return credRef.toAccessor(AccessTokenAccessor.class);
         } else if (credRef.hasAccessor(AccessTokenWithScopesAccessor.class)) {
-            return credRef.toAccessor(AccessTokenWithScopesAccessor.class)
-                    .getAccessTokenWithScopes(Set.of(STORAGE_SCOPE));
+            try {
+                return credRef.toAccessor(AccessTokenWithScopesAccessor.class)
+                        .getAccessTokenWithScopes(Set.of(STORAGE_SCOPE));
+            } catch (IdentityProviderException e) {
+                throw handleIdentityProviderException(e);
+            }
         } else {
             throw new IllegalStateException("The provided credential is incompatible with Microsoft OneLake");
         }
+    }
+
+    private static IOException handleIdentityProviderException(final IdentityProviderException e) {
+        final var matcher = ERROR_PREFIX.matcher(e.getErrorSummary());
+        if (matcher.find()) {
+            final var errorCode = Integer.parseInt(matcher.group(1));
+            // See
+            // https://learn.microsoft.com/en-us/entra/identity-platform/reference-error-codes#aadsts-error-codes
+            if (errorCode == 65001 || errorCode == 65004) {
+                return new IOException("Consent mssing. Please refer to the node description to find "
+                        + "scopes your or your admin need to consent to.", e);
+            }
+        }
+        return e;
     }
 }

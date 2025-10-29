@@ -87,8 +87,18 @@ public class FabricWorkspaceConnectorNodeFactory extends ConfigurableNodeFactory
             .icon("./icon.png")//
             .shortDescription("Microsoft Fabric Workspace Connector node.")//
             .fullDescription("""
+                    <p>
                     The Microsoft Fabric Workspace Connector node allows to connect to a \
                     <a href='https://www.microsoft.com/microsoft-fabric'>Microsoft Fabric</a> workspace.
+                    </p>
+
+                    <p>
+                    <b>Note:</b> The scopes required by this node have to be consented
+                    to at least once interactively by the user or workspace admin, especially for scopeless
+                    secrets. Please refer to the <a \
+                    href="https://docs.knime.com/latest/community_hub_secrets_guide/index.html#secret_type_azure_scopes"
+                    >documentation</a> to find out which scopes are required.
+                    </p>
                     """) //
             .modelSettingsClass(FabricWorkspaceSettings.class)//
             .addInputPort(CREDENTIAL_INPUT_NAME, CredentialPortObject.TYPE, //
