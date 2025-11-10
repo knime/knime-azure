@@ -38,7 +38,6 @@ try {
     		    'knime-kerberos',
     		    'knime-office365',
     		    'knime-rest',
-    		    'knime-scripting-editor',
     		    'knime-streaming',
     		    'knime-textprocessing',
     		    'knime-xml'
