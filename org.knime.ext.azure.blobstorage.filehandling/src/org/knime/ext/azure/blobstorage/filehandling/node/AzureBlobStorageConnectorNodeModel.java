@@ -55,7 +55,6 @@ import org.knime.core.node.CanceledExecutionException;
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.node.NodeLogger;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
@@ -65,6 +64,7 @@ import org.knime.core.node.port.PortType;
 import org.knime.credentials.base.Credential;
 import org.knime.credentials.base.CredentialPortObject;
 import org.knime.credentials.base.CredentialPortObjectSpec;
+import org.knime.core.webui.node.dialog.defaultdialog.NodeParametersUtil;
 import org.knime.ext.azure.AzureUtils;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSConnection;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSConnectionConfig;
@@ -73,21 +73,18 @@ import org.knime.filehandling.core.port.FileSystemPortObject;
 import org.knime.filehandling.core.port.FileSystemPortObjectSpec;
 
 /**
- * Azure Blob Storage Connector node.
+ * Azure Blob Storage Connector node model.
  *
  * @author Alexander Bondaletov
  */
+@SuppressWarnings("restriction")
 class AzureBlobStorageConnectorNodeModel extends NodeModel {
-
-    @SuppressWarnings("unused")
-    private static final NodeLogger LOG = NodeLogger.getLogger(AzureBlobStorageConnectorNodeModel.class);
 
     private static final String FILE_SYSTEM_NAME = "Azure Blob Storage";
 
     private String m_fsId;
     private AzureBlobStorageFSConnection m_fsConnection;
-
-    private final AzureBlobStorageConnectorSettings m_settings = new AzureBlobStorageConnectorSettings();
+    private AzureBlobStorageConnectorNodeParameters m_parameters = new AzureBlobStorageConnectorNodeParameters();
 
     /**
      * Creates new instance.
@@ -99,7 +96,6 @@ class AzureBlobStorageConnectorNodeModel extends NodeModel {
     @Override
     protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs) throws InvalidSettingsException {
         m_fsId = FSConnectionRegistry.getInstance().getKey();
-
         var credential = ((CredentialPortObjectSpec) inSpecs[0]).getCredential(Credential.class);
         var spec = credential.map(this::createSpec).orElse(null);
         return new PortObjectSpec[] { spec };
@@ -114,12 +110,12 @@ class AzureBlobStorageConnectorNodeModel extends NodeModel {
     @SuppressWarnings("resource")
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec) throws Exception {
-
         var credential = ((CredentialPortObject) inObjects[0]).getCredential(Credential.class)
                 .orElseThrow(() -> new InvalidSettingsException(
                         "Credential is not available. Please re-execute authenticator node."));
 
-        m_fsConnection = new AzureBlobStorageFSConnection(m_settings.toFSConnectionConfig(credential));
+        final AzureBlobStorageFSConnectionConfig config = toFSConnectionConfig(m_parameters, credential);
+        m_fsConnection = new AzureBlobStorageFSConnection(config);
 
         if (!m_fsConnection.getFileSystem().canCredentialsListContainers()) {
             setWarningMessage(
@@ -128,6 +124,31 @@ class AzureBlobStorageConnectorNodeModel extends NodeModel {
         FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
 
         return new PortObject[] { new FileSystemPortObject(createSpec(credential)) };
+    }
+
+    private static AzureBlobStorageFSConnectionConfig toFSConnectionConfig(
+            final AzureBlobStorageConnectorNodeParameters settings, final Credential credential) {
+        final AzureBlobStorageFSConnectionConfig config = new AzureBlobStorageFSConnectionConfig(
+                settings.m_workingDirectory);
+        config.setCredential(credential);
+        config.setNormalizePaths(settings.m_normalizePaths);
+        config.setTimeout(java.time.Duration.ofSeconds(settings.m_timeout));
+        return config;
+    }
+
+    /**
+     * Tests the connection by attempting to list containers. This is used by the file browser
+     * to validate the connection before showing the file system.
+     *
+     * @param connection the connection to test
+     * @throws IOException if the connection test fails
+     */
+    static void testConnection(final AzureBlobStorageFSConnection connection) throws IOException {
+        // Test the connection by checking if we can list containers
+        if (!connection.getFileSystem().canCredentialsListContainers()) {
+            throw new IOException(
+                    "Authentication failed, or the account doesn't have enough permissions to list containers");
+        }
     }
 
     @Override
@@ -144,17 +165,18 @@ class AzureBlobStorageConnectorNodeModel extends NodeModel {
 
     @Override
     protected void saveSettingsTo(final NodeSettingsWO settings) {
-        m_settings.saveSettingsTo(settings);
+        NodeParametersUtil.saveSettings(AzureBlobStorageConnectorNodeParameters.class, m_parameters, settings);
     }
 
     @Override
     protected void validateSettings(final NodeSettingsRO settings) throws InvalidSettingsException {
-        m_settings.validateSettings(settings);
+        var parameters = NodeParametersUtil.loadSettings(settings, AzureBlobStorageConnectorNodeParameters.class);
+        parameters.validate();
     }
 
     @Override
     protected void loadValidatedSettingsFrom(final NodeSettingsRO settings) throws InvalidSettingsException {
-        m_settings.loadSettingsFrom(settings);
+        m_parameters = NodeParametersUtil.loadSettings(settings, AzureBlobStorageConnectorNodeParameters.class);
     }
 
     @Override
