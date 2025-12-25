@@ -5,7 +5,7 @@ Bundle-SymbolicName: org.knime.ext.azure.fabric.sql;singleton:=true
 Bundle-Version: 5.10.0.qualifier
 Bundle-Vendor: KNIME AG, Zurich, Switzerland
 Require-Bundle: org.knime.bigdata.database;bundle-version="[5.10.0,6.0.0)",
- org.knime.bigdata.fileformats;bundle-version="[5.9.0,6.0.0)",
+ org.knime.bigdata.fileformats;bundle-version="[5.10.0,6.0.0)",
  org.knime.core;bundle-version="[5.10.0,6.0.0)",
  org.knime.core.ui;bundle-version="[5.10.0,6.0.0)",
  org.knime.credentials.base;bundle-version="[5.9.0,6.0.0)",
