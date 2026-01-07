@@ -1,0 +1,123 @@
+{
+  "data" : {
+    "model" : {
+      "workingDirectory" : "/knime-filehandling-test-container/knimetemp-91428b19909e46a9/",
+      "normalizePaths" : true,
+      "timeout" : 120
+    }
+  },
+  "schema" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "normalizePaths" : {
+            "type" : "boolean",
+            "title" : "Normalize paths",
+            "description" : "Determines if the path normalization should be applied. Path normalization eliminates redundant components of a path like, e.g. <tt>/a/../b/./c</tt> can be normalized to <tt>/b/c</tt>. When these redundant components like <tt>../</tt> or <tt>.</tt> are part of an existing object, then normalization must be deactivated in order to access them properly.",
+            "default" : true
+          },
+          "timeout" : {
+            "type" : "integer",
+            "format" : "int32",
+            "title" : "Service calls timeout (seconds)",
+            "description" : "The time allowed between sending a request and receiving the response.",
+            "default" : 30
+          },
+          "workingDirectory" : {
+            "type" : "string",
+            "title" : "Working directory",
+            "description" : "Specifies the <i>working directory</i> using the path syntax explained above. The working directory must be specified as an absolute path. A working directory allows downstream nodes to access files/folders using <i>relative</i> paths, i.e. paths that do not have a leading slash. If not specified, the default working directory is <tt>/</tt>.",
+            "default" : "/"
+          }
+        }
+      }
+    }
+  },
+  "ui_schema" : {
+    "elements" : [ {
+      "label" : "File System Settings",
+      "type" : "Section",
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/workingDirectory",
+        "options" : {
+          "selectionMode" : "FOLDER",
+          "format" : "stringFileChooser"
+        },
+        "providedOptions" : [ "fileSystemId" ]
+      }, {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/normalizePaths",
+        "options" : {
+          "format" : "checkbox"
+        }
+      } ]
+    }, {
+      "label" : "Connection Settings",
+      "type" : "Section",
+      "options" : {
+        "isAdvanced" : true
+      },
+      "elements" : [ {
+        "type" : "Control",
+        "scope" : "#/properties/model/properties/timeout",
+        "options" : {
+          "validation" : {
+            "max" : {
+              "errorMessage" : "The value must not exceed 2147483647.",
+              "parameters" : {
+                "isExclusive" : false,
+                "max" : 2.147483647E9
+              }
+            },
+            "min" : {
+              "errorMessage" : "The value must be at least 0.",
+              "parameters" : {
+                "isExclusive" : false,
+                "min" : 0.0
+              }
+            }
+          }
+        }
+      } ]
+    } ]
+  },
+  "persist" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "workingDirectory" : {
+            "configKey" : "workingDirectory"
+          },
+          "normalizePaths" : {
+            "configKey" : "normalizePaths"
+          },
+          "timeout" : {
+            "configKey" : "timeout"
+          }
+        }
+      }
+    }
+  },
+  "globalUpdates" : [ {
+    "trigger" : {
+      "id" : "after-open-dialog"
+    },
+    "triggerInitially" : true,
+    "dependencies" : [ "#/properties/model/properties/normalizePaths", "#/properties/model/properties/timeout" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/normalizePaths"
+    },
+    "dependencies" : [ "#/properties/model/properties/normalizePaths", "#/properties/model/properties/timeout" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/timeout"
+    },
+    "dependencies" : [ "#/properties/model/properties/normalizePaths", "#/properties/model/properties/timeout" ]
+  } ]
+}

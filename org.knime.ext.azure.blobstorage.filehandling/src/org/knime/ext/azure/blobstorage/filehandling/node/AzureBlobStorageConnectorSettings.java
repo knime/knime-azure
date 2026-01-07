@@ -67,9 +67,9 @@ import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFileSyste
  */
 class AzureBlobStorageConnectorSettings {
 
-    private static final String KEY_WORKING_DIRECTORY = "workingDirectory";
-    private static final String KEY_NORMALIZE_PATHS = "normalizePaths";
-    private static final String KEY_TIMEOUT = "timeout";
+    static final String KEY_WORKING_DIRECTORY = "workingDirectory";
+    static final String KEY_NORMALIZE_PATHS = "normalizePaths";
+    static final String KEY_TIMEOUT = "timeout";
 
     private final SettingsModelString m_workingDirectory;
     private final SettingsModelBoolean m_normalizePaths;
