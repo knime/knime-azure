@@ -48,16 +48,34 @@
  */
 package org.knime.ext.azure.blobstorage.filehandling.node;
 
+import static org.knime.node.impl.description.PortDescription.fixedPort;
+
+import java.util.List;
+import java.util.Map;
+
+import org.knime.core.node.NodeDescription;
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeFactory;
 import org.knime.core.node.NodeView;
+import org.knime.core.webui.node.dialog.NodeDialog;
+import org.knime.core.webui.node.dialog.NodeDialogFactory;
+import org.knime.core.webui.node.dialog.NodeDialogManager;
+import org.knime.core.webui.node.dialog.SettingsType;
+import org.knime.core.webui.node.dialog.defaultdialog.DefaultKaiNodeInterface;
+import org.knime.core.webui.node.dialog.defaultdialog.DefaultNodeDialog;
+import org.knime.core.webui.node.dialog.kai.KaiNodeInterface;
+import org.knime.core.webui.node.dialog.kai.KaiNodeInterfaceFactory;
+import org.knime.node.impl.description.DefaultNodeDescriptionUtil;
+import org.knime.node.impl.description.PortDescription;
 
 /**
- * Factory class for the {Azure Blob Storage Connector node.
+ * Factory class for the Azure Blob Storage Connector node.
  *
  * @author Alexander Bondaletov
  */
-public class AzureBlobStorageConnectorNodeFactory extends NodeFactory<AzureBlobStorageConnectorNodeModel> {
+@SuppressWarnings("restriction")
+public class AzureBlobStorageConnectorNodeFactory extends NodeFactory<AzureBlobStorageConnectorNodeModel>
+        implements NodeDialogFactory, KaiNodeInterfaceFactory {
 
     @Override
     public AzureBlobStorageConnectorNodeModel createNodeModel() {
@@ -80,9 +98,82 @@ public class AzureBlobStorageConnectorNodeFactory extends NodeFactory<AzureBlobS
         return true;
     }
 
+    private static final String NODE_NAME = "Azure Blob Storage Connector";
+    private static final String NODE_ICON = "./file_system_connector.png";
+    private static final String SHORT_DESCRIPTION = """
+            Connects to Azure Blob Storage in order to read/write files in downstream nodes.
+            """;
+    private static final String FULL_DESCRIPTION = """
+            <p>This node connects to Azure Blob Storage. The resulting output port allows downstream nodes to access
+            the Azure Blob Storage data as a file system, e.g. to read or write files and folders,
+            or to perform other file system operations (browse/list files, copy, move, ...).
+            </p>
+
+            <p>This node requires the <i>Microsoft Authenticator</i> to perform authentication.</p>
+
+            <p><b>Path syntax:</b> Paths for Azure Blob Storage are specified with a UNIX-like syntax,
+            <tt>/mycontainer/myfolder/myfile</tt>. An absolute path for Azure Blob Storage consists of:
+                <ol>
+                    <li>A leading slash (<tt>/</tt>).</li>
+                    <li>Followed by the name of a container (<tt>mycontainer</tt> in the above example),
+                     followed by a slash.</li>
+                    <li>Followed by the name of an object within the container
+                    (<tt>myfolder/myfile</tt> in the above example).</li>
+                </ol>
+            </p>
+
+            <p><b>URI formats:</b> When you apply the <i>Path to URI</i> node to paths coming from this connector, you
+            can create URIs with the following formats:
+                <ol>
+                    <li><b>Shared Access Signature (SAS) URLs</b> which contain credentials, that allow to access files
+            for a certain amount of time
+                    (see <a href="https://docs.microsoft.com/en-us/azure/storage/common/storage-sas-overview">Azure
+            documentation</a>).</li>
+                    <li><b>wasbs:// URLs</b> to access Azure Blob Storage from inside Hadoop environments.</li>
+                </ol>
+            </p>
+            """;
+    private static final List<PortDescription> INPUT_PORTS = List.of(
+            fixedPort("Credential", """
+                    Attach the Microsoft Authenticator node to perform authentication and provide a credential.
+                    """)
+    );
+    private static final List<PortDescription> OUTPUT_PORTS = List.of(
+            fixedPort("Azure Blob Storage File System Connection", """
+                    Azure Blob Storage File System Connection
+                    """)
+    );
+
     @Override
     protected NodeDialogPane createNodeDialogPane() {
-        return new AzureBlobStorageConnectorNodeDialog();
+        return NodeDialogManager.createLegacyFlowVariableNodeDialog(createNodeDialog());
     }
 
+    @Override
+    public NodeDialog createNodeDialog() {
+        return new DefaultNodeDialog(SettingsType.MODEL, AzureBlobStorageConnectorNodeParameters.class);
+    }
+
+    @Override
+    public NodeDescription createNodeDescription() {
+        return DefaultNodeDescriptionUtil.createNodeDescription(
+                NODE_NAME,
+                NODE_ICON,
+                INPUT_PORTS,
+                OUTPUT_PORTS,
+                SHORT_DESCRIPTION,
+                FULL_DESCRIPTION,
+                List.of(),
+                AzureBlobStorageConnectorNodeParameters.class,
+                null,
+                NodeType.Source,
+                List.of(),
+                null
+        );
+    }
+
+    @Override
+    public KaiNodeInterface createKaiNodeInterface() {
+        return new DefaultKaiNodeInterface(Map.of(SettingsType.MODEL, AzureBlobStorageConnectorNodeParameters.class));
+    }
 }
