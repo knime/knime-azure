@@ -72,7 +72,7 @@ import org.knime.node.parameters.updates.ParameterReference;
 import org.knime.node.parameters.updates.StateProvider;
 import org.knime.node.parameters.updates.ValueReference;
 import org.knime.node.parameters.widget.number.NumberInputWidget;
-import org.knime.node.parameters.widget.number.NumberInputWidgetValidation.MinValidation.IsNonNegativeValidation;
+import org.knime.node.parameters.widget.number.NumberInputWidgetValidation.MinValidation.IsPositiveIntegerValidation;
 
 /**
  * Node parameters for Azure Blob Storage Connector.
@@ -121,7 +121,7 @@ final class AzureBlobStorageConnectorNodeParameters implements NodeParameters {
     @Widget(title = "Service calls timeout (seconds)", //
             description = "The time allowed between sending a request and receiving the response.")
     @Layout(ConnectionSettingsSection.class)
-    @NumberInputWidget(minValidation = IsNonNegativeValidation.class)
+    @NumberInputWidget(minValidation = IsPositiveIntegerValidation.class)
     @ValueReference(TimeoutRef.class)
     @Persist(configKey = AzureBlobStorageConnectorSettings.KEY_TIMEOUT)
     int m_timeout = AzureBlobStorageFSConnectionConfig.DEFAULT_TIMEOUT;

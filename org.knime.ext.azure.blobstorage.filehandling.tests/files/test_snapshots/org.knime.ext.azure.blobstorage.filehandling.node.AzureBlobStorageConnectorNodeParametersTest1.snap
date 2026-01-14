@@ -3,7 +3,7 @@
     "model" : {
       "workingDirectory" : "/knime-filehandling-test-container/knimetemp-91428b19909e46a9/",
       "normalizePaths" : true,
-      "timeout" : 120
+      "timeout" : 1
     }
   },
   "schema" : {
@@ -73,10 +73,10 @@
               }
             },
             "min" : {
-              "errorMessage" : "The value must be at least 0.",
+              "errorMessage" : "The value must be at least 1.",
               "parameters" : {
                 "isExclusive" : false,
-                "min" : 0.0
+                "min" : 1.0
               }
             }
           }
