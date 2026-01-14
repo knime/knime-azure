@@ -73,10 +73,10 @@
               }
             },
             "min" : {
-              "errorMessage" : "The value must be at least 0.",
+              "errorMessage" : "The value must be at least 1.",
               "parameters" : {
                 "isExclusive" : false,
-                "min" : 0.0
+                "min" : 1.0
               }
             }
           }
