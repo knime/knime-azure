@@ -1,0 +1,92 @@
+{
+  "data" : {
+    "model" : {
+      "workingDirectory" : "/knime-filehandling-test-container-fixture/test-dir-fixture",
+      "timeoutSeconds" : 120
+    }
+  },
+  "schema" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "timeoutSeconds" : {
+            "type" : "integer",
+            "format" : "int32",
+            "title" : "Service calls timeout",
+            "description" : "The time in seconds allowed between sending a request and receiving the response.",
+            "default" : 30
+          },
+          "workingDirectory" : {
+            "type" : "string",
+            "title" : "Working directory",
+            "description" : "Specify the working directory of the resulting file system connection, using the Path\nsyntax explained in the node description. The working directory must be specified as an\nabsolute path. A working directory allows downstream nodes to access files/folders using\nrelative paths, i.e. paths that do not have a leading slash. The default working directory\nis the root \"/\".",
+            "default" : "/"
+          }
+        }
+      }
+    }
+  },
+  "ui_schema" : {
+    "elements" : [ {
+      "type" : "Control",
+      "scope" : "#/properties/model/properties/workingDirectory",
+      "options" : {
+        "selectionMode" : "FOLDER",
+        "format" : "stringFileChooser"
+      },
+      "providedOptions" : [ "fileSystemId" ]
+    }, {
+      "type" : "Control",
+      "scope" : "#/properties/model/properties/timeoutSeconds",
+      "options" : {
+        "validation" : {
+          "max" : {
+            "errorMessage" : "The value must not exceed 2147483647.",
+            "parameters" : {
+              "isExclusive" : false,
+              "max" : 2.147483647E9
+            }
+          },
+          "min" : {
+            "errorMessage" : "The value must be at least 1.",
+            "parameters" : {
+              "isExclusive" : false,
+              "min" : 1.0
+            }
+          }
+        },
+        "isAdvanced" : true
+      }
+    } ]
+  },
+  "persist" : {
+    "type" : "object",
+    "properties" : {
+      "model" : {
+        "type" : "object",
+        "properties" : {
+          "workingDirectory" : {
+            "configKey" : "workingDirectory"
+          },
+          "timeoutSeconds" : {
+            "configKey" : "timeout"
+          }
+        }
+      }
+    }
+  },
+  "globalUpdates" : [ {
+    "trigger" : {
+      "id" : "after-open-dialog"
+    },
+    "triggerInitially" : true,
+    "dependencies" : [ "#/properties/model/properties/timeoutSeconds" ]
+  }, {
+    "trigger" : {
+      "scope" : "#/properties/model/properties/timeoutSeconds"
+    },
+    "dependencies" : [ "#/properties/model/properties/timeoutSeconds" ]
+  } ]
+}

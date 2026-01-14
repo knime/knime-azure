@@ -76,8 +76,8 @@ import com.azure.storage.common.StorageSharedKeyCredential;
  * @author Alexander Bondaletov
  */
 public final class AdlsConnectorSettings {
-    private static final String KEY_WORKING_DIRECTORY = "workingDirectory";
-    private static final String KEY_TIMEOUT = "timeout";
+    static final String KEY_WORKING_DIRECTORY = "workingDirectory";
+    static final String KEY_TIMEOUT = "timeout";
 
     private final SettingsModelString m_workingDirectory;
     private final SettingsModelIntegerBounded m_timeout;
@@ -115,7 +115,7 @@ public final class AdlsConnectorSettings {
         m_workingDirectory.validateSettings(settings);
         m_timeout.validateSettings(settings);
 
-        AdlsConnectorSettings temp = new AdlsConnectorSettings();
+        var temp = new AdlsConnectorSettings();
         temp.loadSettingsFrom(settings);
         temp.validate();
     }
@@ -126,7 +126,7 @@ public final class AdlsConnectorSettings {
      * @throws InvalidSettingsException
      */
     public void validate() throws InvalidSettingsException {
-        String workDir = m_workingDirectory.getStringValue();
+        var workDir = m_workingDirectory.getStringValue();
         if (workDir.isEmpty() || !workDir.startsWith(AdlsFileSystem.PATH_SEPARATOR)) {
             throw new InvalidSettingsException("Working directory must be set to an absolute path.");
         }
@@ -185,7 +185,8 @@ public final class AdlsConnectorSettings {
                 String.format("%s:%s", AdlsFSDescriptorProvider.FS_TYPE, AzureUtils.getStorageAccount(credential)));
     }
 
-    AdlsFSConnectionConfig toFSConnectionConfig(final Credential credential) {
+    static AdlsFSConnectionConfig toFSConnectionConfig(final Credential credential, final String workingDirectory,
+            final Duration timeout) {
 
         final var fsLocationSpec = createFSLocationSpec(credential);
         final var endpoint = AzureUtils.getEndpoint(credential);
@@ -193,22 +194,26 @@ public final class AdlsConnectorSettings {
         var config = new AdlsFSConnectionConfig(//
                 endpoint, //
                 fsLocationSpec, //
-                getWorkingDirectory());
+                workingDirectory);
 
         if (credential instanceof AzureStorageSharedKeyCredential sharedKeyCred) {
             config.setStorageSharedKeyCredential(new StorageSharedKeyCredential(//
                     sharedKeyCred.getStorageAccountName(), //
                     sharedKeyCred.getSharedKey()));
         } else if (credential instanceof AzureStorageSasUrlCredential) {
-            // Do nothing. SAS token is a part of the endpoint
+            // Do nothing. SAS token is a part of the endpoint.
         } else if (credential instanceof JWTCredential jwtCredential) {
             config.setAzureTokenCredential(TokenCredentialFactory.create(jwtCredential));
         }
 
-        config.setConnectionTimeout(getTimeout());
-        config.setReadTimeout(getTimeout());
+        config.setConnectionTimeout(timeout);
+        config.setReadTimeout(timeout);
 
         return config;
 
+    }
+
+    AdlsFSConnectionConfig toFSConnectionConfig(final Credential credential) {
+        return toFSConnectionConfig(credential, getWorkingDirectory(), getTimeout());
     }
 }
