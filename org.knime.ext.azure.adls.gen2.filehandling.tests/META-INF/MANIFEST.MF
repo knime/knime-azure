@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Tests
 Bundle-SymbolicName: org.knime.ext.azure.adls.gen2.filehandling.tests
-Bundle-Version: 5.9.0.qualifier
+Bundle-Version: 5.10.0.qualifier
 Require-Bundle: org.eclipse.swt,
  org.eclipse.jface,
  org.knime.core;bundle-version="[5.9.0,6.0.0)",
