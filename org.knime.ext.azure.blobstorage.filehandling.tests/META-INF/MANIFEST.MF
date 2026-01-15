@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Tests
 Bundle-SymbolicName: org.knime.ext.azure.blobstorage.filehandling.tests
-Bundle-Version: 5.10.0.qualifier
+Bundle-Version: 5.9.0.qualifier
 Fragment-Host: org.knime.ext.azure.blobstorage.filehandling;bundle-version="[5.9.0,6.0.0)"
 Require-Bundle: org.knime.core;bundle-version="[5.9.0,6.0.0)",
  org.knime.core.ui;bundle-version="[5.9.0,6.0.0)",
