@@ -12,7 +12,7 @@ Require-Bundle: org.knime.workbench.repository;bundle-version="[5.9.0,6.0.0)",
  org.knime.ext.azure;bundle-version="[5.9.0,6.0.0)",
  org.knime.cloud.core;bundle-version="[5.9.0,6.0.0)",
  org.knime.credentials.base;bundle-version="[5.9.0,6.0.0)",
- org.knime.credentials.base.oauth;bundle-version="[5.9.0,6.0.0)"
+ org.knime.credentials.base.oauth;bundle-version="[5.10.0,6.0.0)"
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .
 Automatic-Module-Name: org.knime.ext.azure.blobstorage.filehandling
