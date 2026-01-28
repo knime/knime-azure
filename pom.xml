@@ -33,6 +33,7 @@
                 <module>org.knime.ext.azure.blobstorage.filehandling</module>
                 <module>org.knime.ext.azure.blobstorage.filehandling.tests</module>
                 <module>org.knime.ext.azure.adls.gen2.filehandling</module>
+                <module>org.knime.ext.azure.adls.gen2.filehandling.tests</module>
                 <module>org.knime.features.ext.azure</module> 
                 <module>org.knime.update.azure</module>
 	</modules>
