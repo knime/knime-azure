@@ -20,5 +20,5 @@ Require-Bundle: org.knime.workbench.repository;bundle-version="[5.9.0,6.0.0)",
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .
 Automatic-Module-Name: org.knime.ext.azure.onelake.filehandling
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 

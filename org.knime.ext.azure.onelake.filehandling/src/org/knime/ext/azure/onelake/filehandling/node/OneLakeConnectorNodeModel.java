@@ -51,6 +51,7 @@ package org.knime.ext.azure.onelake.filehandling.node;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.util.function.Function;
 
 import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.InvalidSettingsException;
@@ -79,7 +80,7 @@ import jakarta.ws.rs.WebApplicationException;
  *
  * @author Bjoern Lohrmann, KNIME GmbH
  */
-@SuppressWarnings("restriction")
+@SuppressWarnings({ "restriction", "deprecation" })
 public class OneLakeConnectorNodeModel extends WebUINodeModel<OneLakeConnectorSettings> {
 
     private String m_fsId;
@@ -90,10 +91,10 @@ public class OneLakeConnectorNodeModel extends WebUINodeModel<OneLakeConnectorSe
     }
 
     @Override
-    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs,
-        final OneLakeConnectorSettings settings)
-        throws InvalidSettingsException {
+    protected PortObjectSpec[] configure(final PortObjectSpec[] inSpecs, final OneLakeConnectorSettings settings)
+            throws InvalidSettingsException {
 
+        settings.validateOnConfigure();
         m_fsId = FSConnectionRegistry.getInstance().getKey();
 
         if (inSpecs[0] == null) {
@@ -112,7 +113,6 @@ public class OneLakeConnectorNodeModel extends WebUINodeModel<OneLakeConnectorSe
         return new PortObjectSpec[] { createSpec(fabricConnection.getWorkspaceId()) };
     }
 
-
     private FileSystemPortObjectSpec createSpec(final String workspaceId) {
 
         return new FileSystemPortObjectSpec(//
@@ -123,24 +123,36 @@ public class OneLakeConnectorNodeModel extends WebUINodeModel<OneLakeConnectorSe
 
     @Override
     protected PortObject[] execute(final PortObject[] inObjects, final ExecutionContext exec,
-        final OneLakeConnectorSettings settings) throws Exception {
+            final OneLakeConnectorSettings settings) throws Exception {
 
         final var fabricConnection = ((FabricWorkspacePortObjectSpec) inObjects[0].getSpec()).getFabricConnection();
 
-        final var fabricWorkspaceName = resolveFabricWorkspaceName(fabricConnection);
+        final var fabricWorkspaceName = resolveFabricWorkspaceName(fabricConnection,
+                this::createUnableToAccessWorkspaceException);
 
         final var config = settings.createFSConnectionConfig(fabricConnection, fabricWorkspaceName);
 
         m_fsConnection = new OneLakeFSConnection(config);
         FSConnectionRegistry.getInstance().register(m_fsId, m_fsConnection);
 
-        testConnection(m_fsConnection);
+        testConnection(m_fsConnection, this::createUnableToAccessWorkspaceException);
 
         return new PortObject[] { new FileSystemPortObject(createSpec(fabricConnection.getWorkspaceId())) };
     }
 
-    private String resolveFabricWorkspaceName(final FabricConnection fabricConnection)
-            throws NoSuchCredentialException, KNIMEException {
+    /**
+     * @param <T>
+     *            the type of the exception
+     * @param mapUnableToAccessWorkspace
+     *            maps an exception to the exception which should be thrown when the
+     *            method was unable to access the Fabric workspace (the exception
+     *            argument should be used as the cause).
+     * @throws T
+     *             thrown in case the method was unable to access the Fabric
+     *             workspace
+     */
+    static <T extends Throwable> String resolveFabricWorkspaceName(final FabricConnection fabricConnection,
+            final Function<Exception, T> mapUnableToAccessWorkspace) throws NoSuchCredentialException, T {
 
         try {
             final var client = FabricRESTClient.fromFabricConnection(WorkspaceAPI.class, //
@@ -150,7 +162,7 @@ public class OneLakeConnectorNodeModel extends WebUINodeModel<OneLakeConnectorSe
 
             return workspace.displayName;
         } catch (IOException | WebApplicationException e) {
-            throw createUnableToAccessWorkspaceException(e);
+            throw mapUnableToAccessWorkspace.apply(e);
         }
     }
 
@@ -158,36 +170,42 @@ public class OneLakeConnectorNodeModel extends WebUINodeModel<OneLakeConnectorSe
         return KNIMEException.of(//
                 createMessageBuilder()//
                         .withSummary("Unable to access the selected Fabric workspace.")//
-                        .addResolutions(
-                                """
-                                        Check that the Fabric workspace selected in the preceding 'Microsoft Fabric
-                                        Workspace Connector' node exists.
-                                        """)//
-                        .addResolutions(
-                                        """
-                                        Check that the current user has access to the Fabric workspace.
-                                        """)//
+                        .addResolutions("""
+                                Check that the Fabric workspace selected in the preceding 'Microsoft Fabric
+                                Workspace Connector' node exists.
+                                """)//
+                        .addResolutions("""
+                                Check that the current user has access to the Fabric workspace.
+                                """)//
                         .build()//
                         .orElseThrow(), //
                 e);
     }
 
+    /**
+     * @param <T>
+     *            the type of the exception
+     * @param mapUnableToAccessWorkspace
+     *            maps an exception to the exception which should be thrown when the
+     *            method was unable to access the Fabric workspace (the exception
+     *            argument should be used as the cause).
+     * @throws T
+     *             thrown in case the connection is not able to being set up
+     */
     @SuppressWarnings("resource")
-    private void testConnection(final OneLakeFSConnection connection) throws KNIMEException {
+    static <T extends Throwable> void testConnection(final OneLakeFSConnection connection,
+            final Function<Exception, T> mapUnableToAccessWorkspace) throws T {
         try {
             final var workingDir = connection.getFileSystem().getWorkingDirectory();
 
             Files.list(workingDir).findFirst().orElse(null); // NOSONAR method has a side effect
 
-        } catch (IOException | UncheckedIOException e) {
+        } catch (IOException e) {
             connection.closeInBackground();
-
-            Exception realEx = e;
-            if (e instanceof UncheckedIOException uncheckedEx) {
-                realEx = uncheckedEx.getCause();
-            }
-
-            throw createUnableToAccessWorkspaceException(realEx);
+            throw mapUnableToAccessWorkspace.apply(e);
+        } catch (UncheckedIOException e) { // NOSONAR wrapper exception
+            connection.closeInBackground();
+            throw mapUnableToAccessWorkspace.apply(e.getCause());
         }
     }
 
