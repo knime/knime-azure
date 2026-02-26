@@ -29,6 +29,7 @@
                 <module>org.knime.ext.azure.fabric</module>
                 <module>org.knime.ext.azure.fabric.sql</module>
                 <module>org.knime.ext.azure.onelake.filehandling</module>
+                <module>org.knime.ext.azure.onelake.filehandling.tests</module>
                 <module>org.knime.ext.azure.blobstorage.deprecated</module>
                 <module>org.knime.ext.azure.blobstorage.filehandling</module>
                 <module>org.knime.ext.azure.blobstorage.filehandling.tests</module>

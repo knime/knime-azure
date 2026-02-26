@@ -49,17 +49,31 @@
 package org.knime.ext.azure.onelake.filehandling.node;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 
 import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.node.parameters.NodeParameters;
+import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FSConnectionProvider;
+import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileSelectionWidget;
+import org.knime.core.webui.node.dialog.defaultdialog.internal.file.SingleFileSelectionMode;
+import org.knime.core.webui.node.dialog.defaultdialog.internal.file.WithCustomFileSystem;
 import org.knime.credentials.base.NoSuchCredentialException;
 import org.knime.ext.azure.fabric.port.FabricConnection;
+import org.knime.ext.azure.fabric.port.FabricWorkspacePortObject;
+import org.knime.ext.azure.fabric.rest.FabricRESTClient;
+import org.knime.ext.azure.fabric.rest.workspace.WorkspaceAPI;
+import org.knime.ext.azure.onelake.filehandling.fs.OneLakeFSConnection;
 import org.knime.ext.azure.onelake.filehandling.fs.OneLakeFSConnectionConfig;
 import org.knime.ext.azure.onelake.filehandling.fs.OneLakeFileSystem;
+import org.knime.node.parameters.NodeParameters;
+import org.knime.node.parameters.NodeParametersInput;
 import org.knime.node.parameters.Widget;
 import org.knime.node.parameters.layout.Layout;
 import org.knime.node.parameters.layout.Section;
+import org.knime.node.parameters.updates.StateProvider;
+
+import jakarta.ws.rs.WebApplicationException;
 
 /**
  * Node settings for the Microsoft OneLake Connector.
@@ -74,13 +88,15 @@ public class OneLakeConnectorSettings implements NodeParameters {
     }
 
     @Widget(title = "Working directory", //
-        description = "Specifies the <i>working directory</i> of the resulting file system connection."
-            + " The working directory must be specified as an absolute path."
-            + " A working directory allows downstream nodes to access files/folders using <i>relative</i> paths,"
-            + " i.e. paths that do not have a leading slash."
-            + " If not specified, the default working directory is \"/\".")
+            description = "Specifies the <i>working directory</i> of the resulting file system connection."
+                    + " The working directory must be specified as an absolute path."
+                    + " A working directory allows downstream nodes to access files/folders using"
+                    + " <i>relative</i> paths, i.e. paths that do not have a leading slash."
+                    + " If not specified, the default working directory is \"/\".")
+    @FileSelectionWidget(SingleFileSelectionMode.FOLDER)
+    @WithCustomFileSystem(connectionProvider = FileSystemConnectionProvider.class)
     @Layout(FileSystemSection.class)
-    String m_workingDirectory = "/";
+    String m_workingDirectory = OneLakeFileSystem.PATH_SEPARATOR;
 
     @Override
     public void validate() throws InvalidSettingsException {
@@ -92,15 +108,19 @@ public class OneLakeConnectorSettings implements NodeParameters {
     }
 
     OneLakeFSConnectionConfig createFSConnectionConfig(final FabricConnection fabricConnection,
-            final String fabricWorkspaceName)
+            final String fabricWorkspaceName) throws IOException, NoSuchCredentialException {
+        return createFSConnectionConfig(fabricConnection, fabricWorkspaceName, m_workingDirectory);
+    }
+
+    private static OneLakeFSConnectionConfig createFSConnectionConfig(final FabricConnection fabricConnection,
+            final String fabricWorkspaceName, final String workingDirectory)
             throws IOException, NoSuchCredentialException {
 
         final var fsConfig = new OneLakeFSConnectionConfig(//
                 fabricWorkspaceName, //
                 fabricConnection.getWorkspaceId(), //
-                m_workingDirectory);
+                workingDirectory);
 
-        // this may perform IO
         final var accessToken = OneLakeCredentialUtil.toAccessTokenAccessor(fabricConnection.getCredential());
         fsConfig.setAccessTokenAccessor(accessToken);
 
@@ -108,5 +128,73 @@ public class OneLakeConnectorSettings implements NodeParameters {
         fsConfig.setReadTimeout(fabricConnection.getReadTimeout());
 
         return fsConfig;
+    }
+
+    static final class FileSystemConnectionProvider implements StateProvider<FSConnectionProvider> {
+
+        private static final String ERROR_MSG = """
+                Fabric workspace connection not available. Please re-execute the preceding connector node
+                and make sure it is connected.
+                """;
+
+        @Override
+        public void init(final StateProviderInitializer initializer) {
+            initializer.computeAfterOpenDialog();
+        }
+
+        @Override
+        public FSConnectionProvider computeState(final NodeParametersInput parametersInput) {
+            return () -> {
+                final var fabricConnection = getFabricConnection(parametersInput);
+                final var connection = createConnection(fabricConnection);
+                testConnection(connection);
+                return connection;
+            };
+        }
+
+        private static FabricConnection getFabricConnection(final NodeParametersInput parametersInput)
+                throws InvalidSettingsException {
+            return parametersInput.getInPortObject(0) //
+                    .filter(FabricWorkspacePortObject.class::isInstance) //
+                    .map(FabricWorkspacePortObject.class::cast) //
+                    .map(FabricWorkspacePortObject::getFabricConnection) //
+                    .orElseThrow(() -> new InvalidSettingsException(ERROR_MSG));
+        }
+
+        private static OneLakeFSConnection createConnection(final FabricConnection fabricConnection)
+                throws InvalidSettingsException {
+            try {
+                final var workspaceName = resolveWorkspaceName(fabricConnection);
+                final var config = createFSConnectionConfig(fabricConnection, workspaceName,
+                        OneLakeFileSystem.PATH_SEPARATOR);
+                return new OneLakeFSConnection(config);
+            } catch (IOException e) {
+                throw new InvalidSettingsException("Unable to create the OneLake connection.", e);
+            } catch (NoSuchCredentialException e) {
+                throw new InvalidSettingsException("Selected Fabric credentials are not available.", e);
+            }
+        }
+
+        private static String resolveWorkspaceName(final FabricConnection fabricConnection)
+                throws InvalidSettingsException {
+            try {
+                final var client = FabricRESTClient.fromFabricConnection(WorkspaceAPI.class, fabricConnection);
+                final var workspace = client.getWorkspace(fabricConnection.getWorkspaceId());
+                return workspace.displayName;
+            } catch (IOException | WebApplicationException | NoSuchCredentialException e) {
+                throw new InvalidSettingsException("Unable to access the selected Fabric workspace.", e);
+            }
+        }
+
+        @SuppressWarnings("resource")
+        private static void testConnection(final OneLakeFSConnection connection) throws InvalidSettingsException {
+            try {
+                final var workingDir = connection.getFileSystem().getWorkingDirectory();
+                Files.list(workingDir).findFirst();
+            } catch (IOException | UncheckedIOException e) {
+                connection.closeInBackground();
+                throw new InvalidSettingsException("Unable to access the selected Fabric workspace.", e);
+            }
+        }
     }
 }

@@ -2,8 +2,8 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Azure OneLake Connector plugin
 Bundle-SymbolicName: org.knime.ext.azure.onelake.filehandling;singleton:=true
-Bundle-Version: 5.9.0.qualifier
-Bundle-Vendor: KNIME AG, Zurich, Switzerland
+Bundle-Version: 5.12.0.qualifier
+Bundle-Vendor: KNIME AG
 Require-Bundle: org.knime.workbench.repository;bundle-version="[5.9.0,6.0.0)",
  org.knime.core;bundle-version="[5.9.0,6.0.0)",
  org.knime.core.ui;bundle-version="[5.9.0,6.0.0)",
@@ -20,5 +20,5 @@ Require-Bundle: org.knime.workbench.repository;bundle-version="[5.9.0,6.0.0)",
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .
 Automatic-Module-Name: org.knime.ext.azure.onelake.filehandling
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 
