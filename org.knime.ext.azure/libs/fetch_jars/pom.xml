@@ -9,8 +9,7 @@
 
 	<name>Jar fetcher for Azure</name>
 	<description>Running the maven goal &quot;package&quot; on this maven project will fetch all jars required for Azure and put them into the libs/ directory.</description>
-	
-	
+
 	<!-- NOTE ABOUT DEALING WITH DEPENDENCIES:
 	
 	For *large* dependencies that are *already* part of KNIME we should avoid duplicating
@@ -27,7 +26,7 @@
 	  Pro: This leaves the maven dependency tree intact (for browsing), but prevents them from being copied to the libs/ directory.
 	  Contra: A lot of work when dependencies have themselves have a lot of transitive dependencies, because you need to
 	          exclude them manually too, then.
-	  
+	
 	Option (2):
 	  Exclude them via dependencies>dependency>exclusions.
 	  Pro: Works well for dependencies that themselves have a lot of transitive dependencies.
@@ -42,6 +41,22 @@
 				<exclusion>
 					<groupId>com.azure</groupId>
 					<artifactId>azure-core-http-netty</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.fasterxml.jackson.core</groupId>
+					<artifactId>jackson-core</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.fasterxml.jackson.core</groupId>
+					<artifactId>jackson-annotations</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.fasterxml.jackson.core</groupId>
+					<artifactId>jackson-databind</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.fasterxml.jackson.datatype</groupId>
+					<artifactId>jackson-datatype-jsr310</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -80,19 +95,19 @@
 							<goal>copy-dependencies</goal>
 						</goals>
 					</execution>
-                    <execution>
-                        <id>copy-src-jars</id>
-                        <configuration>
-                            <includeScope>runtime</includeScope>
-                            <outputDirectory>../</outputDirectory>
-                            <excludeGroupIds>jakarta.activation, jakarta.xml, org.slf4j</excludeGroupIds>
-                            <classifier>sources</classifier>
-                        </configuration>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy-dependencies</goal>
-                        </goals>
-                    </execution>
+					<execution>
+						<id>copy-src-jars</id>
+						<configuration>
+							<includeScope>runtime</includeScope>
+							<outputDirectory>../</outputDirectory>
+							<excludeGroupIds>jakarta.activation, jakarta.xml, org.slf4j</excludeGroupIds>
+							<classifier>sources</classifier>
+						</configuration>
+						<phase>package</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+					</execution>
 				</executions>
 			</plugin>
 		</plugins>
