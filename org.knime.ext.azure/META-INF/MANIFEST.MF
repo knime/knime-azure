@@ -16,7 +16,7 @@ Require-Bundle: org.knime.workbench.repository;bundle-version="[5.9.0,6.0.0)",
  org.knime.credentials.base.oauth;bundle-version="[5.9.0,6.0.0)",
  slf4j.api;bundle-version="[2.0.12,3.0.0)"
 Bundle-ActivationPolicy: lazy
-Bundle-ClassPath: .,
+Bundle-ClassPath: knime-azure.jar,
  libs/azure-core-1.55.3.jar,
  libs/azure-core-http-okhttp-1.12.4.jar,
  libs/azure-json-1.5.0.jar,
@@ -54,4 +54,5 @@ Export-Package: com.azure.core.credential,
  reactor.core.publisher
 Automatic-Module-Name: org.knime.ext.azure
 Bundle-RequiredExecutionEnvironment: JavaSE-17
+Eclipse-BundleShape: dir
 
