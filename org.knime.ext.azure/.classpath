@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry exported="true" kind="lib" path="libs/azure-core-1.55.3.jar" sourcepath="libs/azure-core-1.55.3-sources.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/azure-json-1.5.0.jar" sourcepath="libs/azure-json-1.5.0-sources.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/azure-xml-1.2.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/azure-storage-blob-12.30.0.jar" sourcepath="libs/azure-storage-blob-12.30.0-sources.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/azure-storage-common-12.29.0.jar" sourcepath="libs/azure-storage-common-12.29.0-sources.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/azure-storage-file-datalake-12.23.0.jar" sourcepath="libs/azure-storage-file-datalake-12.23.0-sources.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/azure-storage-internal-avro-12.15.0.jar" sourcepath="libs/azure-storage-internal-avro-12.15.0-sources.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/reactor-core-3.4.41.jar" sourcepath="libs/reactor-core-3.4.41-sources.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/azure-core-http-okhttp-1.12.4.jar" sourcepath="libs/azure-core-http-okhttp-1.12.4-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/azure-core-1.57.1.jar" sourcepath="libs/azure-core-1.57.1-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/azure-core-http-okhttp-1.13.3.jar" sourcepath="libs/azure-core-http-okhttp-1.13.3-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/azure-json-1.5.1.jar" sourcepath="libs/azure-json-1.5.1-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/azure-storage-blob-12.33.2.jar" sourcepath="libs/azure-storage-blob-12.33.2-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/azure-storage-common-12.32.2.jar" sourcepath="libs/azure-storage-common-12.32.2-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/azure-storage-file-datalake-12.26.2.jar" sourcepath="libs/azure-storage-file-datalake-12.26.2-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/azure-storage-internal-avro-12.18.1.jar" sourcepath="libs/azure-storage-internal-avro-12.18.1-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/azure-xml-1.2.1.jar" sourcepath="libs/azure-xml-1.2.1-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/reactive-streams-1.0.4.jar" sourcepath="libs/reactive-streams-1.0.4-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/reactor-core-3.7.14.jar" sourcepath="libs/reactor-core-3.7.14-sources.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-17">
 		<attributes>
 			<attribute name="module" value="true"/>
