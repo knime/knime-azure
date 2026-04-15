@@ -50,10 +50,10 @@ import java.io.IOException;
 import java.util.function.Supplier;
 
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FSConnectionProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileSelectionWidget;
-import org.knime.core.webui.node.dialog.defaultdialog.internal.file.SingleFileSelectionMode;
-import org.knime.core.webui.node.dialog.defaultdialog.internal.file.WithCustomFileSystem;
+import org.knime.node.parameters.widget.file.customfilesystem.FSConnectionProvider;
+import org.knime.node.parameters.widget.file.FileSelectionWidget;
+import org.knime.node.parameters.widget.file.SingleFileSelectionMode;
+import org.knime.node.parameters.widget.file.customfilesystem.WithCustomFileSystem;
 import org.knime.credentials.base.Credential;
 import org.knime.credentials.base.CredentialPortObject;
 import org.knime.ext.azure.blobstorage.filehandling.fs.AzureBlobStorageFSConnection;

@@ -59,7 +59,7 @@ import org.knime.core.data.sort.AlphanumericComparator;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.port.PortObjectSpec;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.handler.WidgetHandlerException;
+import org.knime.node.parameters.experimental.validation.WidgetHandlerException;
 import org.knime.ext.azure.fabric.rest.FabricRESTClient;
 import org.knime.ext.azure.fabric.rest.workspace.Workspace;
 import org.knime.ext.azure.fabric.rest.workspace.WorkspaceAPI;

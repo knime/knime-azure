@@ -53,12 +53,12 @@ import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
 import org.knime.core.node.InvalidSettingsException;
-import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FSConnectionProvider;
-import org.knime.core.webui.node.dialog.defaultdialog.internal.file.FileSelectionWidget;
-import org.knime.core.webui.node.dialog.defaultdialog.internal.file.SingleFileSelectionMode;
-import org.knime.core.webui.node.dialog.defaultdialog.internal.file.WithCustomFileSystem;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.validation.custom.CustomValidation;
-import org.knime.core.webui.node.dialog.defaultdialog.widget.validation.custom.SimpleValidation;
+import org.knime.node.parameters.widget.file.customfilesystem.FSConnectionProvider;
+import org.knime.node.parameters.widget.file.FileSelectionWidget;
+import org.knime.node.parameters.widget.file.SingleFileSelectionMode;
+import org.knime.node.parameters.widget.file.customfilesystem.WithCustomFileSystem;
+import org.knime.node.parameters.experimental.validation.CustomValidation;
+import org.knime.node.parameters.experimental.validation.SimpleValidation;
 import org.knime.credentials.base.NoSuchCredentialException;
 import org.knime.ext.azure.fabric.port.FabricConnection;
 import org.knime.ext.azure.fabric.port.FabricWorkspacePortObject;
